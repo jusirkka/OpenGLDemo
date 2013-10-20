@@ -4,6 +4,7 @@
 #include "gl_widget.h"
 #include "function.h"
 #include "constant.h"
+#include "blob.h"
 
 #include <QList>
 
@@ -47,11 +48,11 @@ public:
 
 protected:
 
-    virtual const QVariant& gl_execute(const QVector<QVariant>& vals, int start) = 0;
-
-protected:
-
     Demo::GLWidget* mParent;
+
+private:
+
+    virtual const QVariant& gl_execute(const QVector<QVariant>& vals, int start) = 0;
 
 };
 
@@ -623,6 +624,182 @@ public:
     ~UniformMatrix4F() {}
 };
 
+class GenBuffer: public GLProc {
+
+public:
+
+    GenBuffer(Demo::GLWidget* p): GLProc("genbuffer", Symbol::Integer, p) {}
+
+    const QVariant& gl_execute(const QVector<QVariant>&, int) {
+        GLuint ret;
+        qDebug() << "glGenBuffers";
+        mParent->glGenBuffers(1, &ret);
+        mParent->resources().append(ret);
+        mValue.setValue(ret);
+        return mValue;
+    }
+
+    ~GenBuffer() {}
+};
+
+class DeleteBuffer: public GLProc {
+
+public:
+
+    DeleteBuffer(Demo::GLWidget* p): GLProc("deletebuffer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "glDeleteBuffers" << name;
+        mParent->glDeleteBuffers(1, &name);
+        mParent->resources().removeOne(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~DeleteBuffer() {}
+};
+
+
+class BindBuffer: public GLProc {
+
+public:
+
+    BindBuffer(Demo::GLWidget* p): GLProc("bindbuffer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        GLuint buffer =  vals[start+1].value<int>();
+        qDebug() << "glBindBuffer" << target << buffer;
+        mParent->glBindBuffer(target, buffer);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~BindBuffer() {}
+};
+
+class BufferData: public GLProc {
+
+public:
+
+    BufferData(Demo::GLWidget* p): GLProc("bufferdata", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        const Blob& blob =  mParent->blob(vals[start+1].value<int>());
+        GLuint usage =  vals[start+2].value<int>();
+        qDebug() << "glBufferData" << target << blob.name() << target << usage;
+        mParent->glBufferData(target, blob.bytelen(target), blob.bytes(target), usage);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~BufferData() {}
+};
+
+class VertexAttribPointer: public GLProc {
+
+public:
+
+    VertexAttribPointer(Demo::GLWidget* p): GLProc("vertexattribpointer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        argt = Symbol::Text;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint index =  vals[start].value<int>();
+        const Blob& blob =  mParent->blob(vals[start+1].value<int>());
+        QString attr =  vals[start+2].value<QString>();
+        qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
+        const BlobSpec& spec = blob.spec(attr);
+        mParent->glVertexAttribPointer(index, spec.size, spec.type, spec.normalized, spec.stride, (const void*) spec.offset);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~VertexAttribPointer() {}
+};
+
+class Draw: public GLProc {
+
+public:
+
+    Draw(Demo::GLWidget* p): GLProc("draw", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        const Blob& blob =  mParent->blob(vals[start].value<int>());
+        GLuint mode =  vals[start+1].value<int>();
+        qDebug() << "Draw" << blob.name() << mode;
+        blob.draw(mode);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~Draw() {}
+};
+
+
+class EnableVertexAttribArray: public GLProc {
+
+public:
+
+    EnableVertexAttribArray(Demo::GLWidget* p): GLProc("enablevertexattribarray", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "glEnableVertexAttribArray" << name;
+        mParent->glEnableVertexAttribArray(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~EnableVertexAttribArray() {}
+};
+
+class DisableVertexAttribArray: public GLProc {
+
+public:
+
+    DisableVertexAttribArray(Demo::GLWidget* p): GLProc("disablevertexattribarray", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "glDisableVertexAttribArray" << name;
+        mParent->glDisableVertexAttribArray(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~DisableVertexAttribArray() {}
+};
+
+
 
 class Functions {
 
@@ -657,6 +834,14 @@ public:
         contents.append(new Uniform1F(p));
         contents.append(new Uniform4F(p));
         contents.append(new UniformMatrix4F(p));
+        contents.append(new GenBuffer(p));
+        contents.append(new DeleteBuffer(p));
+        contents.append(new BindBuffer(p));
+        contents.append(new BufferData(p));
+        contents.append(new VertexAttribPointer(p));
+        contents.append(new Draw(p));
+        contents.append(new EnableVertexAttribArray(p));
+        contents.append(new DisableVertexAttribArray(p));
     }
 };
 
@@ -693,6 +878,17 @@ public:
         // createshader
         CONST(VERTEX_SHADER);
         CONST(FRAGMENT_SHADER);
+        // bindbuffer
+        CONST(ARRAY_BUFFER);
+        CONST(ELEMENT_ARRAY_BUFFER);
+        // bufferdata
+        CONST(STATIC_DRAW);
+        CONST(STREAM_DRAW);
+        CONST(DYNAMIC_DRAW);
+        // draw
+        CONST(POINTS);
+        CONST(LINES);
+        CONST(TRIANGLES);
     }
 
 

@@ -20,8 +20,14 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QtPlugin>
+#include <QDebug>
+
 
 #include "mainwindow.h"
+
+Q_IMPORT_PLUGIN(pnp_gl_teapot)
+
 
 
 

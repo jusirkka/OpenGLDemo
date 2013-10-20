@@ -5,7 +5,9 @@
 
 #include <QDebug>
 #include <QMouseEvent>
-
+#include <QPluginLoader>
+#include <QDir>
+#include <QApplication>
 
 
 Demo::GLWidget::GLWidget(QWidget *parent):
@@ -19,6 +21,32 @@ Demo::GLWidget::GLWidget(QWidget *parent):
     foreach(Symbol* func, funcs.contents) Parser::AddSymbol(func);
     GL::Constants constants;
     foreach(Symbol* c, constants.contents) Parser::AddSymbol(c);
+
+    // retrieve blobs
+    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
+        addBlob(plugin);
+    }
+
+    QDir pluginsDir(qApp->applicationDirPath());
+    pluginsDir.cd("plugins");
+
+    foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+        addBlob(loader.instance());
+    }
+}
+
+
+void Demo::GLWidget::addBlob(QObject* plugin) {
+    GL::Blob* blob = qobject_cast<GL::Blob*>(plugin);
+    if (!blob) return;
+    if (Parser::Symbols().contains(blob->name())) {
+        qWarning() << "Cannot load blob:" << blob->name() << "is a reserved symbol";
+        return;
+    }
+    int index = mBlobs.length();
+    Parser::AddSymbol(new Demo::Constant(blob->name(), index));
+    mBlobs.append(blob);
 }
 
 Demo::GLWidget::~GLWidget() {
@@ -59,26 +87,9 @@ void Demo::GLWidget::paintGL()
     qDebug() << "Leaving paintGL";
 }
 
-#undef ALT
 
 void Demo::GLWidget::resizeGL(int w, int h) {
-    // place it in the middle of the s x s scene
-    int s = 600;
-    int x, y;
-    if (w <= s && h <= s) {
-        x = (s - w) / 2;
-        y = (s - h) / 2;
-        glViewport(x, y, w - x, h - y);
-    } else if (w > s && h <= s) {
-        y = (s - h) / 2;
-        glViewport(0, y, s, h - y);
-    } else if (w <= s && h > s) {
-        x = (s - w) / 2;
-        glViewport(x, 0, w - x, s);
-    } else {
-        glViewport(0, 0, s, s);
-    }
-
+    glViewport(0, 0, w, h);
     paintGL();
 }
 
@@ -153,5 +164,19 @@ void Demo::GLWidget::defaults() {
     glDeleteTextures(remaining.size(), remaining.toVector().constData());
     glDeleteBuffers(remaining.size(), remaining.toVector().constData());
 
+    switch (glGetError()) {
+        ALT(GL_INVALID_ENUM);
+        ALT(GL_INVALID_VALUE);
+        ALT(GL_INVALID_OPERATION);
+        ALT(GL_STACK_UNDERFLOW);
+        ALT(GL_STACK_OVERFLOW);
+        ALT(GL_OUT_OF_MEMORY);
+        ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
+    default: ;
+    }
+
     mResources.clear();
 }
+
+#undef ALT
+
