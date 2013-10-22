@@ -36,9 +36,6 @@
 #include <QListWidgetItem>
 #include <QTextEdit>
 
-#include <qjson/serializer.h>
-#include <qjson/parser.h>
-
 
 
 Demo::MainWindow::MainWindow(const QString& demoFile):
