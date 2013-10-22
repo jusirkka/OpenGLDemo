@@ -8,6 +8,7 @@
 #include <QPluginLoader>
 #include <QDir>
 #include <QApplication>
+#include <QMatrix4x4>
 
 
 Demo::GLWidget::GLWidget(QWidget *parent):
@@ -17,10 +18,21 @@ Demo::GLWidget::GLWidget(QWidget *parent):
 {
     mRunners[InitKey] = 0;
     mRunners[DrawKey] = 0;
+
     GL::Functions funcs(this);
     foreach(Symbol* func, funcs.contents) Parser::AddSymbol(func);
     GL::Constants constants;
     foreach(Symbol* c, constants.contents) Parser::AddSymbol(c);
+
+    mCamera = dynamic_cast<Variable*>(Parser::Symbols()["camera"])->clone();
+
+    QMatrix4x4 m;
+    m.ortho(-4.0f, +4.0f, -4.0f, +4.0f, 0.1f, 100.0f);
+    m.translate(0.0f, -0.5f, -7.5f);
+    m.rotate(25, 1, 0, 0);
+
+    Math3D::Matrix4 c(m.data());
+    mCamera->setValue(QVariant::fromValue(c));
 
     // retrieve blobs
     foreach (QObject *plugin, QPluginLoader::staticInstances()) {
@@ -34,6 +46,7 @@ Demo::GLWidget::GLWidget(QWidget *parent):
         QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
         addBlob(loader.instance());
     }
+
 }
 
 
@@ -55,7 +68,6 @@ Demo::GLWidget::~GLWidget() {
     }
 }
 
-#define ALT(item) case item: qDebug() << #item; break
 
 void Demo::GLWidget::initializeGL () {
     initializeGLFunctions();
@@ -65,23 +77,15 @@ void Demo::GLWidget::paintGL()
 {
     qDebug() << "Entering paintGL";
     foreach(int key, mRunners.keys()) {
+        Runner* runner = mRunners[key];
+        if (!runner) continue;
+
         if (key == InitKey) {
             if (mInitialized) continue;
             defaults();
-        }
-        Runner* runner = mRunners[key];
-        if (!runner) continue;
-        qDebug() << "We have runner";
-        runner->evaluate();
-        switch (glGetError()) {
-            ALT(GL_INVALID_ENUM);
-            ALT(GL_INVALID_VALUE);
-            ALT(GL_INVALID_OPERATION);
-            ALT(GL_STACK_UNDERFLOW);
-            ALT(GL_STACK_OVERFLOW);
-            ALT(GL_OUT_OF_MEMORY);
-            ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
-        default: if (key == InitKey) mInitialized = true;
+            mInitialized = runner->evaluate();
+        } else {
+            runner->evaluate();
         }
     }
     qDebug() << "Leaving paintGL";
@@ -94,15 +98,37 @@ void Demo::GLWidget::resizeGL(int w, int h) {
 }
 
 
-void Demo::GLWidget::mousePressEvent(QMouseEvent *) {
+void Demo::GLWidget::mousePressEvent(QMouseEvent *event) {
+//    mDx = mDy = 0;
+//    mLastPos = event->pos();
+//    mGravity = false;
 }
 
-void Demo::GLWidget::mouseReleaseEvent(QMouseEvent *) {
+void Demo::GLWidget::mouseReleaseEvent(QMouseEvent *event) {
+//    mGravity = (mDx != 0) || (mDy != 0);
 }
 
+static float gravity(int dx) {
+    float threshold = 3;
+    float k = 2.0;
+    float cutoff = 10;
 
-void Demo::GLWidget::mouseMoveEvent(QMouseEvent *) {
+    if (abs(dx) >= cutoff) return dx / abs(dx) * k * cutoff ;
+    if (abs(dx) >= threshold) return k * dx;
+
+    return 0;
 }
+
+void Demo::GLWidget::mouseMoveEvent(QMouseEvent *event) {
+
+//    if (event->buttons() & Qt::LeftButton) {
+//        mDx = gravity(event->x() - mLastPos.x());
+//        mDy = gravity(event->y() - mLastPos.y());
+//        qDebug() << mDx << mDy;
+//    }
+//    mLastPos = event->pos();
+}
+
 
 
 void Demo::GLWidget::parse(int key, const QString& commands) {
@@ -121,6 +147,8 @@ void Demo::GLWidget::parse(int key, const QString& commands) {
         updateGL();
     }
 }
+
+#define ALT(item) case item: qDebug() << #item; break
 
 
 void Demo::GLWidget::defaults() {

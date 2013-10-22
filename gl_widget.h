@@ -11,6 +11,7 @@ namespace GL {class Blob;}
 
 namespace Demo {
 
+class Variable;
 class Runner;
 
 class GLWidget : public QGLWidget, public QGLFunctions {
@@ -64,6 +65,7 @@ private:
     bool mInitialized;
     ResourceList mResources;
     BlobList mBlobs;
+    Variable* mCamera;
 
 };
 

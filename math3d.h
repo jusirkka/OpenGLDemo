@@ -395,7 +395,7 @@ inline Matrix4& Matrix4::setBasis(const Vector4& u, const Vector4& v, const Vect
     e[0] = u[X];
     e[1] = v[X];
     e[2] = n[X];
-    e[W] = 0;
+    e[3] = 0;
 
     e[4] = u[Y];
     e[5] = v[Y];

@@ -3913,9 +3913,9 @@ GL::Teapot::Teapot()
     int num_lines = sizeof(elements) / sizeof(GLushort) / 5;
     for (int line = 0; line < num_lines; ++line) {
         // mode, count, offset
-        mModes[GL_POINTS].append(Element(elements[3*line+0], elements[3*line+3], sizeof(GLushort) * elements[3*line+4]));
-        mModes[GL_LINES].append(Element(elements[3*line+1], elements[3*line+3], sizeof(GLushort) * elements[3*line+4]));
-        mModes[GL_TRIANGLES].append(Element(elements[3*line+2], elements[3*line+3], sizeof(GLushort) * elements[3*line+4]));
+        mModes[GL_POINTS].append(Element(elements[5*line+0], elements[5*line+3], sizeof(GLushort) * elements[5*line+4]));
+        mModes[GL_LINES].append(Element(elements[5*line+1], elements[5*line+3], sizeof(GLushort) * elements[5*line+4]));
+        mModes[GL_TRIANGLES].append(Element(elements[5*line+2], elements[5*line+3], sizeof(GLushort) * elements[5*line+4]));
     }
 
 }
