@@ -51,7 +51,6 @@ bool Demo::Parser::ParseIt(const QString& inp) {
     int err = yyparse();
     yylex_destroy();
     // cleanup after errors
-    if (err) instance().cleanup();
     return !err;
 }
 
@@ -118,6 +117,11 @@ Demo::Parser::Parser()
     // vector and matrix constructors
     addSymbol(new Vecx());
     addSymbol(new Mat());
+
+    // shared matrix
+    addSymbol(new Var::Shared::Matrix("camera"));
+    // in glwidget
+    mSharedCounts["camera"] = 1;
 
     // constants
     addSymbol(new Demo::Constant("true", 1));
@@ -285,9 +289,6 @@ void Demo::Parser::pushBackImmed(const QVariant& constVal) {
     mCurrImmed.append(constVal);
 }
 
-void Demo::Parser::cleanup() {
-
-}
 
 
 

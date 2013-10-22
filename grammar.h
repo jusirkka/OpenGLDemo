@@ -42,25 +42,24 @@
      FLOAT = 259,
      CHAR = 260,
      ID = 261,
-     STRING = 262,
-     VECTOR = 263,
-     MATRIX = 264,
-     TEXT = 265,
-     NATURAL = 266,
-     SHARED = 267,
-     REAL = 268,
-     GE = 269,
-     LE = 270,
-     NE = 271,
-     EQ = 272,
-     BOR = 273,
-     OR = 274,
-     BAND = 275,
-     AND = 276,
-     NEG = 277,
-     UNK = 278,
-     BEGINSTRING = 279,
-     ENDSTRING = 280
+     VECTOR = 262,
+     MATRIX = 263,
+     TEXT = 264,
+     NATURAL = 265,
+     SHARED = 266,
+     REAL = 267,
+     GE = 268,
+     LE = 269,
+     NE = 270,
+     EQ = 271,
+     BOR = 272,
+     OR = 273,
+     BAND = 274,
+     AND = 275,
+     NEG = 276,
+     UNK = 277,
+     BEGINSTRING = 278,
+     ENDSTRING = 279
    };
 #endif
 /* Tokens.  */
@@ -68,25 +67,24 @@
 #define FLOAT 259
 #define CHAR 260
 #define ID 261
-#define STRING 262
-#define VECTOR 263
-#define MATRIX 264
-#define TEXT 265
-#define NATURAL 266
-#define SHARED 267
-#define REAL 268
-#define GE 269
-#define LE 270
-#define NE 271
-#define EQ 272
-#define BOR 273
-#define OR 274
-#define BAND 275
-#define AND 276
-#define NEG 277
-#define UNK 278
-#define BEGINSTRING 279
-#define ENDSTRING 280
+#define VECTOR 262
+#define MATRIX 263
+#define TEXT 264
+#define NATURAL 265
+#define SHARED 266
+#define REAL 267
+#define GE 268
+#define LE 269
+#define NE 270
+#define EQ 271
+#define BOR 272
+#define OR 273
+#define BAND 274
+#define AND 275
+#define NEG 276
+#define UNK 277
+#define BEGINSTRING 278
+#define ENDSTRING 279
 
 
 
@@ -96,7 +94,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1685 of yacc.c  */
-#line 97 "grammar.y"
+#line 99 "grammar.y"
 
     int int_value;
     double real_value;
@@ -106,7 +104,7 @@ typedef union YYSTYPE
 
 
 /* Line 1685 of yacc.c  */
-#line 113 "y.tab.h"
+#line 111 "y.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

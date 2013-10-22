@@ -148,8 +148,6 @@ private:
     void pushBackImmed(Math3D::Real constVal);
     void pushBackImmed(const QVariant& constVal);
 
-    void cleanup();
-
 
 
 private:

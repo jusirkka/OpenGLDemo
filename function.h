@@ -108,7 +108,7 @@ public:
                   vals[start+1].value<Math3D::Real>(),
                   vals[start+2].value<Math3D::Real>(),
                   vals[start+3].value<Math3D::Real>());
-        qDebug() << "Vec" << v.getArray();
+        qDebug() << "Vec";
 
         mValue.setValue(v);
         return mValue;
@@ -138,7 +138,7 @@ public:
             }
         }
         Matrix4 m(values);
-        qDebug() << "Mat" << m.getArray();
+        qDebug() << "Mat";
 
 
         mValue.setValue(m);

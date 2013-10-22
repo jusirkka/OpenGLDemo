@@ -15,7 +15,8 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     parser.cpp \
     gl_widget.cpp \
-    runner.cpp
+    runner.cpp \
+    teapot.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -27,7 +28,9 @@ HEADERS  += mainwindow.h \
     variable.h \
     gl_widget.h \
     runner.h \
-    grammar.h
+    grammar.h \
+    blob.h \
+    teapot.h
 
 FORMS    += mainwindow.ui
 
@@ -36,7 +39,7 @@ OTHER_FILES += \
     grammar.y
 
 
-DEFINES += YYERROR_VERBOSE
+DEFINES += YYERROR_VERBOSE QT_STATICPLUGIN
 
 jBISONSOURCES = grammar.y
 

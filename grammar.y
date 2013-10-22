@@ -10,6 +10,7 @@ extern "C"
     void yyerror(const char *);
 
     int yywrap(void) {return 1;}
+
 }
 
 
@@ -79,9 +80,9 @@ static const char* explanations[] = {
 static char buffer[256];
 
 #define HANDLE_ERROR(item, errnum) \
-    sprintf(buffer, explanations[errnum], item); \
+    {sprintf(buffer, explanations[errnum], item); \
     yyerror(buffer); \
-    YYERROR;
+    YYERROR;}
 
 const char* opname(int);
 unsigned int operation(int);
@@ -111,20 +112,21 @@ using namespace Demo;
 %type <p_int_list> parameters arglist
 %destructor {delete ($$);} parameters arglist
 
+%type <p_string> text chars
+%destructor {delete($$);} text chars
+
 %type <int_value> rhs simple_rhs cond_rhs cond_rhs_seq guard
 %type <int_value> expression terms factors factor statement
 %type <int_value> rel_op eq_op add_op sign and_op or_op
 %type <int_value> literal paren_or_variable paren_or_variable_comp function_call
 
 
-%type <p_string> text chars
-%destructor {delete ($$);} text chars
 
 %token <int_value> INT
 %token <real_value> FLOAT
 %token <char_value> CHAR
 
-%token <string_value> ID STRING
+%token <string_value> ID
 
 %token VECTOR MATRIX TEXT NATURAL SHARED REAL
 

@@ -4,6 +4,7 @@
 #include "gl_widget.h"
 #include "function.h"
 #include "constant.h"
+#include "blob.h"
 
 #include <QList>
 
@@ -14,18 +15,21 @@ using Math3D::W;
 using Math3D::Vector4;
 using Math3D::Matrix4;
 
-#define ALT(item) case item: qDebug() << #item; break
 
 namespace GL {
 
 class GLProc: public Demo::Function {
 public:
 
-    GLProc(const QString& name, int type, Demo::GLWidget* p):
-        Demo::Function(name, type),
-        mParent(p) {}
+    GLProc(const QString& name, int type, Demo::GLWidget* p)
+        : Demo::Function(name, type),
+        mParent(p)
+    {}
+
+    #define ALT(item) case item: qWarning() << #item; break
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
+
         const QVariant& q = gl_execute(vals, start);
 
         switch (glGetError()) {
@@ -43,19 +47,19 @@ public:
 
     }
 
+    #undef ALT
 
-
-protected:
-
-    virtual const QVariant& gl_execute(const QVector<QVariant>& vals, int start) = 0;
 
 protected:
 
     Demo::GLWidget* mParent;
 
+private:
+
+    virtual const QVariant& gl_execute(const QVector<QVariant>& vals, int start) = 0;
+
 };
 
-#undef ALT
 
 class Enable: public Demo::Function {
 
@@ -280,7 +284,7 @@ public:
         return mValue;
     }
 
-    ~ClearDepth() {}
+    virtual ~ClearDepth() {}
 };
 
 class CreateShader: public GLProc {
@@ -301,7 +305,7 @@ public:
         return mValue;
     }
 
-    ~CreateShader() {}
+    virtual ~CreateShader() {}
 };
 
 class CompileShader: public GLProc {
@@ -311,23 +315,35 @@ public:
     CompileShader(Demo::GLWidget* p): GLProc("compileshader", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
+        argt = Symbol::Text;
+        mArgTypes.append(argt);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int name =  vals[start].value<int>();
+        GLuint name =  vals[start].value<int>();
+        QByteArray bytes = vals[start+1].value<QString>().toLatin1();
+        const char *data = bytes.constData();
+        qDebug() << "glShaderSource" << name;
+        mParent->glShaderSource(name, 1, &data, 0);
         qDebug() << "glCompileShader" << name;
         mParent->glCompileShader(name);
-        int len;
-        mParent->glGetShaderiv(name, GL_INFO_LOG_LENGTH, &len);
-        char info[len];
-        mParent->glGetShaderInfoLog(name, len, &len, info);
-        qDebug() << info;
-
+        int status;
+        mParent->glGetShaderiv(name, GL_COMPILE_STATUS, &status);
+        if (!status) {
+            int len;
+            mParent->glGetShaderiv(name, GL_INFO_LOG_LENGTH, &len);
+            char info[len];
+            mParent->glGetShaderInfoLog(name, len, &len, info);
+            qWarning() << info;
+            char sh_src[1024];
+            mParent->glGetShaderSource(name, 1024, &len, sh_src);
+            qDebug() << QString(sh_src);
+        }
         mValue.setValue(0);
         return mValue;
     }
 
-    ~CompileShader() {}
+    virtual ~CompileShader() {}
 };
 
 class DeleteShader: public GLProc {
@@ -348,33 +364,9 @@ public:
         return mValue;
     }
 
-    ~DeleteShader() {}
+    virtual ~DeleteShader() {}
 };
 
-class ShaderSource: public GLProc {
-
-public:
-
-    ShaderSource(Demo::GLWidget* p): GLProc("shadersource", Symbol::Integer, p) {
-        int t = Symbol::Integer;
-        mArgTypes.append(t);
-        t = Symbol::Text;
-        mArgTypes.append(t);
-    }
-
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int name =  vals[start].value<int>();
-        QString src =  vals[start+1].value<QString>();
-        qDebug() << "glShaderSource" << name;
-        int length = src.length();
-        const char* data = src.toAscii().constData();
-        mParent->glShaderSource(name, 1, &data, &length);
-        mValue.setValue(0);
-        return mValue;
-    }
-
-    ~ShaderSource() {}
-};
 
 class CreateProgram: public GLProc {
 
@@ -390,7 +382,7 @@ public:
         return mValue;
     }
 
-    ~CreateProgram() {}
+    virtual ~CreateProgram() {}
 };
 
 
@@ -413,7 +405,7 @@ public:
         return mValue;
     }
 
-    ~AttachShader() {}
+    virtual ~AttachShader() {}
 };
 
 
@@ -436,7 +428,7 @@ public:
         return mValue;
     }
 
-    ~DetachShader() {}
+    virtual ~DetachShader() {}
 };
 
 
@@ -453,11 +445,16 @@ public:
         int name =  vals[start].value<int>();
         qDebug() << "glLinkProgram" << name;
         mParent->glLinkProgram(name);
+        int len;
+        mParent->glGetProgramiv(name, GL_INFO_LOG_LENGTH, &len);
+        char info[len];
+        mParent->glGetProgramInfoLog(name, len, &len, info);
+        qDebug() << QString(info);
         mValue.setValue(0);
         return mValue;
     }
 
-    ~LinkProgram() {}
+    virtual ~LinkProgram() {}
 };
 
 
@@ -473,12 +470,14 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int name =  vals[start].value<int>();
         qDebug() << "glUseProgram" << name;
-        mParent->glUseProgram(name);
+        // mParent->glUseProgram(name);
+        QGLFunctions glFuncs(QGLContext::currentContext());
+        glFuncs.glUseProgram(name);
         mValue.setValue(0);
         return mValue;
     }
 
-    ~UseProgram() {}
+    virtual ~UseProgram() {}
 };
 
 
@@ -500,7 +499,7 @@ public:
         return mValue;
     }
 
-    ~DeleteProgram() {}
+    virtual ~DeleteProgram() {}
 };
 
 class GetAttribLocation: public GLProc {
@@ -518,13 +517,14 @@ public:
         int prog =  vals[start].value<int>();
         QString name =  vals[start+1].value<QString>();
         qDebug() << "glGetAttribLocation" << prog << name;
-        const char* data = name.toAscii().constData();
+        QByteArray bytes = name.toLatin1();
+        const char* data = bytes.constData();
         int loc = mParent->glGetAttribLocation(prog, data);
         mValue.setValue(loc);
         return mValue;
     }
 
-    ~GetAttribLocation() {}
+    virtual ~GetAttribLocation() {}
 };
 
 
@@ -543,13 +543,14 @@ public:
         int prog =  vals[start].value<int>();
         QString name =  vals[start+1].value<QString>();
         qDebug() << "glGetUniformLocation" << prog << name;
-        const char* data = name.toAscii().constData();
+        QByteArray bytes = name.toLatin1();
+        const char* data = bytes.constData();
         int loc = mParent->glGetUniformLocation(prog, data);
         mValue.setValue(loc);
         return mValue;
     }
 
-    ~GetUniformLocation() {}
+    virtual ~GetUniformLocation() {}
 };
 
 
@@ -573,7 +574,7 @@ public:
         return mValue;
     }
 
-    ~Uniform1F() {}
+    virtual ~Uniform1F() {}
 };
 
 class Uniform4F: public GLProc {
@@ -596,7 +597,7 @@ public:
         return mValue;
     }
 
-    ~Uniform4F() {}
+    virtual ~Uniform4F() {}
 };
 
 
@@ -614,14 +615,190 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int loc =  vals[start].value<int>();
         Matrix4 uni =  vals[start+1].value<Matrix4>();
-        qDebug() << "glUniformMatrix4F" << loc << uni.readArray();
+        qDebug() << "glUniformMatrix4F" << loc;
         mParent->glUniformMatrix4fv(loc, 1, GL_FALSE, uni.readGLFloat());
         mValue.setValue(0);
         return mValue;
     }
 
-    ~UniformMatrix4F() {}
+    virtual ~UniformMatrix4F() {}
 };
+
+class GenBuffer: public GLProc {
+
+public:
+
+    GenBuffer(Demo::GLWidget* p): GLProc("genbuffer", Symbol::Integer, p) {}
+
+    const QVariant& gl_execute(const QVector<QVariant>&, int) {
+        GLuint ret;
+        qDebug() << "glGenBuffers";
+        mParent->glGenBuffers(1, &ret);
+        mParent->resources().append(ret);
+        mValue.setValue(ret);
+        return mValue;
+    }
+
+    virtual ~GenBuffer() {}
+};
+
+class DeleteBuffer: public GLProc {
+
+public:
+
+    DeleteBuffer(Demo::GLWidget* p): GLProc("deletebuffer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "glDeleteBuffers" << name;
+        mParent->glDeleteBuffers(1, &name);
+        mParent->resources().removeOne(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    virtual ~DeleteBuffer() {}
+};
+
+
+class BindBuffer: public GLProc {
+
+public:
+
+    BindBuffer(Demo::GLWidget* p): GLProc("bindbuffer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        GLuint buffer =  vals[start+1].value<int>();
+        qDebug() << "glBindBuffer" << target << buffer;
+        mParent->glBindBuffer(target, buffer);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~BindBuffer() {}
+};
+
+class BufferData: public GLProc {
+
+public:
+
+    BufferData(Demo::GLWidget* p): GLProc("bufferdata", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        const Blob& blob =  mParent->blob(vals[start+1].value<int>());
+        GLuint usage =  vals[start+2].value<int>();
+        qDebug() << "glBufferData" << target << blob.name() << usage;
+        mParent->glBufferData(target, blob.bytelen(target), blob.bytes(target), usage);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~BufferData() {}
+};
+
+class VertexAttribPointer: public GLProc {
+
+public:
+
+    VertexAttribPointer(Demo::GLWidget* p): GLProc("vertexattribpointer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        argt = Symbol::Text;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint index =  vals[start].value<int>();
+        const Blob& blob =  mParent->blob(vals[start+1].value<int>());
+        QString attr =  vals[start+2].value<QString>();
+        qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
+        const BlobSpec& spec = blob.spec(attr);
+        mParent->glVertexAttribPointer(index, spec.size, spec.type, spec.normalized, spec.stride, (const void*) spec.offset);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~VertexAttribPointer() {}
+};
+
+class Draw: public GLProc {
+
+public:
+
+    Draw(Demo::GLWidget* p): GLProc("draw", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        const Blob& blob =  mParent->blob(vals[start].value<int>());
+        GLuint mode =  vals[start+1].value<int>();
+        qDebug() << "Draw" << blob.name() << mode;
+        blob.draw(mode);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~Draw() {}
+};
+
+
+class EnableVertexAttribArray: public GLProc {
+
+public:
+
+    EnableVertexAttribArray(Demo::GLWidget* p): GLProc("enablevertexattribarray", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "glEnableVertexAttribArray" << name;
+        mParent->glEnableVertexAttribArray(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~EnableVertexAttribArray() {}
+};
+
+class DisableVertexAttribArray: public GLProc {
+
+public:
+
+    DisableVertexAttribArray(Demo::GLWidget* p): GLProc("disablevertexattribarray", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "glDisableVertexAttribArray" << name;
+        mParent->glDisableVertexAttribArray(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~DisableVertexAttribArray() {}
+};
+
 
 
 class Functions {
@@ -645,7 +822,6 @@ public:
         contents.append(new CreateShader(p));
         contents.append(new CompileShader(p));
         contents.append(new DeleteShader(p));
-        contents.append(new ShaderSource(p));
         contents.append(new CreateProgram(p));
         contents.append(new AttachShader(p));
         contents.append(new DetachShader(p));
@@ -657,6 +833,14 @@ public:
         contents.append(new Uniform1F(p));
         contents.append(new Uniform4F(p));
         contents.append(new UniformMatrix4F(p));
+        contents.append(new GenBuffer(p));
+        contents.append(new DeleteBuffer(p));
+        contents.append(new BindBuffer(p));
+        contents.append(new BufferData(p));
+        contents.append(new VertexAttribPointer(p));
+        contents.append(new Draw(p));
+        contents.append(new EnableVertexAttribArray(p));
+        contents.append(new DisableVertexAttribArray(p));
     }
 };
 
@@ -693,6 +877,17 @@ public:
         // createshader
         CONST(VERTEX_SHADER);
         CONST(FRAGMENT_SHADER);
+        // bindbuffer
+        CONST(ARRAY_BUFFER);
+        CONST(ELEMENT_ARRAY_BUFFER);
+        // bufferdata
+        CONST(STATIC_DRAW);
+        CONST(STREAM_DRAW);
+        CONST(DYNAMIC_DRAW);
+        // draw
+        CONST(POINTS);
+        CONST(LINES);
+        CONST(TRIANGLES);
     }
 
 
