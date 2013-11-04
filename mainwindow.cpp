@@ -190,8 +190,8 @@ void Demo::MainWindow::on_actionSaveAs_triggered() {
 void Demo::MainWindow::saveDemoAs(const QString& demoFile) {
     foreach(int key, mEditors.keys()) {
         mGroups[key] = mEditors[key]->toPlainText();
-        qDebug() << "save row = " << key;
-        qDebug() << "save text = " << mGroups[key];
+//        qDebug() << "save row = " << key;
+//        qDebug() << "save text = " << mGroups[key];
     }
 
     QByteArray contents;
@@ -254,19 +254,21 @@ void Demo::MainWindow::on_buttonNew_pressed() {
 void Demo::MainWindow::on_buttonEdit_pressed() {
     int row = mUI->commandGroups->currentRow();
     if (row == -1) return;
-    qDebug() << "row = " << row;
-    qDebug() << "text = " << mGroups[row];
+//    qDebug() << "row = " << row;
+//    qDebug() << "text = " << mGroups[row];
     QTextEdit* editor = new QTextEdit();
     editor->setAttribute(Qt::WA_DeleteOnClose);
 
-    connect(editor, SIGNAL(textChanged()), this, SLOT(parse()));
-    connect(editor, SIGNAL(destroyed(QObject*)), this, SLOT(childClosed(QObject*)));
 
     mUI->buttonEdit->setEnabled(false);
 
     mEditors[row] = editor;
 
     editor->setPlainText(mGroups[row]);
+
+    connect(editor, SIGNAL(textChanged()), this, SLOT(parse()));
+    connect(editor, SIGNAL(destroyed(QObject*)), this, SLOT(childClosed(QObject*)));
+
     editor->show();
 }
 
@@ -289,7 +291,7 @@ void Demo::MainWindow::childClosed(QObject* sender) {
     QTextEdit* editor = qobject_cast<QTextEdit*>(sender);
 
 
-    int key = mEditors.key((QTextEdit*)sender);
+    int key = mEditors.key(editor);
     if (!mUI->commandGroups->currentRow() == key) {
         mUI->buttonEdit->setEnabled(true);
     }
@@ -297,8 +299,8 @@ void Demo::MainWindow::childClosed(QObject* sender) {
 
     if (editor) mGroups[key] = editor->toPlainText();
 
-    qDebug() << "key = " << key;
-    qDebug() << "text = " << mGroups[key];
+//    qDebug() << "key = " << key;
+//    qDebug() << "text = " << mGroups[key];
 
 }
 

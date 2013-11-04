@@ -148,5 +148,50 @@ public:
     ~Mat() {}
 };
 
+class Rot: public Function {
+
+public:
+
+    Rot(): Function("rotation", Symbol::Matrix) {
+        int argt = Symbol::Real;
+        mArgTypes.append(argt);
+        argt = Symbol::Vector;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Real angle = vals[start].value<Math3D::Real>() * Math3D::PI / 180;
+        Vector4 axis = vals[start + 1].value<Vector4>();
+        Matrix4 m;
+        m.setRotation(angle, axis);
+        qDebug() << "Rot";
+        mValue.setValue(m);
+        return mValue;
+    }
+
+    ~Rot() {}
+};
+
+class Tr: public Function {
+
+public:
+
+    Tr(): Function("translation", Symbol::Matrix) {
+        int argt = Symbol::Vector;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        Vector4 tr = vals[start].value<Vector4>();
+        Matrix4 m;
+        m.setTranslation(tr);
+        qDebug() << "Tr";
+        mValue.setValue(m);
+        return mValue;
+    }
+
+    ~Tr() {}
+};
+
 } // namespace DEMO
 #endif // DEMO_FUNCTION_H

@@ -50,7 +50,6 @@ bool Demo::Parser::ParseIt(const QString& inp) {
     yy_scan_string(inp.toAscii().data());
     int err = yyparse();
     yylex_destroy();
-    // cleanup after errors
     return !err;
 }
 
@@ -117,11 +116,15 @@ Demo::Parser::Parser()
     // vector and matrix constructors
     addSymbol(new Vecx());
     addSymbol(new Mat());
+    addSymbol(new Rot());
+    addSymbol(new Tr());
 
-    // shared matrix
+    // shared matrices
     addSymbol(new Var::Shared::Matrix("camera"));
+    addSymbol(new Var::Shared::Matrix("projection"));
     // in glwidget
     mSharedCounts["camera"] = 1;
+    mSharedCounts["projection"] = 1;
 
     // constants
     addSymbol(new Demo::Constant("true", 1));

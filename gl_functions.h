@@ -470,9 +470,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int name =  vals[start].value<int>();
         qDebug() << "glUseProgram" << name;
-        // mParent->glUseProgram(name);
-        QGLFunctions glFuncs(QGLContext::currentContext());
-        glFuncs.glUseProgram(name);
+        mParent->glUseProgram(name);
         mValue.setValue(0);
         return mValue;
     }
@@ -634,7 +632,7 @@ public:
         GLuint ret;
         qDebug() << "glGenBuffers";
         mParent->glGenBuffers(1, &ret);
-        mParent->resources().append(ret);
+        mParent->buffers().append(ret);
         mValue.setValue(ret);
         return mValue;
     }
@@ -655,7 +653,7 @@ public:
         GLuint name =  vals[start].value<int>();
         qDebug() << "glDeleteBuffers" << name;
         mParent->glDeleteBuffers(1, &name);
-        mParent->resources().removeOne(name);
+        mParent->buffers().removeOne(name);
         mValue.setValue(0);
         return mValue;
     }

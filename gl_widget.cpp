@@ -2,19 +2,24 @@
 #include "parser.h"
 #include "runner.h"
 #include "gl_functions.h"
+#include "camera.h"
 
 #include <QDebug>
 #include <QMouseEvent>
 #include <QPluginLoader>
 #include <QDir>
 #include <QApplication>
-#include <QMatrix4x4>
+#include <QTimer>
 
+using Math3D::Matrix4;
+using Math3D::Vector4;
+using Math3D::Real;
 
 Demo::GLWidget::GLWidget(QWidget *parent):
     QGLWidget(parent),
     QGLFunctions(),
-    mInitialized(false)
+    mInitialized(false),
+    mDim(500)
 {
     mRunners[InitKey] = 0;
     mRunners[DrawKey] = 0;
@@ -24,15 +29,11 @@ Demo::GLWidget::GLWidget(QWidget *parent):
     GL::Constants constants;
     foreach(Symbol* c, constants.contents) Parser::AddSymbol(c);
 
-    mCamera = dynamic_cast<Variable*>(Parser::Symbols()["camera"])->clone();
+    mCameraVar = dynamic_cast<Variable*>(Parser::Symbols()["camera"])->clone();
+    mProjectionVar = dynamic_cast<Variable*>(Parser::Symbols()["projection"])->clone();
+    mCamera = new Camera(Vector4(0, 1.25, 10));
+    mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
 
-    QMatrix4x4 m;
-    m.ortho(-4.0f, +4.0f, -4.0f, +4.0f, 0.1f, 100.0f);
-    m.translate(0.0f, -0.5f, -7.5f);
-    m.rotate(25, 1, 0, 0);
-
-    Math3D::Matrix4 c(m.data());
-    mCamera->setValue(QVariant::fromValue(c));
 
     // retrieve blobs
     foreach (QObject *plugin, QPluginLoader::staticInstances()) {
@@ -47,6 +48,8 @@ Demo::GLWidget::GLWidget(QWidget *parent):
         addBlob(loader.instance());
     }
 
+    mTimer = new QTimer(this);
+    connect(mTimer, SIGNAL(timeout()), this, SLOT(spin()));
 }
 
 
@@ -66,10 +69,12 @@ Demo::GLWidget::~GLWidget() {
     foreach (Runner* r, mRunners.values()) {
         delete r;
     }
+    delete mCamera;
+    delete mCameraVar;
 }
 
 
-void Demo::GLWidget::initializeGL () {
+void Demo::GLWidget::initializeGL() {
     initializeGLFunctions();
 }
 
@@ -93,19 +98,33 @@ void Demo::GLWidget::paintGL()
 
 
 void Demo::GLWidget::resizeGL(int w, int h) {
+    mDim = w; if (h > w) mDim = h;
     glViewport(0, 0, w, h);
+    Real a = Real(w) / Real(h);
+    Real ct = 1 / tan(Math3D::PI / 180 * 45 / 2);
+    Real n = 1;
+    Real f = 30;
+    mProj.setIdentity();
+    // column first
+    mProj(0)[0] = ct / a;
+    mProj(1)[1] = ct;
+    mProj(2)[2] = (n + f) / (n - f);
+    mProj(3)[3] = 0;
+    mProj(3)[2] = 2*n*f / (n - f);
+    mProj(2)[3] = -1;
+    mProjectionVar->setValue(QVariant::fromValue(mProj));
     paintGL();
 }
 
 
-void Demo::GLWidget::mousePressEvent(QMouseEvent *event) {
-//    mDx = mDy = 0;
-//    mLastPos = event->pos();
-//    mGravity = false;
+void Demo::GLWidget::mousePressEvent(QMouseEvent* event) {
+    mDx = mDy = 0;
+    mLastPos = event->pos();
+    mTimer->stop();
 }
 
-void Demo::GLWidget::mouseReleaseEvent(QMouseEvent *event) {
-//    mGravity = (mDx != 0) || (mDy != 0);
+void Demo::GLWidget::mouseReleaseEvent(QMouseEvent*) {
+    if ((mDx != 0) || (mDy != 0)) mTimer->start(40);
 }
 
 static float gravity(int dx) {
@@ -119,16 +138,26 @@ static float gravity(int dx) {
     return 0;
 }
 
-void Demo::GLWidget::mouseMoveEvent(QMouseEvent *event) {
+void Demo::GLWidget::mouseMoveEvent(QMouseEvent* event) {
 
-//    if (event->buttons() & Qt::LeftButton) {
-//        mDx = gravity(event->x() - mLastPos.x());
-//        mDy = gravity(event->y() - mLastPos.y());
-//        qDebug() << mDx << mDy;
-//    }
-//    mLastPos = event->pos();
+    if (event->buttons() & Qt::LeftButton) {
+        mDx = event->x() - mLastPos.x();
+        mDy = event->y() - mLastPos.y();
+        spin();
+        mDx = gravity(mDx);
+        mDy = gravity(mDy);
+    }
+    mLastPos = event->pos();
 }
 
+
+void Demo::GLWidget::spin() {
+    float theta = sqrt(mDx*mDx+mDy*mDy) / mDim * 4 * Math3D::PI;
+    float phi = atan2f(mDy, mDx);
+    mCamera->rotate(phi, theta);
+    mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    updateGL();
+}
 
 
 void Demo::GLWidget::parse(int key, const QString& commands) {
@@ -178,19 +207,23 @@ void Demo::GLWidget::defaults() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    ResourceList remaining;
+    glUseProgram(0);
     foreach (int name, mResources) {
         if (glIsShader(name)) {
+            qDebug() << "deleting shader" << name;
             glDeleteShader(name);
         } else if (glIsProgram(name)) {
+            qDebug() << "deleting program" << name;
            glDeleteProgram(name);
-        } else {
-            remaining.append(name);
         }
     }
 
-    glDeleteTextures(remaining.size(), remaining.toVector().constData());
-    glDeleteBuffers(remaining.size(), remaining.toVector().constData());
+    QVector<GLuint> tmp = mBuffers.toVector();
+    qDebug() << "deleting buffers" << mBuffers;
+    glDeleteBuffers(tmp.size(), tmp.constData());
+    tmp = mTextures.toVector();
+    qDebug() << "deleting textures" << mTextures;
+    glDeleteTextures(tmp.size(), tmp.constData());
 
     switch (glGetError()) {
         ALT(GL_INVALID_ENUM);

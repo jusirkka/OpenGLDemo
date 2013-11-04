@@ -16,7 +16,8 @@ SOURCES += main.cpp\
     parser.cpp \
     gl_widget.cpp \
     runner.cpp \
-    teapot.cpp
+    teapot.cpp \
+    camera.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -30,7 +31,8 @@ HEADERS  += mainwindow.h \
     runner.h \
     grammar.h \
     blob.h \
-    teapot.h
+    teapot.h \
+    camera.h
 
 FORMS    += mainwindow.ui
 
