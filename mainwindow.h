@@ -23,7 +23,7 @@
 
 #include <QMainWindow>
 #include <QStringList>
-#include <QTextEdit>
+#include <QDir>
 
 namespace Ui {
 class MainWindow;
@@ -32,85 +32,93 @@ class MainWindow;
 namespace Demo {
 
 class GLWidget;
+class Project;
 
 class MainWindow: public QMainWindow {
 
-        Q_OBJECT
+    Q_OBJECT
 
-    public:
+public:
 
-        MainWindow(const QString& demoFile);
-        virtual ~MainWindow();
+    MainWindow(const QString& project);
+    virtual ~MainWindow();
 
-    protected:
+protected:
 
-        virtual void closeEvent(QCloseEvent *event);
+    virtual void closeEvent(QCloseEvent *event);
 
-    private slots:
+private slots:
 
-        //! New command group.
-        void on_actionNew_triggered();
+    //! Show a file dialog to select new project dir.
+    void on_actionNewProject_triggered();
 
-        //! Show a file dialog to open a demo file.
-        void on_actionOpen_triggered();
+    //! Show a file dialog to open a project file.
+    void on_actionOpenProject_triggered();
 
-        //! Save the demo.
-        void on_actionSave_triggered();
+    //! save the project.
+    void on_actionSaveAll_triggered();
 
-        //! Show a file dialog to save a demo to a new file.
-        void on_actionSaveAs_triggered();
 
-        //! As it says.
-        void on_actionQuit_triggered();
+    //! New command group.
+    void on_actionNew_triggered();
 
-        //! About $APP
-        void on_actionAbout_triggered();
+    //! Show a file dialog to open a group file.
+    void on_actionOpen_triggered();
 
-        //! About Qt
-        void on_actionAboutQt_triggered();
+    //! Save the group.
+    void on_actionSave_triggered();
 
-        //! As it says.
-        void on_actionCut_triggered();
-        void on_actionCopy_triggered();
-        void on_actionPaste_triggered();
+    //! Show a file dialog to save a group to a new file.
+    void on_actionSaveAs_triggered();
 
-        void on_buttonNew_pressed();
-        void on_buttonEdit_pressed();
-        void on_buttonDelete_pressed();
+    //! As it says.
+    void on_actionDelete_triggered();
 
-        void on_commandGroups_currentRowChanged(int);
+    //! As it says.
+    void on_actionRename_triggered();
 
-        void parse();
-        void childClosed(QObject*);
+    //! As it says.
+    void on_actionEdit_triggered();
+
+    //! As it says.
+    void on_actionQuit_triggered();
+
+    //! About $APP
+    void on_actionAbout_triggered();
+
+    //! About Qt
+    void on_actionAboutQt_triggered();
+
+    void on_editorsTabs_tabCloseRequested(int index);
+
+    void selectionChanged();
+    void dataChanged();
+
+    void parse();
 
 private:
 
-        //! The actual method to write the scene to a file.
-        void saveDemoAs(const QString& demoFile);
 
-        //! Test if there are unsaved edits before clearing a scene.
-        bool maybeSave();
+    //! Test if there are unsaved edits before clearing a scene.
+    bool maybeSave();
 
-        //! Open and load a saved demo.
-        void openDemo(const QString& demoFile);
+    //! Read saved state
+    void readSettings();
 
-        //! Read saved state
-        void readSettings();
+    //! Save current state
+    void writeSettings();
 
-        //! Save current state
-        void writeSettings();
+    void dataRestored();
 
+    void openProject(const QString& data, bool isDir);
 
-    private:
+private:
 
-        QString mDemoFile;
-        QString mLastDir;
-        Ui::MainWindow *mUI;
-        QStringList mGroups;
-        QStringList mNames;
-        QMap<int, QTextEdit*> mEditors;
-        GLWidget* mGLWidget;
-        bool mEdited;
+    QDir mLastDir;
+    Ui::MainWindow *mUI;
+    GLWidget* mGLWidget;
+    Project* mProject;
+    int mSelectedIndex;
 };
 
 }

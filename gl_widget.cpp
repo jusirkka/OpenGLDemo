@@ -81,18 +81,18 @@ void Demo::GLWidget::initializeGL() {
 void Demo::GLWidget::paintGL()
 {
     qDebug() << "Entering paintGL";
-    foreach(int key, mRunners.keys()) {
-        Runner* runner = mRunners[key];
-        if (!runner) continue;
 
-        if (key == InitKey) {
-            if (mInitialized) continue;
-            defaults();
-            mInitialized = runner->evaluate();
-        } else {
-            runner->evaluate();
-        }
+    if (mRunners[InitKey] && !mInitialized) {
+        defaults();
+        mInitialized = mRunners[InitKey]->evaluate();
     }
+
+    if (mRunners[DrawKey]) {
+        mRunners[DrawKey]->evaluate();
+    } else {
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
     qDebug() << "Leaving paintGL";
 }
 
