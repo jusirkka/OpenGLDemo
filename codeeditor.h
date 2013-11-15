@@ -44,34 +44,60 @@
 #include <QPlainTextEdit>
 #include <QObject>
 
+
 class QPaintEvent;
 class QResizeEvent;
 class QSize;
 class QWidget;
+class QTimer;
 
 class LineNumberArea;
 
+class Highlight;
+
+namespace Demo {
+    class Runner;
+    class Project;
+}
 
 class CodeEditor : public QPlainTextEdit
 {
     Q_OBJECT
 
 public:
-    CodeEditor(QWidget *parent = 0);
+    CodeEditor(Demo::Project* owner);
 
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
+
+    bool event(QEvent *e);
+
+    Demo::Runner* runner() {return mRunner;}
 
 protected:
     void resizeEvent(QResizeEvent *event);
 
 private slots:
+
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &, int);
 
+    void parse();
+
+signals:
+
+    void runnerReady();
+
+
 private:
+
     QWidget *lineNumberArea;
+    QTimer* mParseDelay;
+    Demo::Runner* mRunner;
+    QString mError;
+    int mErrorPos;
+    Highlight* mHighlight;
 };
 
 

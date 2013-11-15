@@ -16,6 +16,7 @@ namespace Demo {
 
 class Variable;
 class Runner;
+class Project;
 
 class GLWidget : public QGLWidget, public QGLFunctions {
 
@@ -34,13 +35,15 @@ public:
     ResourceList& buffers() {return mBuffers;}
     ResourceList& textures() {return mTextures;}
     const GL::Blob& blob(int index) const {return *mBlobs[index];}
+    void setProject(Project* p);
 
     virtual ~GLWidget();
 
 
 public slots:
 
-    void parse(int key, const QString&);
+    void initChanged();
+    void drawChanged();
 
 protected:
 
@@ -54,11 +57,12 @@ protected:
 private:
 
 
-
-    typedef QMap<int, Runner*> RunnerMap;
     typedef QList<GL::Blob*> BlobList;
 
-    enum {InitKey, DrawKey};
+signals:
+
+    void init();
+    void draw();
 
 private:
 
@@ -69,9 +73,9 @@ private slots:
 
     void spin();
 
+
 private:
 
-    RunnerMap mRunners;
     bool mInitialized;
     ResourceList mResources;
     ResourceList mBuffers;
@@ -85,6 +89,9 @@ private:
     QPoint mLastPos;
     bool mGravity;
     QTimer* mTimer;
+    Project* mProject;
+    Project* mDefaultProject;
+
 
 };
 

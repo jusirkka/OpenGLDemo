@@ -3,6 +3,7 @@
 #include "runner.h"
 #include "gl_functions.h"
 #include "camera.h"
+#include "project.h"
 
 #include <QDebug>
 #include <QMouseEvent>
@@ -21,9 +22,6 @@ Demo::GLWidget::GLWidget(QWidget *parent):
     mInitialized(false),
     mDim(500)
 {
-    mRunners[InitKey] = 0;
-    mRunners[DrawKey] = 0;
-
     GL::Functions funcs(this);
     foreach(Symbol* func, funcs.contents) Parser::AddSymbol(func);
     GL::Constants constants;
@@ -66,9 +64,6 @@ void Demo::GLWidget::addBlob(QObject* plugin) {
 }
 
 Demo::GLWidget::~GLWidget() {
-    foreach (Runner* r, mRunners.values()) {
-        delete r;
-    }
     delete mCamera;
     delete mCameraVar;
 }
@@ -76,26 +71,24 @@ Demo::GLWidget::~GLWidget() {
 
 void Demo::GLWidget::initializeGL() {
     initializeGLFunctions();
+    defaults();
+    emit init();
 }
 
 void Demo::GLWidget::paintGL()
 {
-    qDebug() << "Entering paintGL";
-
-    if (mRunners[InitKey] && !mInitialized) {
-        defaults();
-        mInitialized = mRunners[InitKey]->evaluate();
-    }
-
-    if (mRunners[DrawKey]) {
-        mRunners[DrawKey]->evaluate();
-    } else {
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-
-    qDebug() << "Leaving paintGL";
+    emit draw();
 }
 
+void Demo::GLWidget::initChanged() {
+    makeCurrent();
+    initializeGL();
+    updateGL();
+}
+
+void Demo::GLWidget::drawChanged() {
+    updateGL();
+}
 
 void Demo::GLWidget::resizeGL(int w, int h) {
     mDim = w; if (h > w) mDim = h;
@@ -160,22 +153,6 @@ void Demo::GLWidget::spin() {
 }
 
 
-void Demo::GLWidget::parse(int key, const QString& commands) {
-//    qDebug() << "GLWidget::parse";
-//    qDebug() << commands;
-
-    if (key == InitKey) {
-        mInitialized = false;
-    }
-
-    delete mRunners[key];
-    mRunners[key] = 0;
-
-    if (Parser::ParseIt(commands)) {
-        mRunners[key] = Parser::CreateRunner();
-        updateGL();
-    }
-}
 
 #define ALT(item) case item: qDebug() << #item; break
 

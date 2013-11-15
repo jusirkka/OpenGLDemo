@@ -39,6 +39,32 @@ namespace Demo {
 class GLWidget;
 class Runner;
 
+
+
+class ParseError {
+
+public:
+    ParseError(const QString& msg, int row, int col, int pos)
+        :emsg(msg),
+          erow(row),
+          ecol(col),
+          epos(pos)
+    {}
+
+    const QString msg() const {return emsg;}
+    int row() const {return erow;}
+    int col() const {return ecol;}
+    int pos() const {return epos;}
+
+private:
+
+    QString emsg;
+    int erow;
+    int ecol;
+    int epos;
+
+};
+
 class Parser: public QObject {
 
     Q_OBJECT
@@ -80,7 +106,7 @@ public slots:
 public:
 
     // GL interface
-    static bool ParseIt(const QString&);
+    static void ParseIt(const QString&);
     static Runner* CreateRunner();
 
     // grammar interface

@@ -39,12 +39,29 @@
  ****************************************************************************/
 
 #include <QtGui>
+#include <QTimer>
 
 #include "codeeditor.h"
+#include "parser.h"
+#include "runner.h"
+#include "project.h"
+#include "highlight.h"
+
+using Demo::Parser;
+using Demo::ParseError;
+using Demo::Runner;
+using Demo::Project;
 
 
-CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
+CodeEditor::CodeEditor(Project* owner)
+    :QPlainTextEdit(),
+      mParseDelay(new QTimer(this)),
+      mRunner(0),
+      mErrorPos(-1)
 {
+    connect(this, SIGNAL(runnerReady()), owner, SLOT(runnerReady()));
+    connect(this->document(), SIGNAL(modificationChanged(bool)), owner, SLOT(groupModified(bool)));
+
     lineNumberArea = new LineNumberArea(this);
 
     connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
@@ -53,8 +70,31 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
+
+    mParseDelay->setInterval(1000);
+    connect(this, SIGNAL(textChanged()), mParseDelay, SLOT(start()));
+    connect(mParseDelay, SIGNAL(timeout()), this, SLOT(parse()));
+
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setLineWrapMode(QPlainTextEdit::NoWrap);
+
+    mHighlight = new Highlight(document());
 }
 
+void CodeEditor::parse() {
+    mParseDelay->stop();
+    try {
+        Parser::ParseIt(toPlainText());
+        delete mRunner;
+        mRunner = Parser::CreateRunner();
+        mErrorPos = -1;
+        emit runnerReady();
+    } catch (ParseError& e) {
+        mError = e.msg();
+        mErrorPos = e.pos();
+    }
+    highlightCurrentLine();
+}
 
 
 int CodeEditor::lineNumberAreaWidth()
@@ -66,7 +106,7 @@ int CodeEditor::lineNumberAreaWidth()
         ++digits;
     }
 
-    int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
+    int space = 4 + fontMetrics().width(QLatin1Char('9')) * digits;
 
     return space;
 }
@@ -110,7 +150,7 @@ void CodeEditor::highlightCurrentLine()
     if (!isReadOnly()) {
         QTextEdit::ExtraSelection selection;
 
-        QColor lineColor = QColor(Qt::yellow).lighter(160);
+        QColor lineColor = QColor(Qt::blue).lighter(175);
 
         selection.format.setBackground(lineColor);
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
@@ -118,11 +158,47 @@ void CodeEditor::highlightCurrentLine()
         selection.cursor.clearSelection();
         extraSelections.append(selection);
     }
+    if (mErrorPos >= 0) {
+        QTextEdit::ExtraSelection err;
+        err.cursor = QTextCursor(document());
+        err.cursor.movePosition(QTextCursor::End);
+        int endpos = err.cursor.position();
+        if (mErrorPos <= endpos) {
+            err.cursor.setPosition(mErrorPos, QTextCursor::MoveAnchor);
+            err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+            // err.cursor.select(QTextCursor::WordUnderCursor);
+            // qDebug() << "high" << err.cursor.anchor();
+            // qDebug() << "high" << err.cursor.position();
+
+            QColor under = QColor(Qt::red).darker(175);
+
+            err.format.setUnderlineColor(under);
+            err.format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+            err.format.setToolTip(mError);
+            extraSelections.append(err);
+        }
+    }
 
     setExtraSelections(extraSelections);
 }
 
+bool CodeEditor::event(QEvent* ev) {
+    if (ev->type() == QEvent::ToolTip) {
+        QHelpEvent* helpEvent = static_cast <QHelpEvent*>(ev);
+        QTextCursor cursor = cursorForPosition(helpEvent->pos());
+        cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+        cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+        foreach(QTextEdit::ExtraSelection s, extraSelections()) {
+            int pos = s.cursor.position();
+            if (pos <= cursor.selectionEnd() && pos >= cursor.selectionStart()) {
+                QToolTip::showText(helpEvent->globalPos(), s.format.toolTip());
+            }
+        }
+        return true;
+    }
 
+    return QPlainTextEdit::event(ev);
+}
 
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 {

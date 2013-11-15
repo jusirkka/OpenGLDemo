@@ -8,6 +8,8 @@
 
 namespace Demo {
 
+class GLWidget;
+
 class BadProject {
 
 public:
@@ -21,29 +23,31 @@ private:
 
 
 
-
 class Project : public QAbstractListModel
 {
     Q_OBJECT
 
 public:
 
-    static const int NameRole = Qt::UserRole + 1;
-    static const int FileRole = Qt::UserRole + 2;
-    static const int GroupRole = Qt::UserRole + 3;
-    static const int EditorRole = Qt::UserRole + 4;
+    static const int FileRole = Qt::UserRole;
+    static const int GroupRole = Qt::UserRole + 1;
+    static const int EditorRole = Qt::UserRole + 2;
 
 public:
     // create new project
-    Project(const QDir& pdir, QObject *parent = 0);
+    Project(const QDir& pdir, GLWidget* target);
     // parse existing project
-    Project(const QString& fullpath, QObject *parent = 0);
+    Project(const QString& fullpath, GLWidget* target);
 
     const QDir& directory() const {return mProjectDir;}
     const QString& projectFile() const {return mProjectIni;}
     void setProjectFile(const QString& fname);
+    bool modified() const {return mModified;}
 
     void saveProject();
+
+    QString initGroup() const;
+    QString drawGroup() const;
 
     //! Reimplemented from QAbstractItemModel
     QVariant headerData(int section, Qt::Orientation, int role = Qt::DisplayRole) const;
@@ -64,11 +68,21 @@ public:
 
     bool appendRow(const QString& name, const QString& file, const QString& group);
 
+    virtual ~Project();
+
 public slots:
+
+    void runnerReady();
+    void groupModified(bool);
+    void setInitGroup(QString);
+    void setDrawGroup(QString);
 
 signals:
 
-    private:
+    void initChanged();
+    void drawChanged();
+
+private:
 
     typedef QList<CodeEditor*> EditorList;
 
@@ -79,6 +93,10 @@ private:
     QStringList mNames;
     QStringList mFiles;
     EditorList mEditors;
+    CodeEditor* mInit;
+    CodeEditor* mDraw;
+    GLWidget* mTarget;
+    bool mModified;
 };
 
 }

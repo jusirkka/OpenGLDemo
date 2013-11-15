@@ -77,7 +77,7 @@ static const char* explanations[] = {
     "expected arithmetic type in %s expression"
 };
 
-static char buffer[256];
+char buffer[256];
 
 #define HANDLE_ERROR(item, errnum) \
     {sprintf(buffer, explanations[errnum], item); \
@@ -149,17 +149,17 @@ input:
 elements:
     element
     |
-    elements ';' element
+    elements element
     ;
 
 element:
-    /* empty */
+    ';'
     |
-    declaration
+    declaration ';'
     |
-    assignment
+    assignment ';'
     |
-    statement
+    statement ';'
     ;
 
 declaration:

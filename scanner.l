@@ -1,16 +1,18 @@
 %{
 #include <stdlib.h>
 #include <ctype.h>
+
+#include "scanner_types.h"
 #include "grammar.h"
 
 #define YY_USER_ACTION  \
-    yylloc.first_column = yylloc.last_column; yylloc.last_column += yyleng;
+    yylloc.col = yylloc.prev_col; yylloc.prev_col += yyleng; yylloc.pos = yylloc.prev_pos; yylloc.prev_pos += yyleng;
 
 #define YY_USER_INIT  \
-    yylloc.first_column = yylloc.last_column = 0; yylloc.first_line = 1;
+    yylloc.prev_col = 0; yylloc.row = 0; yylloc.prev_pos = 0;
 
 #define my_init_line \
-    yylloc.first_line++; yylloc.last_column = yylloc.first_column = 0
+    yylloc.row++; yylloc.prev_col = 0;
 
 %}
 
@@ -99,10 +101,13 @@ shared          Shared
 
 %%
 
+char parser_error_buffer[256];
+
 void yyerror(const char *str) {
-    fprintf(stderr,"error at line %d, column %d: %s\n",
+    strcpy(parser_error_buffer, str);
+/*    fprintf(stderr,"error at line %d, column %d: %s\n",
             yylloc.first_line,
             yylloc.first_column,
-            str);
+            str);*/
 }
 

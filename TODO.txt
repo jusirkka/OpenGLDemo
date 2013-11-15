@@ -1,0 +1,8 @@
+- 'include <other file>' statement
+- run time / syntax error indicator on left column
+- plugin help
+- cursor initially at top
+- camera zoom + pan
+- texture support
+- rest of the opengl es2 statements
+- undo/redo

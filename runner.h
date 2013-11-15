@@ -25,9 +25,12 @@ public:
        const Parser::FunctionList& funcs,
        int stackSize);
 
-    bool evaluate();
 
     ~Runner();
+
+public slots:
+
+    void evaluate();
 
 private:
 

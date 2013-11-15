@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     teapot.cpp \
     camera.cpp \
     project.cpp \
-    codeeditor.cpp
+    codeeditor.cpp \
+    highlight.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -31,46 +32,55 @@ HEADERS  += mainwindow.h \
     variable.h \
     gl_widget.h \
     runner.h \
-    grammar.h \
     blob.h \
     teapot.h \
     camera.h \
     project.h \
-    codeeditor.h
+    codeeditor.h \
+    highlight.h \
+    scanner_types.h
 
 FORMS    += mainwindow.ui
 
 OTHER_FILES += \
     scanner.l \
-    grammar.y
+    grammar.y \
+    TODO.txt
 
 
 DEFINES += YYERROR_VERBOSE QT_STATICPLUGIN
 
-jBISONSOURCES = grammar.y
+MY_YACC_SOURCES = grammar.y
 
 
-jbison.commands = yacc -t -v ${QMAKE_FILE_IN} && mv y.tab.c ${QMAKE_FILE_BASE}.cpp
-jbison.input = jBISONSOURCES
-jbison.output = ${QMAKE_FILE_BASE}.cpp
-jbison.variable_out = SOURCES
+my_yacc_source.commands = yacc -t ${QMAKE_FILE_IN} && mv y.tab.c ${QMAKE_FILE_BASE}.cpp
+my_yacc_source.input = MY_YACC_SOURCES
+my_yacc_source.output = ${QMAKE_FILE_BASE}.cpp
+my_yacc_source.variable_out = SOURCES
 
-QMAKE_EXTRA_COMPILERS += jbison
+my_yacc_header.commands = yacc -t -d ${QMAKE_FILE_IN} && rm y.tab.c && mv y.tab.h ${QMAKE_FILE_BASE}.h
+my_yacc_header.input = MY_YACC_SOURCES
+my_yacc_header.output = ${QMAKE_FILE_BASE}.h
+my_yacc_header.variable_out = HEADERS
 
-jLEXSOURCES = scanner.l
+QMAKE_EXTRA_COMPILERS += my_yacc_source
+QMAKE_EXTRA_COMPILERS += my_yacc_header
 
-jlexsource.input = jLEXSOURCES
-jlexsource.output = ${QMAKE_FILE_BASE}.c
-jlexsource.commands = lex -t ${QMAKE_FILE_IN} > ${QMAKE_FILE_BASE}.c
-jlexsource.variable_out = SOURCES
-jlexsource.CONFIG += target_predeps
 
-jlexheader.input = jLEXSOURCES
-jlexheader.output = ${QMAKE_FILE_BASE}.h
-jlexheader.commands = lex -t ${QMAKE_FILE_IN} > /dev/null
-jlexheader.variable_out = HEADERS
-jlexheader.CONFIG += target_predeps
+MY_LEX_SOURCES = scanner.l
 
-QMAKE_EXTRA_COMPILERS += jlexheader
-QMAKE_EXTRA_COMPILERS += jlexsource
+my_lex_source.commands = lex -t ${QMAKE_FILE_IN} > ${QMAKE_FILE_BASE}.c && rm ${QMAKE_FILE_BASE}.h
+my_lex_source.input = MY_LEX_SOURCES
+my_lex_source.output = ${QMAKE_FILE_BASE}.c
+my_lex_source.variable_out = SOURCES
+my_lex_source.CONFIG += target_predeps
+
+my_lex_header.commands = lex -t ${QMAKE_FILE_IN} > /dev/null
+my_lex_header.input = MY_LEX_SOURCES
+my_lex_header.output = ${QMAKE_FILE_BASE}.h
+my_lex_header.variable_out = HEADERS
+my_lex_header.CONFIG += target_predeps
+
+QMAKE_EXTRA_COMPILERS += my_lex_source
+QMAKE_EXTRA_COMPILERS += my_lex_header
 

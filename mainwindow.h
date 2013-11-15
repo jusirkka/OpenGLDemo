@@ -93,14 +93,15 @@ private slots:
 
     void selectionChanged();
     void dataChanged();
-
-    void parse();
+    void setAllModified(bool = true);
 
 private:
 
 
-    //! Test if there are unsaved edits before clearing a scene.
+    //! Test if there are unsaved edits before clearing the project.
+    bool maybeSaveProject();
     bool maybeSave();
+    void saveGroup(const QString& fname);
 
     //! Read saved state
     void readSettings();
@@ -108,7 +109,7 @@ private:
     //! Save current state
     void writeSettings();
 
-    void dataRestored();
+    void setupCombos();
 
     void openProject(const QString& data, bool isDir);
 

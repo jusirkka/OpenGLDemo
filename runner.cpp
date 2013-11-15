@@ -28,18 +28,17 @@ Demo::Runner::Runner(
 }
 
 
-bool Demo::Runner::evaluate() {
+void Demo::Runner::evaluate() {
     foreach (Assignment ass, mAssignments) {
         Variable* v = mVariables[mIndex[ass.var]];
         v->setValue(evalCode(ass.code, ass.immed));
         if (mEvalError != "NoError") {
             qDebug() << mEvalError << "while evaluating" << v->name();
             mEvalError = "NoError";
-            return false;
+            return;
         }
         qDebug() << v->name() << "=" << v->value();
     }
-    return true;
 }
 
 

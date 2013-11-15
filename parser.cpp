@@ -26,9 +26,12 @@ extern "C"
 {
 
 #include "scanner.h"
+#include "scanner_types.h"
 
 int yyparse(void);
 extern int yydebug;
+
+extern char parser_error_buffer[256];
 
 }
 
@@ -42,15 +45,16 @@ using Math3D::Matrix4;
 
 
 
+
 // public GL interface
 
-bool Demo::Parser::ParseIt(const QString& inp) {
+void Demo::Parser::ParseIt(const QString& inp) {
     instance().init();
     yydebug = 0;
     yy_scan_string(inp.toAscii().data());
     int err = yyparse();
     yylex_destroy();
-    return !err;
+    if (err) throw ParseError(QString(parser_error_buffer), yylloc.row, yylloc.col, yylloc.pos);
 }
 
 Demo::Runner* Demo::Parser::CreateRunner() {
