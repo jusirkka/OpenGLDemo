@@ -20,6 +20,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "newdialog.h"
 #include "gl_widget.h"
 #include "project.h"
 #include "codeeditor.h"
@@ -33,6 +34,7 @@
 #include <QSettings>
 #include <QUndoStack>
 #include <QApplication>
+#include <QImageReader>
 
 
 
@@ -50,11 +52,22 @@ Demo::MainWindow::MainWindow(const QString& project):
 
     mUI->centralwidget->hide();
 
+    mUI->commandGroups->addAction(mUI->actionOpen);
     mUI->commandGroups->addAction(mUI->actionSave);
     mUI->commandGroups->addAction(mUI->actionSaveAs);
     mUI->commandGroups->addAction(mUI->actionRename);
     mUI->commandGroups->addAction(mUI->actionEdit);
     mUI->commandGroups->addAction(mUI->actionDelete);
+
+    mUI->models->addAction(mUI->actionOpen);
+    mUI->models->addAction(mUI->actionRename);
+    mUI->models->addAction(mUI->actionDelete);
+    mUI->models->addAction(mUI->actionReload);
+
+    mUI->textures->addAction(mUI->actionOpen);
+    mUI->textures->addAction(mUI->actionRename);
+    mUI->textures->addAction(mUI->actionDelete);
+    mUI->textures->addAction(mUI->actionReload);
 
     openProject(project, false);
 
@@ -95,11 +108,14 @@ void Demo::MainWindow::on_actionOpenProject_triggered() {
 }
 
 void Demo::MainWindow::on_actionSaveAll_triggered() {
-    int gcount = mProject->rowCount(QModelIndex());
-    int tmp = mSelectedIndex;
+    int gcount = mProject->rowCount(mProject->groupParent());
+    QModelIndex tmp = mSelectedIndex;
     for (int i = 0; i < gcount; ++i) {
-        mSelectedIndex = i;
-        on_actionSave_triggered();
+        mSelectedIndex = mProject->index(i, 0, mProject->groupParent());
+        QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+        CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
+        if (editor->document()->isModified())
+            on_actionSave_triggered();
     }
     mSelectedIndex = tmp;
 
@@ -126,16 +142,35 @@ void Demo::MainWindow::on_actionSaveAll_triggered() {
 
 
 void Demo::MainWindow::on_actionNew_triggered() {
-    mProject->appendRow("unnamed", "", "// new group of commands\n");
+    NewDialog dlg(mProject);
+    if (dlg.exec() == QDialog::Accepted) {
+        mProject->appendRow(dlg.name(), "", dlg.listParent());
+    }
 }
 
 void Demo::MainWindow::on_actionOpen_triggered() {
+    QString title;
+    QString filter;
+    if (mSelectedIndex.parent() == mProject->groupParent()) {
+        title = "Open command file and bind to group";
+        filter = "OpenGL command files ( *.ogl)";
+    } else if (mSelectedIndex.parent() == mProject->modelParent()) {
+        title = "Open model file to create vertex data";
+        filter = "Model files ( *.obj)";
+    } else if (mSelectedIndex.parent() == mProject->textureParent()) {
+        title = "Open image file to create texture data";
+        filter = "Image files (";
+        foreach(QByteArray b, QImageReader::supportedImageFormats()) {
+            filter += QString(" *.%1").arg(QString(b));
+        }
+        filter += ")";
+    }
     QString fileName = QFileDialog::getOpenFileName(
-        this,
-        "Open existing group file",
-        mProject->directory().absolutePath(),
-        "OpenGL files (*.ogl)"
-    );
+                this,
+                title,
+                mProject->directory().absolutePath(),
+                filter
+                );
     if (fileName.isEmpty()) return;
 
     QFileInfo info(fileName);
@@ -144,17 +179,13 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     // suggest to save the current group before deleting
     if(!maybeSave()) return;
 
-    mProject->setData(mProject->index(mSelectedIndex), QVariant::fromValue(fileName), Project::FileRole);
-    QFile gfile(fileName);
-    gfile.open(QFile::ReadOnly);
-    mProject->setData(mProject->index(mSelectedIndex), QVariant::fromValue(QString(gfile.readAll())), Project::GroupRole);
-    gfile.close();
+    mProject->setData(mSelectedIndex, QVariant::fromValue(fileName), Project::FileRole);
 }
 
 
 void Demo::MainWindow::on_actionSave_triggered() {
 
-    QString fname = mProject->data(mProject->index(mSelectedIndex), Project::FileRole).toString();
+    QString fname = mProject->data(mSelectedIndex, Project::FileNameRole).toString();
 
     QFileInfo info(fname);
     if (info.isRelative()) {
@@ -170,16 +201,16 @@ void Demo::MainWindow::on_actionSave_triggered() {
 }
 
 void Demo::MainWindow::on_actionSaveAs_triggered() {
-    QString name = mProject->data(mProject->index(mSelectedIndex)).toString();
+    QString name = mProject->data(mSelectedIndex).toString();
 
     QString fname = QFileDialog::getSaveFileName(
         this,
-        QString("Select file to save the group %1 to").arg(name),
+        QString("Select file to save the command group %1 to").arg(name),
         mProject->directory().absolutePath(),
-        "OpenGL files (*.ogl)"
+        "OpenGL command files (*.ogl)"
     );
     if (fname.isEmpty()) return;
-    mProject->setData(mProject->index(mSelectedIndex), QVariant::fromValue(fname), Project::FileRole);
+    mProject->setData(mSelectedIndex, QVariant::fromValue(fname), Project::FileNameRole);
     saveGroup(fname);
 }
 
@@ -187,7 +218,7 @@ void Demo::MainWindow::on_actionDelete_triggered() {
     // suggest to save the current group before deleting
     if(!maybeSave()) return;
 
-    mProject->removeRows(mSelectedIndex, 1);
+    mProject->removeRows(mSelectedIndex.row(), 1, mSelectedIndex.parent());
 }
 
 void Demo::MainWindow::on_actionRename_triggered() {
@@ -195,19 +226,19 @@ void Demo::MainWindow::on_actionRename_triggered() {
     QString text = QInputDialog::getText(
                         this,
                         "Rename",
-                        "New group name:",
+                        "New item name:",
                         QLineEdit::Normal,
-                        mProject->data(mProject->index(mSelectedIndex)).toString(),
+                        mProject->data(mSelectedIndex).toString(),
                         &ok);
    if (ok && !text.isEmpty()) {
-       mProject->setData(mProject->index(mSelectedIndex), QVariant::fromValue(text));
+       mProject->setData(mSelectedIndex, QVariant::fromValue(text));
    }
 }
 
 void Demo::MainWindow::on_actionEdit_triggered() {
-    QWidget* widget = mProject->data(mProject->index(mSelectedIndex), Project::EditorRole).value<QWidget*>();
+    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
     if (mUI->editorsTabs->indexOf(widget) == -1) {
-        QString label = mProject->data(mProject->index(mSelectedIndex)).toString();
+        QString label = mProject->data(mSelectedIndex).toString();
         mUI->editorsTabs->addTab(widget, label);
     }
     mUI->editorsTabs->setCurrentWidget(widget);
@@ -236,37 +267,60 @@ void Demo::MainWindow::on_editorsTabs_tabCloseRequested(int index) {
 void Demo::MainWindow::selectionChanged() {
     const QItemSelectionModel* s = mUI->commandGroups->selectionModel();
     if (s->hasSelection()) {
-        QModelIndex index = s->selectedIndexes()[0];
-        mSelectedIndex = index.row();
-        mUI->actionSaveAs->setEnabled(true);
-        mUI->actionRename->setEnabled(true);
-        mUI->actionEdit->setEnabled(true);
-        mUI->actionDelete->setEnabled(true);
+        mSelectedIndex = s->selectedIndexes()[0];
+        if (mSelectedIndex.parent() == mProject->groupParent()) {
 
-        QWidget* widget = mProject->data(mProject->index(mSelectedIndex), Project::EditorRole).value<QWidget*>();
-        if (mUI->editorsTabs->indexOf(widget) != -1) {
-            mUI->editorsTabs->setCurrentWidget(widget);
+            mUI->actionOpen->setEnabled(true);
+
+            QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+            if (mUI->editorsTabs->indexOf(widget) != -1) {
+                mUI->editorsTabs->setCurrentWidget(widget);
+            }
+            CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
+            mUI->actionSave->setEnabled(editor->document()->isModified());
+
+            mUI->actionSaveAs->setEnabled(true);
+            mUI->actionRename->setEnabled(true);
+            mUI->actionEdit->setEnabled(true);
+            mUI->actionDelete->setEnabled(true);
+
+            mUI->actionReload->setEnabled(false);
+
+
+        } else {
+
+            mUI->actionOpen->setEnabled(true);
+            mUI->actionSave->setEnabled(false);
+            mUI->actionSaveAs->setEnabled(false);
+            mUI->actionRename->setEnabled(true);
+            mUI->actionEdit->setEnabled(false);
+            mUI->actionDelete->setEnabled(true);
+            mUI->actionReload->setEnabled(true);
+
         }
-        CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
-        mUI->actionSave->setEnabled(editor->document()->isModified());
+
     } else {
-        mSelectedIndex = -1;
+        mSelectedIndex = QModelIndex();
+        mUI->actionOpen->setEnabled(false);
         mUI->actionSave->setEnabled(false);
         mUI->actionSaveAs->setEnabled(false);
         mUI->actionRename->setEnabled(false);
         mUI->actionEdit->setEnabled(false);
         mUI->actionDelete->setEnabled(false);
+        mUI->actionReload->setEnabled(false);
     }
 }
 
 void Demo::MainWindow::dataChanged() {
     bool modified = mProject->modified();
-    for (int i = 0; i < mProject->rowCount(QModelIndex()) && !modified; ++i) {
-        QWidget* widget = mProject->data(mProject->index(i), Project::EditorRole).value<QWidget*>();
+    for (int i = 0; i < mProject->rowCount(mProject->groupParent()) && !modified; ++i) {
+        QModelIndex gindex = mProject->index(i, 0, mProject->groupParent());
+        QWidget* widget = mProject->data(gindex, Project::EditorRole).value<QWidget*>();
         CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
         modified = editor->document()->isModified();
     }
     setAllModified(modified);
+    selectionChanged();
     setupCombos();
 }
 
@@ -284,8 +338,9 @@ void Demo::MainWindow::setupCombos() {
     mUI->drawCombo->clear();
     int initIndex = -1;
     int drawIndex = -1;
-    for (int i = 0; i < mProject->rowCount(QModelIndex()); ++i) {
-        QString name = mProject->data(mProject->index(i)).toString();
+    for (int i = 0; i < mProject->rowCount(mProject->groupParent()); ++i) {
+        QModelIndex gindex = mProject->index(i, mProject->groupParent());
+        QString name = mProject->data(gindex).toString();
         if (mProject->initGroup() == name) initIndex = i;
         if (mProject->drawGroup() == name) drawIndex = i;
         mUI->initCombo->addItem(name);
@@ -340,8 +395,10 @@ bool Demo::MainWindow::maybeSaveProject() {
 }
 
 bool Demo::MainWindow::maybeSave() {
+    if (mSelectedIndex.parent() != mProject->groupParent())
+        return false;
     bool cancel = false;
-    QWidget* widget = mProject->data(mProject->index(mSelectedIndex), Project::EditorRole).value<QWidget*>();
+    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
     CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
     if (editor->document()->isModified()) {
         QMessageBox msgBox;
@@ -369,12 +426,14 @@ void Demo::MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void Demo::MainWindow::saveGroup(const QString &fname) {
-    QString group = mProject->data(mProject->index(mSelectedIndex), Project::GroupRole).toString();
+    if (mSelectedIndex.parent() != mProject->groupParent())
+        return;
+    QString group = mProject->data(mSelectedIndex, Project::GroupRole).toString();
     QFile f(fname);
     f.open(QFile::WriteOnly);
     f.write(group.toAscii());
     f.close();
-    QWidget* widget = mProject->data(mProject->index(mSelectedIndex), Project::EditorRole).value<QWidget*>();
+    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
     CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
     editor->document()->setModified(false);
 }
@@ -389,10 +448,21 @@ void Demo::MainWindow::openProject(const QString &data, bool isDir) {
             newp = new Project(data, mGLWidget);
         }
         mUI->commandGroups->setModel(newp);
+        mUI->commandGroups->setRootIndex(newp->groupParent());
+
+        mUI->models->setModel(newp);
+        mUI->models->setSelectionModel(mUI->commandGroups->selectionModel());
+        mUI->models->setRootIndex(newp->modelParent());
+
+        mUI->textures->setModel(newp);
+        mUI->textures->setSelectionModel(mUI->commandGroups->selectionModel());
+        mUI->textures->setRootIndex(newp->textureParent());
+
+        mUI->actionNew->setEnabled(true);
+
         delete mProject;
         mProject = newp;
-        mUI->actionNew->setEnabled(true);
-        mUI->actionOpen->setEnabled(true);
+
         connect(mUI->commandGroups->selectionModel(),
                 SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
                 this,
@@ -406,7 +476,6 @@ void Demo::MainWindow::openProject(const QString &data, bool isDir) {
     } catch (BadProject& e) {
         if (!mProject) {
             mUI->actionNew->setEnabled(false);
-            mUI->actionOpen->setEnabled(false);
         }
         qDebug() << e.msg();
     }

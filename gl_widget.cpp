@@ -4,6 +4,7 @@
 #include "gl_functions.h"
 #include "camera.h"
 #include "project.h"
+#include "imagestore.h"
 
 #include <QDebug>
 #include <QMouseEvent>
@@ -53,14 +54,32 @@ Demo::GLWidget::GLWidget(QWidget *parent):
 
 void Demo::GLWidget::addBlob(QObject* plugin) {
     GL::Blob* blob = qobject_cast<GL::Blob*>(plugin);
-    if (!blob) return;
-    if (Parser::Symbols().contains(blob->name())) {
-        qWarning() << "Cannot load blob:" << blob->name() << "is a reserved symbol";
+    if (blob) {
+        if (Parser::Symbols().contains(blob->name())) {
+            qWarning() << "Cannot load blob:" << blob->name() << "is a reserved symbol";
+            return;
+        }
+        int index = mBlobs.length();
+        Parser::AddSymbol(new Demo::Constant(blob->name(), index));
+        mBlobs.append(blob);
         return;
     }
-    int index = mBlobs.length();
-    Parser::AddSymbol(new Demo::Constant(blob->name(), index));
-    mBlobs.append(blob);
+
+    GL::ImageStore* store = qobject_cast<GL::ImageStore*>(plugin);
+    if (store) mImageStore = store;
+
+    GL::TexBlob* texBlob = qobject_cast<GL::TexBlob*>(plugin);
+    if (texBlob) {
+        if (Parser::Symbols().contains(texBlob->name())) {
+            qWarning() << "Cannot load blob:" << texBlob->name() << "is a reserved symbol";
+            return;
+        }
+        int index = mTexBlobs.length();
+        Parser::AddSymbol(new Demo::Constant(texBlob->name(), index));
+        mTexBlobs.append(texBlob);
+
+        return;
+    }
 }
 
 Demo::GLWidget::~GLWidget() {

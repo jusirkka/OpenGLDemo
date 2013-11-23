@@ -8,7 +8,7 @@
 typedef union YYSTYPE
 {
     int int_value;
-    double real_value;
+    float real_value;
     char char_value;
     char string_value[1024];
 } YYSTYPE;

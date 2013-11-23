@@ -36,6 +36,7 @@ Highlight::Highlight(QTextDocument* parent)
     mFormats[NATURAL] = mReserved;
     mFormats[SHARED] = mReserved;
     mFormats[REAL] = mReserved;
+    mFormats[EXECUTE] = mReserved;
     mFormats[INT] = mNumeric;
     mFormats[FLOAT] = mNumeric;
 
@@ -43,9 +44,16 @@ Highlight::Highlight(QTextDocument* parent)
 
 void Highlight::highlightBlock(const QString &text) {
 
-    yy_scan_string(text.toAscii().data());
+    yylex_destroy();
+    QString parsed = text;
+    int pshift = 0;
+    if (previousBlockState() == 1) {
+        parsed = "\"" + text;
+        pshift = -1;
+    }
+    setCurrentBlockState(0);
+    yy_scan_string(parsed.toAscii().data());
 
-    setCurrentBlockState(previousBlockState());
     int text_start = 0;
     int text_length = 0;
 
@@ -53,26 +61,30 @@ void Highlight::highlightBlock(const QString &text) {
     while (token > 0) {
         if (currentBlockState() == 1) {
             text_length += yyleng;
-            if (token == BEGINSTRING || token == ENDSTRING) {
+            if (token == ENDSTRING) {
                 setCurrentBlockState(0);
                 setFormat(text_start, text_length, mText);
             }
         } else {
-            if (token == BEGINSTRING || token == ENDSTRING) {
+            if (token == BEGINSTRING) {
                 setCurrentBlockState(1);
-                text_start = yylloc.pos;
+                text_start = yylloc.pos  + pshift;
                 text_length = yyleng;
+                if (text_start < 0) {
+                    text_start = 0;
+                    text_length = 0;
+                }
             } else {
                 if (mFormats.contains(token)) {
-                    setFormat(yylloc.pos, yyleng, mFormats[token]);
+                    setFormat(yylloc.pos + pshift, yyleng, mFormats[token]);
                 } else if (token == ID && Parser::Symbols().contains(yytext)) {
                     Function* fun = dynamic_cast<Function*>(Parser::Symbols()[yytext]);
                     if (fun) {
-                        setFormat(yylloc.pos, yyleng, mFunction);
+                        setFormat(yylloc.pos + pshift, yyleng, mFunction);
                     } else {
                         Constant* con = dynamic_cast<Constant*>(Parser::Symbols()[yytext]);
                         if (con) {
-                            setFormat(yylloc.pos, yyleng, mConstant);
+                            setFormat(yylloc.pos + pshift, yyleng, mConstant);
                         }
                     }
                 }
@@ -90,6 +102,5 @@ void Highlight::highlightBlock(const QString &text) {
             setFormat(index, length, mComment);
             index = mCommentExp.indexIn(text, index + length);
         }
-        yylex_destroy();
     }
 }

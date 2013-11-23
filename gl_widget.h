@@ -10,7 +10,12 @@ class QMouseEvent;
 
 class Camera;
 
-namespace GL {class Blob;}
+namespace GL {
+    class Blob;
+    class TexBlob;
+    class Emitter;
+    class ImageStore;
+}
 
 namespace Demo {
 
@@ -35,6 +40,8 @@ public:
     ResourceList& buffers() {return mBuffers;}
     ResourceList& textures() {return mTextures;}
     const GL::Blob& blob(int index) const {return *mBlobs[index];}
+    const GL::TexBlob& texBlob(int index) const {return *mTexBlobs[index];}
+    GL::ImageStore* imageStore() {return mImageStore;}
     void setProject(Project* p);
 
     virtual ~GLWidget();
@@ -57,12 +64,16 @@ protected:
 private:
 
 
+    friend class GL::Emitter;
+
     typedef QList<GL::Blob*> BlobList;
+    typedef QList<GL::TexBlob*> TexBlobList;
 
 signals:
 
     void init();
     void draw();
+    void evaluate(const QString& curr, const QString& other);
 
 private:
 
@@ -81,6 +92,7 @@ private:
     ResourceList mBuffers;
     ResourceList mTextures;
     BlobList mBlobs;
+    TexBlobList mTexBlobs;
     Variable* mCameraVar;
     Variable* mProjectionVar;
     Camera* mCamera;
@@ -91,7 +103,7 @@ private:
     QTimer* mTimer;
     Project* mProject;
     Project* mDefaultProject;
-
+    GL::ImageStore* mImageStore;
 
 };
 

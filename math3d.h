@@ -10,7 +10,7 @@ namespace Math3D {
 
 #define OSTREAM_MATH3D
 
-typedef double Real;
+typedef float Real;
 typedef int Integer;
 
 // --------------------------------------------------------------
@@ -44,8 +44,7 @@ class Vector4 {
 
 public:
 
-    Vector4() {}
-    Vector4 (Real x, Real y, Real z, Real w = 1) {e[X] = x; e[Y] = y; e[Z] = z; e[W] = w;}
+    Vector4 (Real x = 0, Real y = 0, Real z = 0, Real w = 1) {e[X] = x; e[Y] = y; e[Z] = z; e[W] = w;}
     explicit Vector4(const Real* vec, int len = 3) {for (int i = 0; i < len; ++i) e[i] = vec[i]; if (len == 3) e[W] = 1;}
 
     const Real& operator[] (int i) const {return e[i];}
@@ -114,8 +113,6 @@ public:
     const Real* readArray() const {return e;}
     Real* getArray() {return e;}
 
-    const GLfloat* readGLFloat(); // 14a
-
     inline Matrix4 transpose3() const; // (5)
     inline Matrix4 transpose4() const; // (6)
     inline Vector4 translation() const; // (7)
@@ -135,7 +132,6 @@ public:
 private:
 
     Real e[16];
-    GLfloat f[16];
 
 
 };
@@ -177,7 +173,7 @@ inline Vector4& Vector4::operator*= (Real s) {
 // ----------------- (4) ----------------------------------------
 inline Real Vector4::length23() const {
     return dot3(*this, *this);
-};
+}
 
 // ----------------- (5) ----------------------------------------
 inline Real Vector4::length3() const {
@@ -414,13 +410,6 @@ inline Matrix4& Matrix4::setBasis(const Vector4& u, const Vector4& v, const Vect
     return *this;
 }
 
-// ----------------- (14a) ----------------------------------------
-inline const GLfloat* Matrix4::readGLFloat() {
-
-    for(int i = 0; i < 16; ++i) f[i] = static_cast<GLfloat>(e[i]);
-
-    return f;
-}
 
 
 // ---------------- (15) ----------------------------------------

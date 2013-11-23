@@ -1,8 +1,12 @@
-- 'include <other file>' statement
-- run time / syntax error indicator on left column
-- plugin help
-- cursor initially at top
-- camera zoom + pan
-- texture support
+- object model loader
+- bug: segfault when init group changes
+- bug: init changes not activated
 - rest of the opengl es2 statements
+- plugin help
+- run time / syntax error indicator on left column
+- camera zoom + pan
+- autoapply / apply button
 - undo/redo
+- animation start/stop button + spinbox + shared var 'time'
+- shadersource command
+

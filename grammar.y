@@ -48,7 +48,8 @@ enum {
     demo_err_notamatrixvariable,
     demo_err_notatextvariable,
     demo_err_notaintegervariable,
-    demo_err_expectedarithmetictype
+    demo_err_expectedarithmetictype,
+    demo_err_nottext,
 };
 
 static const char* explanations[] = {
@@ -74,7 +75,8 @@ static const char* explanations[] = {
     "type of variable %s is not Matrix",
     "type of variable %s is not Text",
     "type of variable %s is not Natural",
-    "expected arithmetic type in %s expression"
+    "expected arithmetic type in %s expression",
+    "%s expects a text expression",
 };
 
 char buffer[256];
@@ -128,7 +130,7 @@ using namespace Demo;
 
 %token <string_value> ID
 
-%token VECTOR MATRIX TEXT NATURAL SHARED REAL
+%token VECTOR MATRIX TEXT NATURAL SHARED REAL EXECUTE
 
 %nonassoc <int_value> '<' '>' EQ NE LE GE
 %left <int_value> '+' '-' OR BOR
@@ -313,6 +315,21 @@ statement:
             // qDebug() << "Code:" << opname(Parser::cFun) << fun->name();
             Parser::PushBack(Parser::cFun, 0, 1 - $2->size());
             Parser::PushBack(fun->index(), 0, 0);
+
+            Parser::SetJump();
+            Parser::SetCode("gl_result");
+        }
+    |
+    EXECUTE expression
+        {
+            Function* emitter = dynamic_cast<Function*>(Parser::Symbols()["gl_emitter"]);
+            if ($2 != Symbol::Text) {
+                HANDLE_ERROR("Exexute", demo_err_nottext);
+            }
+            Parser::PushBack(Parser::cImmed, 0, 1);
+            Parser::PushBackImmed(Parser::Name());
+            Parser::PushBack(Parser::cFun, 0, -1);
+            Parser::PushBack(emitter->index(), 0, 0);
 
             Parser::SetJump();
             Parser::SetCode("gl_result");

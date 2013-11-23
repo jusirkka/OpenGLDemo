@@ -27,7 +27,7 @@
 #include "mainwindow.h"
 
 Q_IMPORT_PLUGIN(pnp_gl_teapot)
-
+Q_IMPORT_PLUGIN(pnp_gl_imagestore)
 
 
 

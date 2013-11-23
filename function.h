@@ -117,6 +117,7 @@ public:
     ~Vecx() {}
 };
 
+
 class Mat: public Function {
 
 public:
@@ -191,6 +192,42 @@ public:
     }
 
     ~Tr() {}
+};
+
+
+class Functions {
+
+public:
+
+    QList<Demo::Symbol*> contents;
+
+#define FUN(fun) contents.append(new StdFunction(#fun, std::fun))
+
+    Functions() {
+        contents.append(new Vecx());
+        contents.append(new Mat());
+        contents.append(new Rot());
+        contents.append(new Tr());
+        FUN(sin);
+        FUN(cos);
+        FUN(tan);
+        FUN(asin);
+        FUN(acos);
+        FUN(atan);
+        FUN(exp);
+        FUN(log);
+        FUN(log10);
+        FUN(sqrt);
+        FUN(abs);
+        FUN(ceil);
+        FUN(floor);
+        FUN(sinh);
+        FUN(cosh);
+        FUN(tanh);
+    }
+
+#undef FUN
+
 };
 
 } // namespace DEMO

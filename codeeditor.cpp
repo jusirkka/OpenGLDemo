@@ -84,7 +84,8 @@ CodeEditor::CodeEditor(Project* owner)
 void CodeEditor::parse() {
     mParseDelay->stop();
     try {
-        Parser::ParseIt(toPlainText());
+        Parser::ParseIt(objectName(), toPlainText());
+        mKids.clear();
         delete mRunner;
         mRunner = Parser::CreateRunner();
         mErrorPos = -1;
@@ -99,7 +100,7 @@ void CodeEditor::parse() {
 
 int CodeEditor::lineNumberAreaWidth()
 {
-    int digits = 1;
+    int digits = 3;
     int max = qMax(1, blockCount());
     while (max >= 10) {
         max /= 10;

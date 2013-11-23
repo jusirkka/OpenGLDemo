@@ -48,8 +48,8 @@ using Math3D::Matrix4;
 
 // public GL interface
 
-void Demo::Parser::ParseIt(const QString& inp) {
-    instance().init();
+void Demo::Parser::ParseIt(const QString& name, const QString& inp) {
+    instance().init(name);
     yydebug = 0;
     yy_scan_string(inp.toAscii().data());
     int err = yyparse();
@@ -62,6 +62,11 @@ Demo::Runner* Demo::Parser::CreateRunner() {
 }
 
 // public grammar interface
+
+QString Demo::Parser::Name() {
+    return instance().objectName();
+}
+
 
 
 void Demo::Parser::AddSymbol(Symbol* s) {
@@ -117,43 +122,21 @@ Demo::Parser::Parser()
     mCodeSize(0),
     mImmedSize(0) {
 
-    // vector and matrix constructors
-    addSymbol(new Vecx());
-    addSymbol(new Mat());
-    addSymbol(new Rot());
-    addSymbol(new Tr());
-
     // shared matrices
     addSymbol(new Var::Shared::Matrix("camera"));
     addSymbol(new Var::Shared::Matrix("projection"));
+
     // in glwidget
     mSharedCounts["camera"] = 1;
     mSharedCounts["projection"] = 1;
 
     // constants
-    addSymbol(new Demo::Constant("true", 1));
-    addSymbol(new Demo::Constant("false", 0));
+    Constants cons;
+    foreach(Symbol* con, cons.contents) addSymbol(con);
 
-#define FUN(fun) addSymbol(new StdFunction(#fun, std::fun))
-
-    FUN(sin);
-    FUN(cos);
-    FUN(tan);
-    FUN(asin);
-    FUN(acos);
-    FUN(atan);
-    FUN(exp);
-    FUN(log);
-    FUN(log10);
-    FUN(sqrt);
-    FUN(abs);
-    FUN(ceil);
-    FUN(floor);
-    FUN(sinh);
-    FUN(cosh);
-    FUN(tanh);
-
-#undef FUN
+    // functions
+    Functions funcs;
+    foreach(Symbol* func, funcs.contents) addSymbol(func);
 
 
 }
@@ -165,7 +148,10 @@ Demo::Parser& Demo::Parser::instance() {
 
 // private GL interface
 
-void Demo::Parser::init() {
+void Demo::Parser::init(const QString& name) {
+
+    setObjectName(name);
+
     mStackSize = 0;
     mStackPos = 0;
     mCodeSize = 0;
@@ -184,14 +170,14 @@ void Demo::Parser::init() {
             delete v;
         } else {
             if (!mSharedCounts.contains(v->name())) {
-                qDebug() << "check: deleting unused" << v->name();
+                // qDebug() << "check: deleting unused" << v->name();
                 delete v;
             } else if (mSharedCounts[v->name()] < 1) {
-                qDebug() << "check: count of" << v->name() << "is" << mSharedCounts[v->name()] << ":deleting";
+                // qDebug() << "check: count of" << v->name() << "is" << mSharedCounts[v->name()] << ":deleting";
                 mSharedCounts.remove(v->name());
                 delete v;
             } else {
-                qDebug() << "check: count of" << v->name() << "is" << mSharedCounts[v->name()];
+                // qDebug() << "check: count of" << v->name() << "is" << mSharedCounts[v->name()];
                 shared.append(v);
             }
         }

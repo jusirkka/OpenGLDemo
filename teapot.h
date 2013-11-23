@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QtPlugin>
+#include <QVector>
 
 #include "blob.h"
 
@@ -37,12 +38,14 @@ private:
     };
 
     typedef QVector<Element> ElementVector;
-    typedef QMap<unsigned int, ElementVector> ElementVectorMap;
+    typedef QMap<unsigned int, unsigned int> ModeMap;
+    typedef QMap<unsigned int, ModeMap> ModeMapMap;
 
 private:
 
-    ElementVectorMap mModes;
-
+    ElementVector mElements;
+    ModeMapMap mModes;
+    ModeMap mSupported;
 };
 
 } // namespace GL

@@ -55,5 +55,19 @@ class Constant: public Symbol {
 };
 
 
+class Constants {
+
+public:
+
+    QList<Demo::Symbol*> contents;
+
+    Constants() {
+        contents.append(new Constant("true", 1));
+        contents.append(new Constant("false", 0));
+    }
+
+};
+
+
 } // namespace Demo
 #endif // DEMO_CONSTANT_H

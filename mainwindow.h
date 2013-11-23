@@ -23,6 +23,7 @@
 
 #include <QMainWindow>
 #include <QStringList>
+#include <QModelIndex>
 #include <QDir>
 
 namespace Ui {
@@ -119,7 +120,7 @@ private:
     Ui::MainWindow *mUI;
     GLWidget* mGLWidget;
     Project* mProject;
-    int mSelectedIndex;
+    QModelIndex mSelectedIndex;
 };
 
 }

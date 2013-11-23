@@ -106,8 +106,10 @@ public slots:
 public:
 
     // GL interface
-    static void ParseIt(const QString&);
+    static void ParseIt(const QString&, const QString&);
     static Runner* CreateRunner();
+
+    static QString Name();
 
     // grammar interface
     static void AddSymbol(Symbol*);
@@ -120,6 +122,7 @@ public:
     static void PushBackImmed(int);
     static void PushBackImmed(Math3D::Real);
     static void PushBackImmed(const QVariant&);
+
 
     ~Parser();
 
@@ -160,7 +163,7 @@ private:
     static Parser& instance();
 
     // GL interface
-    void init();
+    void init(const QString&);
     Runner* createRunner();
 
     // grammar interface

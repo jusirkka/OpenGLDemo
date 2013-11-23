@@ -5,6 +5,7 @@
 #include "function.h"
 #include "constant.h"
 #include "blob.h"
+#include "texblob.h"
 
 #include <QList>
 
@@ -23,23 +24,23 @@ public:
 
     GLProc(const QString& name, int type, Demo::GLWidget* p)
         : Demo::Function(name, type),
-        mParent(p)
+          mParent(p)
     {}
 
-    #define ALT(item) case item: qWarning() << #item; break
+#define ALT(item) case item: qWarning() << #item; break
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
 
         const QVariant& q = gl_execute(vals, start);
 
         switch (glGetError()) {
-            ALT(GL_INVALID_ENUM);
-            ALT(GL_INVALID_VALUE);
-            ALT(GL_INVALID_OPERATION);
-            ALT(GL_STACK_UNDERFLOW);
-            ALT(GL_STACK_OVERFLOW);
-            ALT(GL_OUT_OF_MEMORY);
-            ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
+        ALT(GL_INVALID_ENUM);
+        ALT(GL_INVALID_VALUE);
+        ALT(GL_INVALID_OPERATION);
+        ALT(GL_STACK_UNDERFLOW);
+        ALT(GL_STACK_OVERFLOW);
+        ALT(GL_OUT_OF_MEMORY);
+        ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
         default: ;// nothing
         }
 
@@ -47,7 +48,7 @@ public:
 
     }
 
-    #undef ALT
+#undef ALT
 
 
 protected:
@@ -350,7 +351,7 @@ class DeleteShader: public GLProc {
 
 public:
 
-    DeleteShader(Demo::GLWidget* p): GLProc("deleteshader", Symbol::Integer, p) {
+    DeleteShader(Demo::GLWidget* p): GLProc("deletsShader", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
@@ -575,6 +576,28 @@ public:
     virtual ~Uniform1F() {}
 };
 
+class Uniform1I: public GLProc {
+
+public:
+
+    Uniform1I(Demo::GLWidget* p): GLProc("uniform1i", Symbol::Integer, p) {
+        int t = Symbol::Integer;
+        mArgTypes.append(t);
+        mArgTypes.append(t);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        int loc =  vals[start].value<int>();
+        int uniform =  vals[start+1].value<int>();
+        qDebug() << "glUniform1i" << loc << uniform;
+        mParent->glUniform1i(loc, uniform);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    virtual ~Uniform1I() {}
+};
+
 class Uniform4F: public GLProc {
 
 public:
@@ -614,7 +637,7 @@ public:
         int loc =  vals[start].value<int>();
         Matrix4 uni =  vals[start+1].value<Matrix4>();
         qDebug() << "glUniformMatrix4F" << loc;
-        mParent->glUniformMatrix4fv(loc, 1, GL_FALSE, uni.readGLFloat());
+        mParent->glUniformMatrix4fv(loc, 1, GL_FALSE, uni.readArray());
         mValue.setValue(0);
         return mValue;
     }
@@ -726,6 +749,7 @@ public:
         QString attr =  vals[start+2].value<QString>();
         qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
         const BlobSpec& spec = blob.spec(attr);
+        qDebug() << "VertexAttribPointer" << spec.size << spec.offset;
         mParent->glVertexAttribPointer(index, spec.size, spec.type, spec.normalized, spec.stride, (const void*) spec.offset);
         mValue.setValue(0);
         return mValue;
@@ -798,6 +822,198 @@ public:
 };
 
 
+class ActiveTexture: public GLProc {
+
+public:
+
+    ActiveTexture(Demo::GLWidget* p): GLProc("activetexture", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "ActiveTexture" << name;
+        mParent->glActiveTexture(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~ActiveTexture() {}
+};
+
+
+class GenerateMipMap: public GLProc {
+
+public:
+
+    GenerateMipMap(Demo::GLWidget* p): GLProc("generatemipmap", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        qDebug() << "GenerateMipMap" << target;
+        mParent->glGenerateMipmap(target);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~GenerateMipMap() {}
+};
+
+class BindTexture: public GLProc {
+
+public:
+
+    BindTexture(Demo::GLWidget* p): GLProc("bindtexture", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        GLuint texture =  vals[start + 1].value<int>();
+        qDebug() << "BindTexture" << target << texture;
+        glBindTexture(target, texture);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~BindTexture() {}
+};
+
+class GenTexture: public GLProc {
+
+public:
+
+    GenTexture(Demo::GLWidget* p): GLProc("gentexture", Symbol::Integer, p) {}
+
+    const QVariant& gl_execute(const QVector<QVariant>&, int) {
+        GLuint ret;
+        qDebug() << "GenTexture";
+        glGenTextures(1, &ret);
+        mParent->textures().append(ret);
+        mValue.setValue(ret);
+        return mValue;
+    }
+
+    virtual ~GenTexture() {}
+};
+
+class DeleteTexture: public GLProc {
+
+public:
+
+    DeleteTexture(Demo::GLWidget* p): GLProc("deletetexture", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint name =  vals[start].value<int>();
+        qDebug() << "DeleteTexture" << name;
+        glDeleteTextures(1, &name);
+        mParent->textures().removeOne(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    virtual ~DeleteTexture() {}
+};
+
+
+class TexParameter: public GLProc {
+
+public:
+
+    TexParameter(Demo::GLWidget* p): GLProc("texparameter", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        GLuint name =  vals[start + 1].value<int>();
+        GLuint param =  vals[start + 2].value<int>();
+        qDebug() << "TexParameter" << target << name << param;
+        glTexParameteri(target, name, param);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    virtual ~TexParameter() {}
+};
+
+
+class TexImage2D: public GLProc {
+
+public:
+
+    TexImage2D(Demo::GLWidget* p): GLProc("teximage2d", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        argt = Symbol::Text;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint target =  vals[start].value<int>();
+        GLuint level =  vals[start + 1].value<int>();
+        GLuint iformat =  vals[start + 2].value<int>();
+        const TexBlob& blob =  mParent->texBlob(vals[start + 3].value<int>());
+        QString attr =  vals[start + 4].value<QString>();
+        qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
+        const TexBlobSpec spec = blob.spec(attr);
+        qDebug() << "TexImage2D" << spec.width << spec.height << spec.type;
+        glTexImage2D(target, level, iformat, spec.width, spec.height, 0, spec.format, spec.type, blob.data(attr));
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~TexImage2D() {}
+};
+
+
+
+class Emitter: public Demo::Function {
+
+public:
+
+    Emitter(Demo::GLWidget* p)
+        :Function("gl_emitter", Symbol::Integer),
+          mParent(p)
+    {
+        int argt = Symbol::Text;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        QString other = vals[start].value<QString>();
+        QString me = vals[start+1].value<QString>();
+        emit mParent->evaluate(me, other);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    ~Emitter() {}
+
+private:
+
+    Demo::GLWidget* mParent;
+
+};
+
+
+
 
 class Functions {
 
@@ -829,6 +1045,7 @@ public:
         contents.append(new GetAttribLocation(p));
         contents.append(new GetUniformLocation(p));
         contents.append(new Uniform1F(p));
+        contents.append(new Uniform1I(p));
         contents.append(new Uniform4F(p));
         contents.append(new UniformMatrix4F(p));
         contents.append(new GenBuffer(p));
@@ -839,6 +1056,14 @@ public:
         contents.append(new Draw(p));
         contents.append(new EnableVertexAttribArray(p));
         contents.append(new DisableVertexAttribArray(p));
+        contents.append(new ActiveTexture(p));
+        contents.append(new GenerateMipMap(p));
+        contents.append(new BindTexture(p));
+        contents.append(new GenTexture(p));
+        contents.append(new DeleteTexture(p));
+        contents.append(new TexParameter(p));
+        contents.append(new TexImage2D(p));
+        contents.append(new Emitter(p));
     }
 };
 
@@ -886,6 +1111,42 @@ public:
         CONST(POINTS);
         CONST(LINES);
         CONST(TRIANGLES);
+        // active texture
+        CONST(TEXTURE0);
+        // texture targets
+        CONST(TEXTURE_2D);
+        CONST(TEXTURE_CUBE_MAP);
+        CONST(TEXTURE_CUBE_MAP_POSITIVE_X);
+        CONST(TEXTURE_CUBE_MAP_POSITIVE_Y);
+        CONST(TEXTURE_CUBE_MAP_POSITIVE_Z);
+        CONST(TEXTURE_CUBE_MAP_NEGATIVE_X);
+        CONST(TEXTURE_CUBE_MAP_NEGATIVE_Y);
+        CONST(TEXTURE_CUBE_MAP_NEGATIVE_Z);
+        // texture params & values
+        CONST(TEXTURE_WRAP_S);
+        CONST(TEXTURE_WRAP_T);
+        CONST(TEXTURE_MIN_FILTER);
+        CONST(TEXTURE_MAG_FILTER);
+        CONST(NEAREST);
+        CONST(LINEAR);
+        CONST(NEAREST_MIPMAP_LINEAR);
+        CONST(NEAREST_MIPMAP_NEAREST);
+        CONST(LINEAR_MIPMAP_LINEAR);
+        CONST(LINEAR_MIPMAP_NEAREST);
+        CONST(NEAREST_MIPMAP_LINEAR);
+        CONST(CLAMP_TO_EDGE);
+        CONST(MIRRORED_REPEAT);
+        CONST(REPEAT);
+        // texture formats & types
+        CONST(ALPHA);
+        CONST(LUMINANCE);
+        CONST(LUMINANCE_ALPHA);
+        CONST(RGB);
+        CONST(RGBA);
+        CONST(UNSIGNED_BYTE);
+        CONST(UNSIGNED_SHORT_5_6_5);
+        CONST(UNSIGNED_SHORT_4_4_4_4);
+        CONST(UNSIGNED_SHORT_5_5_5_1);
     }
 
 

@@ -37,6 +37,7 @@ vector          Vector
 natural         Natural
 text            Text
 shared          Shared
+execute         Execute
 
 %x INSTRING
 
@@ -62,6 +63,7 @@ shared          Shared
 {natural}       return NATURAL;
 {text}          return TEXT;
 {shared}        return SHARED;
+{execute}       return EXECUTE;
 
 {id}            {
                     strcpy(yylval.string_value, yytext);

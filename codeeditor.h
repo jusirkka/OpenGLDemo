@@ -65,6 +65,10 @@ class CodeEditor : public QPlainTextEdit
     Q_OBJECT
 
 public:
+
+    typedef QList<CodeEditor*> EditorList;
+
+public:
     CodeEditor(Demo::Project* owner);
 
     void lineNumberAreaPaintEvent(QPaintEvent *event);
@@ -73,6 +77,8 @@ public:
     bool event(QEvent *e);
 
     Demo::Runner* runner() {return mRunner;}
+    void appendChild(CodeEditor* kid) {mKids.append(kid);}
+    const EditorList& children() const {return mKids;}
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -98,6 +104,7 @@ private:
     QString mError;
     int mErrorPos;
     Highlight* mHighlight;
+    EditorList mKids;
 };
 
 

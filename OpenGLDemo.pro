@@ -20,7 +20,10 @@ SOURCES += main.cpp\
     camera.cpp \
     project.cpp \
     codeeditor.cpp \
-    highlight.cpp
+    highlight.cpp \
+    newdialog.cpp \
+    imagestore.cpp \
+    patch.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -38,9 +41,14 @@ HEADERS  += mainwindow.h \
     project.h \
     codeeditor.h \
     highlight.h \
-    scanner_types.h
+    scanner_types.h \
+    newdialog.h \
+    texblob.h \
+    imagestore.h \
+    patch.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    newdialog.ui
 
 OTHER_FILES += \
     scanner.l \
