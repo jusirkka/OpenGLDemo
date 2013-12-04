@@ -28,6 +28,7 @@
 
 Q_IMPORT_PLUGIN(pnp_gl_teapot)
 Q_IMPORT_PLUGIN(pnp_gl_imagestore)
+Q_IMPORT_PLUGIN(pnp_gl_modelstore)
 
 
 

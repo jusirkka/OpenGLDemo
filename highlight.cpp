@@ -13,11 +13,12 @@ using Demo::Constant;
 extern "C"
 {
 
-#include "scanner.h"
-#include "scanner_types.h"
+#include "s_p_types.h"
+#include "s_p.h"
+
 }
 
-#include "grammar.h"
+#include "g_p.h"
 
 Highlight::Highlight(QTextDocument* parent)
     :QSyntaxHighlighter(parent),
@@ -44,7 +45,7 @@ Highlight::Highlight(QTextDocument* parent)
 
 void Highlight::highlightBlock(const QString &text) {
 
-    yylex_destroy();
+    s_plex_destroy();
     QString parsed = text;
     int pshift = 0;
     if (previousBlockState() == 1) {
@@ -52,15 +53,15 @@ void Highlight::highlightBlock(const QString &text) {
         pshift = -1;
     }
     setCurrentBlockState(0);
-    yy_scan_string(parsed.toAscii().data());
+    s_p_scan_string(parsed.toAscii().data());
 
     int text_start = 0;
     int text_length = 0;
 
-    int token = yylex();
+    int token = g_plex();
     while (token > 0) {
         if (currentBlockState() == 1) {
-            text_length += yyleng;
+            text_length += s_pleng;
             if (token == ENDSTRING) {
                 setCurrentBlockState(0);
                 setFormat(text_start, text_length, mText);
@@ -68,29 +69,29 @@ void Highlight::highlightBlock(const QString &text) {
         } else {
             if (token == BEGINSTRING) {
                 setCurrentBlockState(1);
-                text_start = yylloc.pos  + pshift;
-                text_length = yyleng;
+                text_start = g_plloc.pos  + pshift;
+                text_length = s_pleng;
                 if (text_start < 0) {
                     text_start = 0;
                     text_length = 0;
                 }
             } else {
                 if (mFormats.contains(token)) {
-                    setFormat(yylloc.pos + pshift, yyleng, mFormats[token]);
-                } else if (token == ID && Parser::Symbols().contains(yytext)) {
-                    Function* fun = dynamic_cast<Function*>(Parser::Symbols()[yytext]);
+                    setFormat(g_plloc.pos + pshift, s_pleng, mFormats[token]);
+                } else if (token == ID && Parser::Symbols().contains(s_ptext)) {
+                    Function* fun = dynamic_cast<Function*>(Parser::Symbols()[s_ptext]);
                     if (fun) {
-                        setFormat(yylloc.pos + pshift, yyleng, mFunction);
+                        setFormat(g_plloc.pos + pshift, s_pleng, mFunction);
                     } else {
-                        Constant* con = dynamic_cast<Constant*>(Parser::Symbols()[yytext]);
+                        Constant* con = dynamic_cast<Constant*>(Parser::Symbols()[s_ptext]);
                         if (con) {
-                            setFormat(yylloc.pos + pshift, yyleng, mConstant);
+                            setFormat(g_plloc.pos + pshift, s_pleng, mConstant);
                         }
                     }
                 }
             }
         }
-        token = yylex();
+        token = g_plex();
     }
 
     if (currentBlockState() == 1) {

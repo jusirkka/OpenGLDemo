@@ -765,14 +765,18 @@ public:
     Draw(Demo::GLWidget* p): GLProc("draw", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
+        argt = Symbol::Text;
+        mArgTypes.append(argt);
+        argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         const Blob& blob =  mParent->blob(vals[start].value<int>());
-        GLuint mode =  vals[start+1].value<int>();
-        qDebug() << "Draw" << blob.name() << mode;
-        blob.draw(mode);
+        QString attr =  vals[start + 1].value<QString>();
+        GLuint mode =  vals[start + 2].value<int>();
+        qDebug() << "Draw" << blob.name() << attr << mode;
+        blob.draw(mode, attr);
         mValue.setValue(0);
         return mValue;
     }

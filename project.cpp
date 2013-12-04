@@ -2,6 +2,7 @@
 #include "gl_widget.h"
 #include "runner.h"
 #include "imagestore.h"
+#include "modelstore.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -40,6 +41,9 @@ bool TreeFind::find2(CodeEditor* top, CodeEditor *leaf) {
     return found;
 }
 
+using GL::ImageStore;
+using GL::ModelStore;
+
 Demo::Project::~Project() {
     foreach(EditorTuple ed, mEditors) delete ed.editor;
 }
@@ -54,8 +58,7 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target)
     :QAbstractItemModel(target),
       mProjectDir(pdir),
       mProjectIni(""),
-      mTarget(target),
-      mModified(false)
+      mTarget(target)
 {
     if (!mProjectDir.exists() || !mProjectDir.isReadable())
         throw BadProject(QString("Project dir %1 is not readable").arg(mProjectDir.absolutePath()));
@@ -65,15 +68,17 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target)
     mInit = appendEditor("Init", "clearcolor vec(.1,.2,.2,1);\n", "");
     mDraw = appendEditor("Draw", "clear color_buffer_bit;\n", "");
 
-    mTarget->imageStore()->clean();
+    ImageStore::Clean();
+    ModelStore::Clean();
+
+    mModified = false;
 }
 
 Demo::Project::Project(const QString& fullpath, GLWidget* target)
     :QAbstractItemModel(target),
       mInit(0),
       mDraw(0),
-      mTarget(target),
-      mModified(false)
+      mTarget(target)
 {
     init_and_connect();
 
@@ -118,6 +123,7 @@ Demo::Project::Project(const QString& fullpath, GLWidget* target)
     project.endGroup();
 
     project.beginGroup("Models");
+    NameList models;
     const QStringList onames = project.childKeys();
     foreach (const QString &oname, onames) {
         QString fname_orig = project.value(oname).toString();
@@ -127,14 +133,14 @@ Demo::Project::Project(const QString& fullpath, GLWidget* target)
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
-        if (!info.exists()) throw BadProject(QString("Object file %1 does not exist").arg(fname_orig));
-        if (!info.isFile() || !info.isReadable()) throw BadProject(QString("Object file %1 is not readable").arg(fname_orig));
+        if (!info.exists() || !info.isFile() || !info.isReadable()) {
+            fname_orig = "";
+        }
 
         NameTuple t;
         t.name = oname;
         t.filename = fname_orig;
-        mModels.append(t);
-        // TODO: create blob
+        models.append(t);
     }
     project.endGroup();
 
@@ -162,14 +168,22 @@ Demo::Project::Project(const QString& fullpath, GLWidget* target)
 
     if (project.status() != QSettings::NoError) throw BadProject(QString("%1 is not a valid project file").arg(fullpath));
 
-    mTarget->imageStore()->clean();
+    ImageStore::Clean();
     foreach(NameTuple t, textures) {
-        mTarget->imageStore()->setImage(t.name, t.filename);
+        ImageStore::SetImage(t.name, t.filename);
     }
+
+    ModelStore::Clean();
+    foreach(NameTuple t, models) {
+        ModelStore::SetModel(t.name, t.filename);
+    }
+
+    mModified = false;
 }
 
 void Demo::Project::saveProject() {
     QSettings project(mProjectDir.absoluteFilePath(mProjectIni), QSettings::IniFormat);
+    project.clear();
 
     project.beginGroup("Groups");
     for (int i = 0; i < mEditors.length(); ++i) {
@@ -185,6 +199,18 @@ void Demo::Project::saveProject() {
     project.setValue("Draw", "None");
     if (mDraw) {
         project.setValue("Draw", mDraw->objectName());
+    }
+    project.endGroup();
+
+    project.beginGroup("Textures");
+    for (int i = 0; i < ImageStore::Size(); ++i) {
+        project.setValue(ImageStore::ImageName(i), ImageStore::FileName(i));
+    }
+    project.endGroup();
+
+    project.beginGroup("Models");
+    for (int i = 0; i < ModelStore::Size(); ++i) {
+        project.setValue(ModelStore::ModelName(i), ModelStore::FileName(i));
     }
     project.endGroup();
 
@@ -329,7 +355,7 @@ QModelIndex Demo::Project::index(int row, int column, const QModelIndex &parent)
     if (parent.internalId() == ModelRow)
         return createIndex(row, column, NumRows + mEditors.size() + row);
     if (parent.internalId() == TextureRow)
-        return createIndex(row, column, NumRows + mEditors.size() + mModels.size() + row);
+        return createIndex(row, column, NumRows + mEditors.size() + ModelStore::Size() + row);
 
     return QModelIndex();
 }
@@ -347,8 +373,8 @@ QModelIndex Demo::Project::parent(const QModelIndex &index) const {
 
     if (id < NumRows) return QModelIndex();
     if (id < NumRows + mEditors.size()) return createIndex(GroupRow, 0, GroupRow);
-    if (id < NumRows + mEditors.size() + mModels.size()) return createIndex(ModelRow, 0, ModelRow);
-    if (id < NumRows + mEditors.size() + mModels.size() + mTarget->imageStore()->size()) return createIndex(TextureRow, 0, TextureRow);
+    if (id < NumRows + mEditors.size() + ModelStore::Size()) return createIndex(ModelRow, 0, ModelRow);
+    if (id < NumRows + mEditors.size() + ModelStore::Size() + ImageStore::Size()) return createIndex(TextureRow, 0, TextureRow);
 
     return QModelIndex();
 }
@@ -361,8 +387,8 @@ int Demo::Project::rowCount(const QModelIndex& parent) const {
     if (!parent.isValid()) return NumRows;
     int id = parent.internalId();
     if (id == GroupRow) return mEditors.size();
-    if (id == ModelRow) return mModels.size();
-    if (id == TextureRow) return mTarget->imageStore()->size();
+    if (id == ModelRow) return ModelStore::Size();
+    if (id == TextureRow) return ImageStore::Size();
 
     return 0;
 }
@@ -412,15 +438,15 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
 
     if (index.parent() == modelParent()) {
         if (role == Qt::DisplayRole) {
-            return QVariant::fromValue(mModels[index.row()].name);
+            return QVariant::fromValue(ModelStore::ModelName(index.row()));
         }
 
         if (role == Qt::ToolTipRole) {
-            return QVariant::fromValue(mModels[index.row()].filename);
+            return QVariant::fromValue(ModelStore::FileName(index.row()));
         }
 
         if (role == FileNameRole) {
-            return QVariant::fromValue(mModels[index.row()].filename);
+            return QVariant::fromValue(ModelStore::FileName(index.row()));
         }
 
         return QVariant();
@@ -428,15 +454,15 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
 
     if (index.parent() == textureParent()) {
         if (role == Qt::DisplayRole) {
-            return QVariant::fromValue(mTarget->imageStore()->imageName(index.row()));
+            return QVariant::fromValue(ImageStore::ImageName(index.row()));
         }
 
         if (role == Qt::ToolTipRole) {
-            return QVariant::fromValue(mTarget->imageStore()->fileName(index.row()));
+            return QVariant::fromValue(ImageStore::FileName(index.row()));
         }
 
         if (role == FileNameRole) {
-            return QVariant::fromValue(mTarget->imageStore()->fileName(index.row()));
+            return QVariant::fromValue(ImageStore::FileName(index.row()));
         }
 
         return QVariant();
@@ -496,41 +522,9 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
 
     if (index.parent() == modelParent()) {
         if (role == Qt::EditRole) {
-            if (mModels[index.row()].name != value.toString()) {
-                mModels[index.row()].name = value.toString();
-                mModified = true;
-                // TODO: update symbols & blob map
-                emit dataChanged(index, index);
-            }
-            return true;
-        }
-
-        if (role == FileRole) {
-            QString fname = value.toString();
-            if (mModels[index.row()].filename != fname) {
-                mModels[index.row()].filename = fname;
-                mModified = true;
-
-                QFile file(fname);
-                if (file.open(QFile::ReadOnly)) {
-                    // TODO: update blob
-                    file.close();
-                }
-
-                emit dataChanged(index, index);
-            }
-            return true;
-        }
-
-
-        return false;
-    }
-
-    if (index.parent() == textureParent()) {
-        if (role == Qt::EditRole) {
-            QString curr = mTarget->imageStore()->imageName(index.row());
+            QString curr = ModelStore::ModelName(index.row());
             if (curr != value.toString()) {
-                mTarget->imageStore()->rename(curr, value.toString());
+                ModelStore::Rename(curr, value.toString());
                 mModified = true;
                 emit dataChanged(index, index);
             }
@@ -539,8 +533,8 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
 
         if (role == FileRole) {
             QString fname = value.toString();
-            QString cfname = mTarget->imageStore()->fileName(index.row());
-            QString name = mTarget->imageStore()->imageName(index.row());
+            QString cfname = ModelStore::FileName(index.row());
+            QString name = ModelStore::ModelName(index.row());
 
             QFileInfo info(fname);
             if (info.isRelative()) {
@@ -550,7 +544,43 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
 
             if (info.exists() && info.isFile() && info.isReadable()) {
                 // TODO: throw error otherwise
-                mTarget->imageStore()->setImage(name, fname);
+                ModelStore::SetModel(name, fname);
+                if (cfname != fname) {
+                    mModified = true;
+                    emit dataChanged(index, index);
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    if (index.parent() == textureParent()) {
+        if (role == Qt::EditRole) {
+            QString curr = ImageStore::ImageName(index.row());
+            if (curr != value.toString()) {
+                ImageStore::Rename(curr, value.toString());
+                mModified = true;
+                emit dataChanged(index, index);
+            }
+            return true;
+        }
+
+        if (role == FileRole) {
+            QString fname = value.toString();
+            QString cfname = ImageStore::FileName(index.row());
+            QString name = ImageStore::ImageName(index.row());
+
+            QFileInfo info(fname);
+            if (info.isRelative()) {
+                fname = mProjectDir.absoluteFilePath(fname);
+                info = QFileInfo(fname);
+            }
+
+            if (info.exists() && info.isFile() && info.isReadable()) {
+                // TODO: throw error otherwise
+                ImageStore::SetImage(name, fname);
                 if (cfname != fname) {
                     mModified = true;
                     emit dataChanged(index, index);
@@ -593,23 +623,21 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
 
     } else if (parent == modelParent()) {
 
-        if (row >= mModels.size())
+        if (row >= ModelStore::Size())
             return false;
 
         beginRemoveRows(parent, row, row);
-        mModels.removeAt(row);
+        ModelStore::Remove(row);
         endRemoveRows();
-        // TODO: remove blob
 
     } else if (parent == textureParent()) {
 
-        if (row >= mTarget->imageStore()->size())
+        if (row >= ImageStore::Size())
             return false;
 
         beginRemoveRows(parent, row, row);
-        mTarget->imageStore()->remove(row);
+        ImageStore::Remove(row);
         endRemoveRows();
-        // TODO: remove texture blob
     }
 
     mModified = true;
@@ -634,13 +662,19 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
 
     } else if (parent == modelParent()) {
         beginInsertRows(parent, row, row);
-        NameTuple t;
-        t.name = name;
-        t.filename = file;
-        mModels.append(t);
-        endInsertRows();
+        QString fname = file;
+        QFileInfo info(fname);
+        if (info.isRelative()) {
+            fname = mProjectDir.absoluteFilePath(fname);
+            info = QFileInfo(fname);
+        }
 
-        // TODO add blob
+        if (info.exists() && info.isFile() && info.isReadable()) {
+            ModelStore::SetModel(name, fname);
+        } else {
+            ModelStore::SetModel(name);
+        }
+        endInsertRows();
 
     } else if (parent == textureParent()) {
         beginInsertRows(parent, row, row);
@@ -652,13 +686,12 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
         }
 
         if (info.exists() && info.isFile() && info.isReadable()) {
-            mTarget->imageStore()->setImage(name, fname);
+            ImageStore::SetImage(name, fname);
         } else {
-            mTarget->imageStore()->setImage(name);
+            ImageStore::SetImage(name);
         }
         endInsertRows();
 
-        // TODO add texture blob
     } else {
         return false;
     }

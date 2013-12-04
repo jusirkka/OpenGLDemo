@@ -1,12 +1,54 @@
 #include "imagestore.h"
 #include <QGLWidget>
 #include <QDebug>
+#include <QPluginLoader>
 
 GL::ImageStore::ImageStore()
     : QObject(),
       TexBlob()
 {
     setObjectName("imagestore");
+}
+
+static GL::ImageStore* staticInstance() {
+    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
+        GL::ImageStore* store = qobject_cast<GL::ImageStore*>(plugin);
+        if (store) return store;
+    }
+    return 0;
+}
+
+GL::ImageStore* GL::ImageStore::instance() {
+    static GL::ImageStore* store = staticInstance();
+    return store;
+}
+
+void GL::ImageStore::Clean() {
+    instance()->clean();
+}
+
+void GL::ImageStore::SetImage(const QString& key, const QString& path) {
+    instance()->setImage(key, path);
+}
+
+int GL::ImageStore::Size() {
+    return instance()->size();
+}
+
+const QString& GL::ImageStore::ImageName(int idx) {
+    return instance()->imageName(idx);
+}
+
+const QString& GL::ImageStore::FileName(int idx) {
+    return instance()->fileName(idx);
+}
+
+void GL::ImageStore::Rename(const QString& from, const QString& to) {
+    instance()->rename(from, to);
+}
+
+void GL::ImageStore::Remove(int index) {
+    instance()->remove(index);
 }
 
 
@@ -54,17 +96,17 @@ static const char* const plaid[] = {
     "x              m black  s dark_color ",
     "   c none               s mask ",
     /* pixels */
-    "                      x x x x x + x x x x x ",
-    "                    . x x x x x x x x x x x ",
-    "                  . x x x x x x + x x x x x ",
-    "                . x . x x x x x x x x x x x ",
-    "              . x . x x x x x x + x x x x x ",
-    "            Y Y Y Y Y + x + x + x + x + x + ",
-    "          x x . x . x x x x x x + x x x x x ",
-    "        . x . x . x . x x x x x x x x x x x ",
-    "      . x x x . x . x x x x x x + x x x x x ",
-    "    . x . x . x . x . x x x x x x x x x x x ",
-    "  . x . x x x . x . x x x x x x + x x x x x ",
+    "x . x . x + x . x . x x x x x x + x x x x x ",
+    ". x . x . x . x . x . x x x x x x x x x x x ",
+    "x . x . x + x . x . x x x x x x + x x x x x ",
+    ". x . x . x . x . x . x x x x x x x x x x x ",
+    "x . x . x + x . x . x x x x x x + x x x x x ",
+    "x x x x x x x x x x x + x + x + x + x + x + ",
+    ". x . x . x x . x . x x x x x x + x x x x x ",
+    "x . x . x + . x . x . x x x x x x x x x x x ",
+    ". x . x . x . x . x . x x x x x + x x x x x ",
+    "x . x . x + x . x . x x x x x x x x x x x x ",
+    "x . x . x x x . x . x x x x x x + x x x x x ",
     ". . . . . x . . . . . x . x . x Y x . x . x ",
     ". . . . . x . . . . . . x . x . Y . x . x . ",
     ". . . . . x . . . . . x . x . x Y x . x . x ",

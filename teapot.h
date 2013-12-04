@@ -18,7 +18,7 @@ public:
 
     Teapot();
 
-    void draw(unsigned int mode) const;
+    void draw(unsigned int mode, const QString& attr) const;
 
     ~Teapot();
 

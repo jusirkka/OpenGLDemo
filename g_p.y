@@ -5,11 +5,11 @@ extern "C"
 {
     #include <stdio.h>
 
-    int yyparse(void);
-    int yylex(void);
-    void yyerror(const char *);
+    int g_pparse(void);
+    int g_plex(void);
+    void g_perror(const char *);
 
-    int yywrap(void) {return 1;}
+    int s_pwrap(void) {return 1;}
 
 }
 

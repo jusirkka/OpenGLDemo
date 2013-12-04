@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "scanner_types.h"
-#include "grammar.h"
+#include "s_p_types.h"
+#include "g_p.h"
+
+#define yylval g_plval
+#define yylloc g_plloc
 
 #define YY_USER_ACTION  \
     yylloc.col = yylloc.prev_col; yylloc.prev_col += yyleng; yylloc.pos = yylloc.prev_pos; yylloc.prev_pos += yyleng;
@@ -14,10 +17,12 @@
 #define my_init_line \
     yylloc.row++; yylloc.prev_col = 0;
 
+#define YY_DECL int g_plex (void)
+
 %}
 
 
-%option header-file="scanner.h"
+%option header-file="s_p.h"
 
 dig             [0-9]
 unum            {dig}+
@@ -105,7 +110,7 @@ execute         Execute
 
 char parser_error_buffer[256];
 
-void yyerror(const char *str) {
+void g_perror(const char *str) {
     strcpy(parser_error_buffer, str);
 /*    fprintf(stderr,"error at line %d, column %d: %s\n",
             yylloc.first_line,

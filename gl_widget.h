@@ -41,7 +41,6 @@ public:
     ResourceList& textures() {return mTextures;}
     const GL::Blob& blob(int index) const {return *mBlobs[index];}
     const GL::TexBlob& texBlob(int index) const {return *mTexBlobs[index];}
-    GL::ImageStore* imageStore() {return mImageStore;}
     void setProject(Project* p);
 
     virtual ~GLWidget();
@@ -60,6 +59,7 @@ protected:
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event);
 
 private:
 
@@ -68,6 +68,48 @@ private:
 
     typedef QList<GL::Blob*> BlobList;
     typedef QList<GL::TexBlob*> TexBlobList;
+
+    class Mover {
+    public:
+        Mover(Demo::GLWidget* owner):
+            parent(owner) {}
+
+        Demo::GLWidget* parent;
+
+        virtual void move() {}
+        virtual ~Mover() {}
+    };
+
+    class Zoomer: public Mover {
+    public:
+        Zoomer(Demo::GLWidget* owner):
+            Mover(owner) {}
+
+        void move() {parent->zoom();}
+        virtual ~Zoomer() {}
+    };
+
+    class Spinner: public Mover {
+    public:
+        Spinner(Demo::GLWidget* owner):
+            Mover(owner) {}
+
+        void move() {parent->spin();}
+        virtual ~Spinner() {}
+    };
+
+    class Panner: public Mover {
+    public:
+        Panner(Demo::GLWidget* owner):
+            Mover(owner) {}
+
+        void move() {parent->pan();}
+        virtual ~Panner() {}
+    };
+
+    friend class Spinner;
+    friend class Zoomer;
+    friend class Panner;
 
 signals:
 
@@ -80,9 +122,13 @@ private:
     void defaults();
     void addBlob(QObject*);
 
+    void zoom();
+    void spin();
+    void pan();
+
 private slots:
 
-    void spin();
+    void move();
 
 
 private:
@@ -103,7 +149,7 @@ private:
     QTimer* mTimer;
     Project* mProject;
     Project* mDefaultProject;
-    GL::ImageStore* mImageStore;
+    Mover* mMover;
 
 };
 

@@ -120,14 +120,13 @@ private:
         QString filename;
     };
 
+    typedef QList<NameTuple> NameList;
     typedef QList<EditorTuple> EditorList;
 
     static const int GroupRow = 0;
     static const int ModelRow = 1;
     static const int TextureRow = 2;
     static const int NumRows = 3;
-
-    typedef QList<NameTuple> NameList;
 
 private:
 
@@ -140,7 +139,6 @@ private:
     QDir mProjectDir;
     QString mProjectIni;
     EditorList mEditors;
-    NameList mModels;
     CodeEditor* mInit;
     CodeEditor* mDraw;
     GLWidget* mTarget;

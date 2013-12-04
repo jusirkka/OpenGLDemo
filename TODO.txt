@@ -1,12 +1,20 @@
-- object model loader
-- bug: segfault when init group changes
-- bug: init changes not activated
-- rest of the opengl es2 statements
-- plugin help
-- run time / syntax error indicator on left column
-- camera zoom + pan
-- autoapply / apply button
-- undo/redo
 - animation start/stop button + spinbox + shared var 'time'
+- autoapply and apply actions
+- check that project model indices are ok after setModel (in case old deleted)
+- bug: pan
+- bug: modelstore:clean: free memory
+- bug: tab titles not updated after rename
+- bug: modelstore not updated after opening model
+- bug: files are appended rather than replaced when opening a group
+- run time / syntax error indicator on left column
+- bug: scene not updated after edits in sub groups
+- obj:group support
+- rest of the opengl es2 statements
+- undo/redo
 - shadersource command
-
+- code completion
+- plugin help
+- plugin config
+- re-entrant scanners / parsers
+- model scanner / parser: SPACE as token
+- TEXT add operations in group parser

@@ -25,11 +25,11 @@
 extern "C"
 {
 
-#include "scanner.h"
-#include "scanner_types.h"
+#include "s_p.h"
+#include "s_p_types.h"
 
-int yyparse(void);
-extern int yydebug;
+int g_pparse(void);
+extern int g_pdebug;
 
 extern char parser_error_buffer[256];
 
@@ -50,11 +50,11 @@ using Math3D::Matrix4;
 
 void Demo::Parser::ParseIt(const QString& name, const QString& inp) {
     instance().init(name);
-    yydebug = 0;
-    yy_scan_string(inp.toAscii().data());
-    int err = yyparse();
-    yylex_destroy();
-    if (err) throw ParseError(QString(parser_error_buffer), yylloc.row, yylloc.col, yylloc.pos);
+    g_pdebug = 0;
+    s_p_scan_string(inp.toAscii().data());
+    int err = g_pparse();
+    s_plex_destroy();
+    if (err) throw ParseError(QString(parser_error_buffer), g_plloc.row, g_plloc.col, g_plloc.pos);
 }
 
 Demo::Runner* Demo::Parser::CreateRunner() {

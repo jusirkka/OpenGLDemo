@@ -46,7 +46,7 @@ public:
     const void* bytes(unsigned int target) const {return mData[target].data;}
     const BlobSpec spec(const QString& key) const {return mSpecs[key];}
 
-    virtual void draw(unsigned int mode) const = 0;
+    virtual void draw(unsigned int mode, const QString& attr) const = 0;
 
     virtual ~Blob() {}
 
@@ -56,7 +56,7 @@ protected:
 
     class Data {
     public:
-        Data(void* d, unsigned int l)
+        Data(char* d, unsigned int l)
             : data(d),
               length(l)
         {}
@@ -66,7 +66,7 @@ protected:
               length(0)
         {}
 
-        void* data;
+        char* data;
         unsigned int length;
     };
 

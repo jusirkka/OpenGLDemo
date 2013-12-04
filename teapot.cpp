@@ -632,8 +632,11 @@ GL::Teapot::Teapot()
 }
 
 
-void GL::Teapot::draw(unsigned int mode) const {
+void GL::Teapot::draw(unsigned int mode, const QString&) const {
     if (!mSupported.contains(mode)) return;
+    int name;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &name);
+    if (name == 0) return;
     foreach (Element item, mElements) {
         glDrawElements((GLenum) mModes[item.mode][mode], (GLsizei) item.count, GL_UNSIGNED_INT, (void*) item.offset);
     }

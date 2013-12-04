@@ -133,6 +133,7 @@ void Demo::MainWindow::on_actionSaveAll_triggered() {
         if (fname.isEmpty()) return;
         qDebug() << "on_actionSaveAll_triggered" << fname;
         mProject->setProjectFile(fname);
+        setWindowTitle(QString("%1: %2 [*]").arg(QApplication::applicationName(), fname));
     }
 
     mProject->saveProject();
@@ -195,6 +196,7 @@ void Demo::MainWindow::on_actionSave_triggered() {
 
     if (info.isFile() && info.isWritable()) {
         saveGroup(fname);
+        dataChanged();
     } else {
         on_actionSaveAs_triggered();
     }
@@ -210,8 +212,8 @@ void Demo::MainWindow::on_actionSaveAs_triggered() {
         "OpenGL command files (*.ogl)"
     );
     if (fname.isEmpty()) return;
-    mProject->setData(mSelectedIndex, QVariant::fromValue(fname), Project::FileNameRole);
     saveGroup(fname);
+    mProject->setData(mSelectedIndex, QVariant::fromValue(fname), Project::FileNameRole);
 }
 
 void Demo::MainWindow::on_actionDelete_triggered() {
@@ -396,7 +398,7 @@ bool Demo::MainWindow::maybeSaveProject() {
 
 bool Demo::MainWindow::maybeSave() {
     if (mSelectedIndex.parent() != mProject->groupParent())
-        return false;
+        return true;
     bool cancel = false;
     QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
     CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
@@ -440,12 +442,15 @@ void Demo::MainWindow::saveGroup(const QString &fname) {
 
 
 void Demo::MainWindow::openProject(const QString &data, bool isDir) {
+    QString title = windowTitle();
     try {
         Project* newp;
         if (isDir) {
             newp = new Project(QDir(data), mGLWidget);
+            title = QString("%1: new project [*]").arg(QApplication::applicationName());
         } else {
             newp = new Project(data, mGLWidget);
+            title = QString("%1: %2 [*]").arg(QApplication::applicationName(), data);
         }
         mUI->commandGroups->setModel(newp);
         mUI->commandGroups->setRootIndex(newp->groupParent());
@@ -475,11 +480,12 @@ void Demo::MainWindow::openProject(const QString &data, bool isDir) {
         setAllModified(false);
     } catch (BadProject& e) {
         if (!mProject) {
+            title = QString("%1 [*]").arg(QApplication::applicationName());
             mUI->actionNew->setEnabled(false);
         }
         qDebug() << e.msg();
     }
-
+    setWindowTitle(title);
 }
 
 

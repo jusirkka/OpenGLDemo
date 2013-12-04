@@ -21,7 +21,8 @@ Demo::GLWidget::GLWidget(QWidget *parent):
     QGLWidget(parent),
     QGLFunctions(),
     mInitialized(false),
-    mDim(500)
+    mDim(500),
+    mMover(new Mover(this))
 {
     GL::Functions funcs(this);
     foreach(Symbol* func, funcs.contents) Parser::AddSymbol(func);
@@ -48,7 +49,7 @@ Demo::GLWidget::GLWidget(QWidget *parent):
     }
 
     mTimer = new QTimer(this);
-    connect(mTimer, SIGNAL(timeout()), this, SLOT(spin()));
+    connect(mTimer, SIGNAL(timeout()), this, SLOT(move()));
 }
 
 
@@ -64,9 +65,6 @@ void Demo::GLWidget::addBlob(QObject* plugin) {
         mBlobs.append(blob);
         return;
     }
-
-    GL::ImageStore* store = qobject_cast<GL::ImageStore*>(plugin);
-    if (store) mImageStore = store;
 
     GL::TexBlob* texBlob = qobject_cast<GL::TexBlob*>(plugin);
     if (texBlob) {
@@ -115,7 +113,7 @@ void Demo::GLWidget::resizeGL(int w, int h) {
     Real a = Real(w) / Real(h);
     Real ct = 1 / tan(Math3D::PI / 180 * 45 / 2);
     Real n = 1;
-    Real f = 30;
+    Real f = 80;
     mProj.setIdentity();
     // column first
     mProj(0)[0] = ct / a;
@@ -129,14 +127,31 @@ void Demo::GLWidget::resizeGL(int w, int h) {
 }
 
 
+
 void Demo::GLWidget::mousePressEvent(QMouseEvent* event) {
     mDx = mDy = 0;
     mLastPos = event->pos();
     mTimer->stop();
 }
 
-void Demo::GLWidget::mouseReleaseEvent(QMouseEvent*) {
-    if ((mDx != 0) || (mDy != 0)) mTimer->start(40);
+void Demo::GLWidget::mouseDoubleClickEvent(QMouseEvent*) {
+    mCamera->reset();
+    mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    updateGL();
+}
+
+void Demo::GLWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if ((mDx != 0) || (mDy != 0)) {
+        delete mMover;
+        if (event->modifiers() & Qt::ShiftModifier) {
+            mMover = new Zoomer(this);
+        } else if (event->modifiers() & Qt::ControlModifier) {
+            mMover = new Panner(this);
+        } else {
+            mMover = new Spinner(this);
+        }
+        mTimer->start(40);
+    }
 }
 
 static float gravity(int dx) {
@@ -155,7 +170,13 @@ void Demo::GLWidget::mouseMoveEvent(QMouseEvent* event) {
     if (event->buttons() & Qt::LeftButton) {
         mDx = event->x() - mLastPos.x();
         mDy = event->y() - mLastPos.y();
-        spin();
+        if (event->modifiers() & Qt::ShiftModifier) {
+            zoom();
+        } else if (event->modifiers() & Qt::ControlModifier) {
+            pan();
+        } else {
+            spin();
+        }
         mDx = gravity(mDx);
         mDy = gravity(mDy);
     }
@@ -171,7 +192,22 @@ void Demo::GLWidget::spin() {
     updateGL();
 }
 
+void Demo::GLWidget::pan() {
+    mCamera->pan(float(mDx) / mDim, float(mDy) / mDim);
+    mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    updateGL();
+}
 
+void Demo::GLWidget::zoom() {
+    float dz = 0.05 * mDy;
+    mCamera->zoom(dz);
+    mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    updateGL();
+}
+
+void Demo::GLWidget::move() {
+    mMover->move();
+}
 
 #define ALT(item) case item: qDebug() << #item; break
 

@@ -18,25 +18,44 @@ using Math3D::Real;
 
 Camera::Camera(const Vector4& eye)
 {
-    mTrans.setTranslation(- eye);
+    mTransReset.setTranslation(- eye);
+    mTrans = mTransReset;
+    mCenter.setTranslation(Vector4(0, 0, 0));
     mRot.setIdentity();
-    mTot = mRot * mTrans;
+    mTot = mTrans * mRot * mCenter;
 }
 
 
 void Camera::rotate(float phi, float theta) {
     Matrix4 r;
-//    float cp = cos(phi);
-//    float sp = sin(phi);
-//    float ct = cos(theta);
-//    float st = sin(theta);
-//    Vector4 x(1 - cp*cp * (1-ct), -sp*cp*(1-ct), -cp*st);
-//    Vector4 y(sp*cp*(1-ct), 1 - sp*sp * (1-ct), -sp*st);
-//    Vector4 z(cp*st, sp*st, ct);
-    // r.setBasis(x, y, z);
     r.setRotation(theta, Vector4(sin(phi), cos(phi), 0));
     mRot = r * mRot;
-    mTot = mTrans * mRot;
+    mTot = mTrans * mRot * mCenter;
+}
+
+void Camera::pan(float dx, float dy) {
+    Vector4 t = mTrans.translation();
+    float len = t.length3();
+    Matrix4 c;
+    t -= len * mRot.transpose3() * Vector4(dx, dy, 0);
+    c.setTranslation(len * t.normalized3());
+    mCenter *= c;
+    mTot = mTrans * mRot * mCenter;
+}
+
+void Camera::zoom(float dz) {
+    Vector4 t = mTrans.translation();
+    float len = t.length3();
+    if (len + dz < 0.1) return;
+    mTrans.setTranslation( (len + dz) / len * t);
+    mTot = mTrans * mRot * mCenter;
+}
+
+void Camera::reset() {
+    mTrans = mTransReset;
+    mCenter.setTranslation(Vector4(0, 0, 0));
+    mRot.setIdentity();
+    mTot = mTrans * mRot * mCenter;
 }
 
 const Matrix4& Camera::trans() const {

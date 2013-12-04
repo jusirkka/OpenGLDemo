@@ -22,7 +22,9 @@ typedef struct YYLTYPE
   int prev_pos;
 } YYLTYPE;
 
-extern YYLTYPE yylloc;
+extern YYLTYPE g_plloc;
+
+extern int g_plex (void);
 
 
 #endif // SCANNER_TYPES_H
