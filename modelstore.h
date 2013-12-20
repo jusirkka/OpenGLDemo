@@ -88,7 +88,7 @@ private:
 
 
     void rename(const QString& from, const QString& to);
-    void remove(int index);
+    void remove(int index, bool keepNames = false);
     void setModel(const QString& key, const QString& path);
     void clean();
     int size();

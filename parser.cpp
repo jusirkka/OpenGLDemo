@@ -125,10 +125,13 @@ Demo::Parser::Parser()
     // shared matrices
     addSymbol(new Var::Shared::Matrix("camera"));
     addSymbol(new Var::Shared::Matrix("projection"));
+    // shared time variable
+    addSymbol(new Var::Shared::Natural("time"));
 
     // in glwidget
     mSharedCounts["camera"] = 1;
     mSharedCounts["projection"] = 1;
+    mSharedCounts["time"] = 1;
 
     // constants
     Constants cons;

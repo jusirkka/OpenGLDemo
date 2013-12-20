@@ -24,6 +24,7 @@
 #include "gl_widget.h"
 #include "project.h"
 #include "codeeditor.h"
+#include "fpscontrol.h"
 
 #include <QtDebug>
 #include <QMessageBox>
@@ -47,6 +48,10 @@ Demo::MainWindow::MainWindow(const QString& project):
 
     mUI->setupUi(this);
 
+    FPSControl* fps = new FPSControl();
+    connect(fps, SIGNAL(valueChanged(int)), this, SLOT(fps_changed(int)));
+    mUI->animBar->addWidget(fps);
+
     mGLWidget = new GLWidget(mUI->graphicsDockContents);
     mUI->graphicsDockLayout->addWidget(mGLWidget);
 
@@ -57,6 +62,7 @@ Demo::MainWindow::MainWindow(const QString& project):
     mUI->commandGroups->addAction(mUI->actionSaveAs);
     mUI->commandGroups->addAction(mUI->actionRename);
     mUI->commandGroups->addAction(mUI->actionEdit);
+    mUI->commandGroups->addAction(mUI->actionCompile);
     mUI->commandGroups->addAction(mUI->actionDelete);
 
     mUI->models->addAction(mUI->actionOpen);
@@ -266,6 +272,22 @@ void Demo::MainWindow::on_editorsTabs_tabCloseRequested(int index) {
     mUI->editorsTabs->removeTab(index);
 }
 
+void Demo::MainWindow::on_actionPlay_triggered() {
+    mUI->actionPause->setEnabled(true);
+    mUI->actionPlay->setEnabled(false);
+    mGLWidget->animStart();
+}
+
+void Demo::MainWindow::on_actionPause_triggered() {
+    mUI->actionPlay->setEnabled(true);
+    mUI->actionPause->setEnabled(false);
+    mGLWidget->animStop();
+}
+
+void Demo::MainWindow::fps_changed(int value) {
+    mGLWidget->animReset(value);
+}
+
 void Demo::MainWindow::selectionChanged() {
     const QItemSelectionModel* s = mUI->commandGroups->selectionModel();
     if (s->hasSelection()) {
@@ -286,6 +308,8 @@ void Demo::MainWindow::selectionChanged() {
             mUI->actionEdit->setEnabled(true);
             mUI->actionDelete->setEnabled(true);
 
+            mUI->actionCompile->setDisabled(mUI->actionAutocompile->isChecked());
+
             mUI->actionReload->setEnabled(false);
 
 
@@ -296,6 +320,7 @@ void Demo::MainWindow::selectionChanged() {
             mUI->actionSaveAs->setEnabled(false);
             mUI->actionRename->setEnabled(true);
             mUI->actionEdit->setEnabled(false);
+            mUI->actionCompile->setEnabled(false);
             mUI->actionDelete->setEnabled(true);
             mUI->actionReload->setEnabled(true);
 
@@ -308,6 +333,7 @@ void Demo::MainWindow::selectionChanged() {
         mUI->actionSaveAs->setEnabled(false);
         mUI->actionRename->setEnabled(false);
         mUI->actionEdit->setEnabled(false);
+        mUI->actionCompile->setEnabled(false);
         mUI->actionDelete->setEnabled(false);
         mUI->actionReload->setEnabled(false);
     }
@@ -330,6 +356,31 @@ void Demo::MainWindow::setAllModified(bool mod) {
     setWindowModified(mod);
     mUI->actionSaveAll->setEnabled(mod);
 }
+
+void Demo::MainWindow::on_actionAutocompile_toggled(bool on) {
+    mUI->actionCompile->setDisabled(true);
+    const QItemSelectionModel* s = mUI->commandGroups->selectionModel();
+    if (s && s->hasSelection()) {
+        QModelIndex index = s->selectedIndexes()[0];
+        if (index.parent() == mProject->groupParent()) {
+            mUI->actionCompile->setDisabled(on);
+        }
+    }
+    if (mProject) mProject->toggleAutoCompile(on);
+}
+
+void Demo::MainWindow::on_actionCompile_triggered() {
+    const QItemSelectionModel* s = mUI->commandGroups->selectionModel();
+    if (s->hasSelection()) {
+        QModelIndex index = s->selectedIndexes()[0];
+        if (index.parent() == mProject->groupParent()) {
+            QWidget* widget = mProject->data(index, Project::EditorRole).value<QWidget*>();
+            CodeEditor* ed = qobject_cast<CodeEditor*>(widget);
+            ed->parse();
+        }
+    }
+}
+
 
 void Demo::MainWindow::setupCombos() {
 
@@ -446,10 +497,10 @@ void Demo::MainWindow::openProject(const QString &data, bool isDir) {
     try {
         Project* newp;
         if (isDir) {
-            newp = new Project(QDir(data), mGLWidget);
+            newp = new Project(QDir(data), mGLWidget, mUI->actionAutocompile->isChecked());
             title = QString("%1: new project [*]").arg(QApplication::applicationName());
         } else {
-            newp = new Project(data, mGLWidget);
+            newp = new Project(data, mGLWidget, mUI->actionAutocompile->isChecked());
             title = QString("%1: %2 [*]").arg(QApplication::applicationName(), data);
         }
         mUI->commandGroups->setModel(newp);

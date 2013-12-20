@@ -92,9 +92,16 @@ private slots:
 
     void on_editorsTabs_tabCloseRequested(int index);
 
+    void on_actionPlay_triggered();
+    void on_actionPause_triggered();
+    void fps_changed(int);
+
     void selectionChanged();
     void dataChanged();
     void setAllModified(bool = true);
+
+    void on_actionAutocompile_toggled(bool on);
+    void on_actionCompile_triggered();
 
 private:
 

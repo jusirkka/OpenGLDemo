@@ -72,13 +72,24 @@ CodeEditor::CodeEditor(Project* owner)
     highlightCurrentLine();
 
     mParseDelay->setInterval(1000);
-    connect(this, SIGNAL(textChanged()), mParseDelay, SLOT(start()));
-    connect(mParseDelay, SIGNAL(timeout()), this, SLOT(parse()));
+    toggleAutoParse(owner->autoCompileEnabled());
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setLineWrapMode(QPlainTextEdit::NoWrap);
 
     mHighlight = new Highlight(document());
+}
+
+
+void CodeEditor::toggleAutoParse(bool on) {
+    if (on) {
+        connect(this, SIGNAL(textChanged()), mParseDelay, SLOT(start()));
+        connect(mParseDelay, SIGNAL(timeout()), this, SLOT(parse()));
+    } else {
+        mParseDelay->stop();
+        disconnect(this, SIGNAL(textChanged()), mParseDelay, SLOT(start()));
+        disconnect(mParseDelay, SIGNAL(timeout()), this, SLOT(parse()));
+    }
 }
 
 void CodeEditor::parse() {

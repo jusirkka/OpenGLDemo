@@ -54,31 +54,38 @@ void Demo::Project::init_and_connect() {
     connect(mTarget, SIGNAL(evaluate(QString,QString)), this, SLOT(dispatcher(QString,QString)));
 }
 
-Demo::Project::Project(const QDir& pdir, GLWidget* target)
+Demo::Project::Project(const QDir& pdir, GLWidget* target, bool autoCompileOn)
     :QAbstractItemModel(target),
       mProjectDir(pdir),
       mProjectIni(""),
-      mTarget(target)
+      mInit(0),
+      mDraw(0),
+      mTarget(target),
+      mAutoCompileOn(autoCompileOn)
 {
     if (!mProjectDir.exists() || !mProjectDir.isReadable())
         throw BadProject(QString("Project dir %1 is not readable").arg(mProjectDir.absolutePath()));
 
     init_and_connect();
 
-    mInit = appendEditor("Init", "clearcolor vec(.1,.2,.2,1);\n", "");
-    mDraw = appendEditor("Draw", "clear color_buffer_bit;\n", "");
+    appendEditor("Init", "clearcolor vec(.1,.2,.2,1);\n", "");
+    appendEditor("Draw", "clear color_buffer_bit;\n", "");
 
     ImageStore::Clean();
     ModelStore::Clean();
 
+    setInitGroup("Init");
+    setDrawGroup("Draw");
+
     mModified = false;
 }
 
-Demo::Project::Project(const QString& fullpath, GLWidget* target)
+Demo::Project::Project(const QString& fullpath, GLWidget* target, bool autoCompileOn)
     :QAbstractItemModel(target),
       mInit(0),
       mDraw(0),
-      mTarget(target)
+      mTarget(target),
+      mAutoCompileOn(autoCompileOn)
 {
     init_and_connect();
 
@@ -113,13 +120,6 @@ Demo::Project::Project(const QString& fullpath, GLWidget* target)
         gfile.close();
 
     }
-    project.endGroup();
-
-    project.beginGroup("Roles");
-    QString initKey = project.value("Init", "unknown_init").toString();
-    setInitGroup(initKey);
-    QString drawKey = project.value("Draw", "unknown_draw").toString();
-    setDrawGroup(drawKey);
     project.endGroup();
 
     project.beginGroup("Models");
@@ -177,6 +177,13 @@ Demo::Project::Project(const QString& fullpath, GLWidget* target)
     foreach(NameTuple t, models) {
         ModelStore::SetModel(t.name, t.filename);
     }
+
+    project.beginGroup("Roles");
+    QString initKey = project.value("Init", "unknown_init").toString();
+    setInitGroup(initKey);
+    QString drawKey = project.value("Draw", "unknown_draw").toString();
+    setDrawGroup(drawKey);
+    project.endGroup();
 
     mModified = false;
 }
@@ -330,9 +337,17 @@ CodeEditor* Demo::Project::appendEditor(const QString& name, const QString& grou
     t.editor = editor;
     t.filename = file;
     mEditors.append(t);
+    editor->parse();
     return editor;
 }
 
+void Demo::Project::toggleAutoCompile(bool on) {
+    mAutoCompileOn = on;
+    foreach (EditorTuple t, mEditors) {
+        CodeEditor* ed = t.editor;
+        ed->toggleAutoParse(on);
+    }
+}
 
 QModelIndex Demo::Project::groupParent() const{
     return index(GroupRow, QModelIndex());

@@ -80,6 +80,12 @@ public:
     void appendChild(CodeEditor* kid) {mKids.append(kid);}
     const EditorList& children() const {return mKids;}
 
+    void toggleAutoParse(bool on);
+
+public slots:
+
+    void parse();
+
 protected:
     void resizeEvent(QResizeEvent *event);
 
@@ -88,8 +94,6 @@ private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &, int);
-
-    void parse();
 
 signals:
 

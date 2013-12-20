@@ -164,7 +164,7 @@ void GL::ModelStore::rename(const QString& from, const QString& to) {
     }
 }
 
-void GL::ModelStore::remove(int index) {
+void GL::ModelStore::remove(int index, bool keepNames) {
     QString name = mNames[index];
 
     mSpecs.remove(name + ":vertex");
@@ -202,8 +202,11 @@ void GL::ModelStore::remove(int index) {
     mData[GL_ELEMENT_ARRAY_BUFFER] = Data(data, mData[GL_ELEMENT_ARRAY_BUFFER].length - len);
 
     mModels.remove(name);
-    mNames.removeAt(index);
-    mFileNames.removeAt(index);
+
+    if (!keepNames) {
+        mNames.removeAt(index);
+        mFileNames.removeAt(index);
+    }
 
     // fix offsets + specs of other models
     foreach (QString other, mNames) {
@@ -251,9 +254,12 @@ void GL::ModelStore::parseModelData(const QString& path) {
 void GL::ModelStore::setModel(const QString& key, const QString& path) {
     try {
         parseModelData(path);
-        if (mModels.contains(key)) remove(mNames.indexOf(key));
-        mNames.append(key);
-        mFileNames.append(path);
+        if (mModels.contains(key)) {
+            remove(mNames.indexOf(key), true);
+        } else {
+            mNames.append(key);
+            mFileNames.append(path);
+        }
         // model
         Model model;
         model.vertexOffset = mData[GL_ARRAY_BUFFER].length;

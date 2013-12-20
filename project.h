@@ -42,14 +42,16 @@ public:
 
 public:
     // create new project
-    Project(const QDir& pdir, GLWidget* target);
+    Project(const QDir& pdir, GLWidget* target, bool autoCompileOn);
     // parse existing project
-    Project(const QString& fullpath, GLWidget* target);
+    Project(const QString& fullpath, GLWidget* target, bool autoCompileOn);
 
     const QDir& directory() const {return mProjectDir;}
     const QString& projectFile() const {return mProjectIni;}
     void setProjectFile(const QString& fname);
     bool modified() const {return mModified;}
+    bool autoCompileEnabled() const {return mAutoCompileOn;}
+    void toggleAutoCompile(bool on);
 
     void saveProject();
 
@@ -143,6 +145,7 @@ private:
     CodeEditor* mDraw;
     GLWidget* mTarget;
     bool mModified;
+    bool mAutoCompileOn;
 };
 
 }

@@ -21,7 +21,6 @@ namespace Demo {
 
 class Variable;
 class Runner;
-class Project;
 
 class GLWidget : public QGLWidget, public QGLFunctions {
 
@@ -41,7 +40,10 @@ public:
     ResourceList& textures() {return mTextures;}
     const GL::Blob& blob(int index) const {return *mBlobs[index];}
     const GL::TexBlob& texBlob(int index) const {return *mTexBlobs[index];}
-    void setProject(Project* p);
+
+    void animStart();
+    void animStop();
+    void animReset(int);
 
     virtual ~GLWidget();
 
@@ -129,6 +131,7 @@ private:
 private slots:
 
     void move();
+    void anim();
 
 
 private:
@@ -142,13 +145,14 @@ private:
     Variable* mCameraVar;
     Variable* mProjectionVar;
     Camera* mCamera;
+    int mTime;
+    Variable* mTimeVar;
     Math3D::Matrix4 mProj;
     int mDx, mDy, mDim;
     QPoint mLastPos;
     bool mGravity;
     QTimer* mTimer;
-    Project* mProject;
-    Project* mDefaultProject;
+    QTimer* mAnimTimer;
     Mover* mMover;
 
 };

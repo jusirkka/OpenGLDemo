@@ -129,6 +129,8 @@ public:
     inline Matrix4& setBasis(const Vector4& v, const Vector4& n); // (13)
     inline Matrix4& setBasis(const Vector4& u, const Vector4& v, const Vector4& n); // (14)
 
+    inline Vector4 row3(int i) const; // (14b)
+
 private:
 
     Real e[16];
@@ -410,6 +412,9 @@ inline Matrix4& Matrix4::setBasis(const Vector4& u, const Vector4& v, const Vect
     return *this;
 }
 
+inline Vector4 Matrix4::row3(int i) const {
+    return Vector4(e[i], e[4 + i], e[8 + i]);
+}
 
 
 // ---------------- (15) ----------------------------------------

@@ -3,7 +3,6 @@
 #include "runner.h"
 #include "gl_functions.h"
 #include "camera.h"
-#include "project.h"
 #include "imagestore.h"
 
 #include <QDebug>
@@ -31,9 +30,12 @@ Demo::GLWidget::GLWidget(QWidget *parent):
 
     mCameraVar = dynamic_cast<Variable*>(Parser::Symbols()["camera"])->clone();
     mProjectionVar = dynamic_cast<Variable*>(Parser::Symbols()["projection"])->clone();
-    mCamera = new Camera(Vector4(0, 1.25, 10));
+    mCamera = new Camera(Vector4(0, 1.25, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
 
+    mTime = 0;
+    mTimeVar = dynamic_cast<Variable*>(Parser::Symbols()["time"])->clone();
+    mTimeVar->setValue(QVariant::fromValue(mTime));
 
     // retrieve blobs
     foreach (QObject *plugin, QPluginLoader::staticInstances()) {
@@ -49,7 +51,11 @@ Demo::GLWidget::GLWidget(QWidget *parent):
     }
 
     mTimer = new QTimer(this);
+    mTimer->setInterval(1000/25);
     connect(mTimer, SIGNAL(timeout()), this, SLOT(move()));
+    mAnimTimer = new QTimer(this);
+    mAnimTimer->setInterval(1000/25);
+    connect(mAnimTimer, SIGNAL(timeout()), this, SLOT(anim()));
 }
 
 
@@ -137,6 +143,8 @@ void Demo::GLWidget::mousePressEvent(QMouseEvent* event) {
 void Demo::GLWidget::mouseDoubleClickEvent(QMouseEvent*) {
     mCamera->reset();
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    mTime = 0;
+    mTimeVar->setValue(QVariant::fromValue(mTime));
     updateGL();
 }
 
@@ -150,14 +158,14 @@ void Demo::GLWidget::mouseReleaseEvent(QMouseEvent* event) {
         } else {
             mMover = new Spinner(this);
         }
-        mTimer->start(40);
+        mTimer->start();
     }
 }
 
 static float gravity(int dx) {
-    float threshold = 3;
-    float k = 2.0;
-    float cutoff = 10;
+    float threshold = 2;
+    float k = 1.0;
+    float cutoff = 50;
 
     if (abs(dx) >= cutoff) return dx / abs(dx) * k * cutoff ;
     if (abs(dx) >= threshold) return k * dx;
@@ -193,7 +201,9 @@ void Demo::GLWidget::spin() {
 }
 
 void Demo::GLWidget::pan() {
-    mCamera->pan(float(mDx) / mDim, float(mDy) / mDim);
+    float theta = sqrt(mDx*mDx+mDy*mDy) / mDim * 4 * Math3D::PI;
+    float phi = atan2f(mDy, mDx);
+    mCamera->pan(phi, theta);
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
     updateGL();
 }
@@ -207,6 +217,24 @@ void Demo::GLWidget::zoom() {
 
 void Demo::GLWidget::move() {
     mMover->move();
+}
+
+void Demo::GLWidget::animStart() {
+    mAnimTimer->start();
+}
+
+void Demo::GLWidget::animStop() {
+    mAnimTimer->stop();
+}
+
+void Demo::GLWidget::animReset(int fps) {
+    mAnimTimer->setInterval(1000/fps);
+}
+
+void Demo::GLWidget::anim() {
+    mTime += 1;
+    mTimeVar->setValue(QVariant::fromValue(mTime));
+    updateGL();
 }
 
 #define ALT(item) case item: qDebug() << #item; break

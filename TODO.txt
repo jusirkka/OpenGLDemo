@@ -1,11 +1,8 @@
-- animation start/stop button + spinbox + shared var 'time'
-- autoapply and apply actions
-- check that project model indices are ok after setModel (in case old deleted)
-- bug: pan
-- bug: modelstore:clean: free memory
+- bug: modelstore::clean: free memory
 - bug: tab titles not updated after rename
 - bug: modelstore not updated after opening model
 - bug: files are appended rather than replaced when opening a group
+- bug: ensure that item names are unique
 - run time / syntax error indicator on left column
 - bug: scene not updated after edits in sub groups
 - obj:group support

@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     newdialog.cpp \
     imagestore.cpp \
     patch.cpp \
-    modelstore.cpp
+    modelstore.cpp \
+    fpscontrol.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -48,10 +49,12 @@ HEADERS  += mainwindow.h \
     patch.h \
     modelstore.h \
     s_o_types.h \
-    s_p_types.h
+    s_p_types.h \
+    fpscontrol.h
 
 FORMS    += mainwindow.ui \
-    newdialog.ui
+    newdialog.ui \
+    fpscontrol.ui
 
 OTHER_FILES += \
     TODO.txt \

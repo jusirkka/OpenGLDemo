@@ -20,21 +20,20 @@ class Camera {
 
 public:
 
-    Camera(const Math3D::Vector4& eye);
+    Camera(const Math3D::Vector4& eye, const Math3D::Vector4& center, const Math3D::Vector4& up);
     void rotate(float phi, float theta);
-    void pan(float dx, float dy);
+    void pan(float phi, float theta);
     void zoom(float inc);
     void reset();
+    void reset(const Math3D::Vector4& eye, const Math3D::Vector4& center, const Math3D::Vector4& up);
     const Math3D::Matrix4& trans() const;
     ~Camera() {}
 
 private:
 
-    Math3D::Matrix4 mTrans;
-    Math3D::Matrix4 mTransReset;
-    Math3D::Matrix4 mRot;
-    Math3D::Matrix4 mCenter;
-    Math3D::Matrix4 mTot;
+    Math3D::Matrix4 mRot, mRot0, mTot;
+    Math3D::Vector4 mEye, mEye0;
+    Math3D::Real mD, mD0;
 };
 
 
