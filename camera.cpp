@@ -60,7 +60,7 @@ void Camera::rotate(float phi, float theta) {
 
     Vector4 d = mD * mRot.row3(Math3D::Z);
 
-    mEye = mEye + d - d0;
+    mEye += d - d0;
 
     mTot.setTranslation(- mEye);
     mTot = mRot * mTot;

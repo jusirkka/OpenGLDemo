@@ -134,6 +134,9 @@ private:
 
     CodeEditor* appendEditor(const QString& name, const QString& group, const QString& file);
     void init_and_connect();
+    QString uniqueGroupName(const QString& orig) const;
+    QString uniqueModelName(const QString& orig) const;
+    QString uniqueImageName(const QString& orig) const;
 
 
 private:

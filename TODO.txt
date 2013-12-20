@@ -1,9 +1,5 @@
-- bug: modelstore::clean: free memory
-- bug: tab titles not updated after rename
-- bug: modelstore not updated after opening model
-- bug: files are appended rather than replaced when opening a group
-- bug: ensure that item names are unique
 - run time / syntax error indicator on left column
+- throw error if program link fails
 - bug: scene not updated after edits in sub groups
 - obj:group support
 - rest of the opengl es2 statements

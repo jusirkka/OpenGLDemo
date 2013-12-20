@@ -1,4 +1,5 @@
 #include "runner.h"
+#include "gl_functions.h"
 
 using Math3D::Real;
 using Math3D::Vector4;
@@ -13,8 +14,7 @@ Demo::Runner::Runner(
     : QObject(),
         mAssignments(ass),
         mVariables(vars),
-        mFunctions(funcs),
-        mEvalError("NoError")
+        mFunctions(funcs)
 {
     mStack.resize(stackSize);
     for (int i = 0; i < mVariables.length(); i++) {
@@ -30,14 +30,13 @@ Demo::Runner::Runner(
 
 void Demo::Runner::evaluate() {
     foreach (Assignment ass, mAssignments) {
-        Variable* v = mVariables[mIndex[ass.var]];
-        v->setValue(evalCode(ass.code, ass.immed));
-        if (mEvalError != "NoError") {
-            qDebug() << mEvalError << "while evaluating" << v->name();
-            mEvalError = "NoError";
-            return;
+        try {
+            Variable* v = mVariables[mIndex[ass.var]];
+            v->setValue(evalCode(ass.code, ass.immed, ass.pos));
+            // qDebug() << v->name() << "=" << v->value();
+        } catch (GL::RunError& e) {
+            throw RunError(e.msg(), ass.pos);
         }
-        qDebug() << v->name() << "=" << v->value();
     }
 }
 
@@ -172,7 +171,7 @@ static bool lt_f(QVariant& left, const QVariant& right, int lrtype) {
 
 
 
-const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack& immed) {
+const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack& immed, int pos) {
 
     const unsigned int* codes = code.data();
 
@@ -208,8 +207,7 @@ const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack&
             break;
         case Parser::cDiv:
             if (!div_f(mStack[sPos-1], mStack[sPos], lrType)) {
-                mEvalError = "Division by zero error";
-                return mStack[sPos]; // just some value
+                throw RunError("Division by zero error", pos);
             }
             --sPos;
             break;
@@ -276,8 +274,7 @@ const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack&
             {
                 int index = mStack[sPos].value<int>();
                 if (index < 0 || index > 3) {
-                    mEvalError = "Out of range error";
-                    return mStack[sPos]; // just some value
+                    throw RunError("Out of range error", pos);
                 }
                 take_f(mStack[sPos-1], index, lrType);
                 --sPos;
@@ -309,8 +306,7 @@ const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack&
 
     // we have jumped but not stopped
     if (jumpFlag && !stopFlag) {
-        mEvalError = "No Value error";
-        return mStack[0]; // sPos might be = -1
+        throw RunError("No Value error", pos);
     }
 
     return mStack[sPos];

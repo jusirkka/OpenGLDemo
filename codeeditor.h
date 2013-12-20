@@ -85,6 +85,7 @@ public:
 public slots:
 
     void parse();
+    void evaluate();
 
 protected:
     void resizeEvent(QResizeEvent *event);

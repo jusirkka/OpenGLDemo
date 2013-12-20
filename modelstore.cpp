@@ -256,6 +256,7 @@ void GL::ModelStore::setModel(const QString& key, const QString& path) {
         parseModelData(path);
         if (mModels.contains(key)) {
             remove(mNames.indexOf(key), true);
+            mFileNames[mNames.indexOf(key)] = path;
         } else {
             mNames.append(key);
             mFileNames.append(path);

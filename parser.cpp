@@ -244,7 +244,7 @@ void Demo::Parser::addSymbol(Symbol* sym, bool used) {
 
 
 void Demo::Parser::setCode(const QString& name) {
-    mAssignments.append(Assignment(name, mCurrent, mCurrImmed));
+    mAssignments.append(Assignment(name, mCurrent, mCurrImmed, g_plloc.pos));
     mCurrent.clear();
     mCurrImmed.clear();
     mCodeSize = 0;

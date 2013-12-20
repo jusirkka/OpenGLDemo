@@ -12,6 +12,26 @@
 
 namespace Demo {
 
+class RunError {
+
+public:
+    RunError(const QString& msg, int pos)
+        :emsg(msg),
+          epos(pos)
+    {}
+
+    const QString msg() const {return emsg;}
+    int pos() const {return epos;}
+
+private:
+
+    QString emsg;
+    int epos;
+
+};
+
+
+
 class Runner: public QObject {
 
     Q_OBJECT
@@ -48,7 +68,7 @@ private:
     Runner(const Runner&); // Not implemented
     Runner &operator=(const Runner&); // Not implemented
 
-    const QVariant& evalCode(const CodeStack& code, const ValueStack& immed);
+    const QVariant& evalCode(const CodeStack& code, const ValueStack& immed, int pos);
 
     static unsigned LRType(unsigned code);
     static unsigned Code(unsigned code);
@@ -59,7 +79,6 @@ private:
     VariableList mVariables;
     FunctionList mFunctions;
     ValueStack mStack;
-    QString mEvalError;
     QStringList mShared;
     IndexMap mIndex;
 

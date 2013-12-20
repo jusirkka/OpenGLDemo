@@ -78,20 +78,23 @@ public:
 
     public:
 
-        Assignment(const QString& v, const CodeStack& c, const ValueStack& i):
+        Assignment(const QString& v, const CodeStack& c, const ValueStack& i, int p):
             var(v),
             code(c),
-            immed(i) {}
+            immed(i),
+            pos(p) {}
 
         Assignment(const Assignment& a) {
             var = a.var;
             code = CodeStack(a.code);
             immed = ValueStack(a.immed);
+            pos = a.pos;
         }
 
         QString var;
         CodeStack code;
         ValueStack immed;
+        int pos;
     };
 
     typedef QMap<QString, Symbol*> SymbolMap;

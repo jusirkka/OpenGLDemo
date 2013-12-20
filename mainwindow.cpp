@@ -120,8 +120,11 @@ void Demo::MainWindow::on_actionSaveAll_triggered() {
         mSelectedIndex = mProject->index(i, 0, mProject->groupParent());
         QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
         CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
-        if (editor->document()->isModified())
+        if (editor->document()->isModified()) {
             on_actionSave_triggered();
+        } else if (mProject->data(mSelectedIndex, Project::FileNameRole) == "") {
+            on_actionSaveAs_triggered();
+        }
     }
     mSelectedIndex = tmp;
 
@@ -240,6 +243,11 @@ void Demo::MainWindow::on_actionRename_triggered() {
                         &ok);
    if (ok && !text.isEmpty()) {
        mProject->setData(mSelectedIndex, QVariant::fromValue(text));
+       QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+       int idx = mUI->editorsTabs->indexOf(widget);
+       if (idx != -1) {
+           mUI->editorsTabs->setTabText(idx, text);
+       }
    }
 }
 

@@ -19,6 +19,22 @@ using Math3D::Matrix4;
 
 namespace GL {
 
+class RunError {
+
+public:
+    RunError(const QString& msg)
+        :emsg(msg)
+    {}
+
+    const QString msg() const {return emsg;}
+
+private:
+
+    QString emsg;
+
+};
+
+
 class GLProc: public Demo::Function {
 public:
 
@@ -27,7 +43,7 @@ public:
           mParent(p)
     {}
 
-#define ALT(item) case item: qWarning() << #item; break
+#define ALT(item) case item: throw RunError(#item); break
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
 
@@ -335,10 +351,7 @@ public:
             mParent->glGetShaderiv(name, GL_INFO_LOG_LENGTH, &len);
             char info[len];
             mParent->glGetShaderInfoLog(name, len, &len, info);
-            qWarning() << info;
-            char sh_src[1024];
-            mParent->glGetShaderSource(name, 1024, &len, sh_src);
-            qDebug() << QString(sh_src);
+            throw RunError(info);
         }
         mValue.setValue(0);
         return mValue;
@@ -351,7 +364,7 @@ class DeleteShader: public GLProc {
 
 public:
 
-    DeleteShader(Demo::GLWidget* p): GLProc("deletsShader", Symbol::Integer, p) {
+    DeleteShader(Demo::GLWidget* p): GLProc("deleteshader", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }

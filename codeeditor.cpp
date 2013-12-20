@@ -49,6 +49,7 @@
 
 using Demo::Parser;
 using Demo::ParseError;
+using Demo::RunError;
 using Demo::Runner;
 using Demo::Project;
 
@@ -108,6 +109,16 @@ void CodeEditor::parse() {
     highlightCurrentLine();
 }
 
+void CodeEditor::evaluate() {
+    if (!mRunner) return;
+    try {
+        mRunner->evaluate();
+    } catch (RunError& e) {
+        mError = e.msg();
+        mErrorPos = e.pos();
+        highlightCurrentLine();
+    }
+}
 
 int CodeEditor::lineNumberAreaWidth()
 {
