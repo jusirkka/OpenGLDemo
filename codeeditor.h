@@ -79,6 +79,8 @@ public:
     Demo::Runner* runner() {return mRunner;}
     void appendChild(CodeEditor* kid) {mKids.append(kid);}
     const EditorList& children() const {return mKids;}
+    bool hasRunError() const {return mRunErrorPos != -1;}
+    bool hasParseError() const {return mParseErrorPos != -1;}
 
     void toggleAutoParse(bool on);
 
@@ -99,6 +101,7 @@ private slots:
 signals:
 
     void runnerReady();
+    void statusChanged();
 
 
 private:
@@ -106,8 +109,10 @@ private:
     QWidget *lineNumberArea;
     QTimer* mParseDelay;
     Demo::Runner* mRunner;
-    QString mError;
-    int mErrorPos;
+    QString mRunError;
+    QString mParseError;
+    int mParseErrorPos;
+    int mRunErrorPos;
     Highlight* mHighlight;
     EditorList mKids;
 };

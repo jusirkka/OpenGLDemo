@@ -1,10 +1,9 @@
-- run time / syntax error indicator on left column
-- throw error if program link fails
-- bug: scene not updated after edits in sub groups
-- obj:group support
 - rest of the opengl es2 statements
-- undo/redo
 - shadersource command
+- bug: scene not updated after edits in sub groups
+- bug: segfault in draw teapot if buffer missing
+- obj:group support
+- undo/redo
 - code completion
 - plugin help
 - plugin config

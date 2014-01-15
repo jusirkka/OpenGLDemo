@@ -49,11 +49,11 @@ using Math3D::Matrix4;
 // public GL interface
 
 void Demo::Parser::ParseIt(const QString& name, const QString& inp) {
+    s_plex_destroy();
     instance().init(name);
     g_pdebug = 0;
     s_p_scan_string(inp.toAscii().data());
     int err = g_pparse();
-    s_plex_destroy();
     if (err) throw ParseError(QString(parser_error_buffer), g_plloc.row, g_plloc.col, g_plloc.pos);
 }
 

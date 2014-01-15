@@ -97,7 +97,7 @@ public:
 public slots:
 
     void runnerReady();
-    void groupModified(bool);
+    void groupModified(bool unused=true);
     void setInitGroup(QString);
     void setDrawGroup(QString);
 

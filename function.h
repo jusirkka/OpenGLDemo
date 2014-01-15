@@ -194,6 +194,72 @@ public:
     ~Tr() {}
 };
 
+class Sc: public Function {
+
+public:
+
+    Sc(): Function("scaling", Symbol::Matrix) {
+        int argt = Symbol::Real;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Real x = vals[start].value<Math3D::Real>();
+        Math3D::Real y = vals[start+1].value<Math3D::Real>();
+        Math3D::Real z = vals[start+2].value<Math3D::Real>();
+        Matrix4 m;
+        m.setScaling(x, y, z);
+        qDebug() << "Sc";
+        mValue.setValue(m);
+        return mValue;
+    }
+
+    ~Sc() {}
+};
+
+class Norm: public Function {
+
+public:
+
+    Norm(): Function("normalize", Symbol::Vector) {
+        int argt = Symbol::Vector;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        Vector4 x = vals[start].value<Vector4>();
+        Vector4 u = x.normalized3();
+        qDebug() << "Norm";
+        mValue.setValue(u);
+        return mValue;
+    }
+
+    ~Norm() {}
+};
+
+class NormalT: public Function {
+
+public:
+
+    NormalT(): Function("normal_transform", Symbol::Matrix) {
+        int argt = Symbol::Matrix;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        Matrix4 m = vals[start].value<Matrix4>();
+        m = m.linear();
+        m = m.transpose3();
+        m = m.comatrix();
+        qDebug() << "NormalT";
+        mValue.setValue(m);
+        return mValue;
+    }
+
+    ~NormalT() {}
+};
 
 class Functions {
 
@@ -208,6 +274,9 @@ public:
         contents.append(new Mat());
         contents.append(new Rot());
         contents.append(new Tr());
+        contents.append(new Sc());
+        contents.append(new Norm());
+        contents.append(new NormalT());
         FUN(sin);
         FUN(cos);
         FUN(tan);

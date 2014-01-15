@@ -117,6 +117,7 @@ public:
     inline Matrix4 transpose4() const; // (6)
     inline Vector4 translation() const; // (7)
     inline Matrix4 linear() const; // (8)
+    inline Matrix4 comatrix() const; // (8b)
 
     inline Matrix4& doTranspose3(); // (22)
     inline Matrix4& doTranspose4(); // (23)
@@ -307,6 +308,14 @@ inline Vector4 Matrix4::translation() const {
 
 // ----------------- (8) ----------------------------------------
 inline Matrix4 Matrix4::linear() const {
+    Matrix4 m;
+    m.setIdentity();
+    for (int x = 0; x < 3; ++x) for (int y = 0; y < 3; ++y) m(x)[y] = (*this)[x][y];
+    return m;
+}
+
+// ----------------- (8b) ----------------------------------------
+inline Matrix4 Matrix4::comatrix() const {
     Matrix4 m;
     m.setIdentity();
     for (int x = 0; x < 3; ++x) for (int y = 0; y < 3; ++y) m(x)[y] = (*this)[x][y];

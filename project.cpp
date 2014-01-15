@@ -254,6 +254,7 @@ void Demo::Project::groupModified(bool) {
     emit dataChanged(lower, upper);
 }
 
+
 QString Demo::Project::initGroup() const {
     if (mInit) return mInit->objectName();
     return "";
@@ -320,13 +321,7 @@ void Demo::Project::dispatcher(const QString& curr, const QString& other) {
 
 
 static void setEditorText(CodeEditor* editor, const QString& group) {
-    editor->clear();
-    editor->insertPlainText(group);
-    editor->document()->setModified(false);
-
-    QTextCursor c = editor->textCursor();
-    c.setPosition(0);
-    editor->setTextCursor(c);
+    editor->setPlainText(group);
 }
 
 CodeEditor* Demo::Project::appendEditor(const QString& name, const QString& group, const QString& file) {
@@ -480,6 +475,12 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
         }
 
         if (role == Qt::DecorationRole) {
+            if (mEditors[index.row()].editor->hasParseError()) {
+                return QIcon::fromTheme("error");
+            }
+            if (mEditors[index.row()].editor->hasRunError()) {
+                return QIcon::fromTheme("error");
+            }
             if (mEditors[index.row()].editor->document()->isModified()) {
                 return QIcon::fromTheme("filesave");
             }

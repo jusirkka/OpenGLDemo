@@ -58,10 +58,12 @@ CodeEditor::CodeEditor(Project* owner)
     :QPlainTextEdit(),
       mParseDelay(new QTimer(this)),
       mRunner(0),
-      mErrorPos(-1)
+      mParseErrorPos(-1),
+      mRunErrorPos(-1)
 {
     connect(this, SIGNAL(runnerReady()), owner, SLOT(runnerReady()));
     connect(this->document(), SIGNAL(modificationChanged(bool)), owner, SLOT(groupModified(bool)));
+    connect(this, SIGNAL(statusChanged()), owner, SLOT(groupModified()));
 
     lineNumberArea = new LineNumberArea(this);
 
@@ -95,29 +97,116 @@ void CodeEditor::toggleAutoParse(bool on) {
 
 void CodeEditor::parse() {
     mParseDelay->stop();
+    int prevPos = mParseErrorPos;
     try {
         Parser::ParseIt(objectName(), toPlainText());
         mKids.clear();
         delete mRunner;
         mRunner = Parser::CreateRunner();
-        mErrorPos = -1;
+        mParseErrorPos = -1;
         emit runnerReady();
     } catch (ParseError& e) {
-        mError = e.msg();
-        mErrorPos = e.pos();
+        mParseError = e.msg();
+        mParseErrorPos = e.pos();
     }
-    highlightCurrentLine();
+    if (prevPos != mParseErrorPos) {
+        highlightCurrentLine();
+        emit statusChanged();
+    }
 }
 
 void CodeEditor::evaluate() {
     if (!mRunner) return;
+    int prevPos = mRunErrorPos;
     try {
         mRunner->evaluate();
+        mRunErrorPos = -1;
     } catch (RunError& e) {
-        mError = e.msg();
-        mErrorPos = e.pos();
-        highlightCurrentLine();
+        mRunError = e.msg();
+        mRunErrorPos = e.pos();
     }
+    if (prevPos != mRunErrorPos) {
+        highlightCurrentLine();
+        emit statusChanged();
+    }
+}
+
+
+void CodeEditor::highlightCurrentLine()
+{
+    QList<QTextEdit::ExtraSelection> extraSelections;
+
+    if (!isReadOnly()) {
+        QTextEdit::ExtraSelection selection;
+
+        QColor lineColor = QColor(Qt::blue).lighter(175);
+
+        selection.format.setBackground(lineColor);
+        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        selection.cursor = textCursor();
+        selection.cursor.clearSelection();
+        extraSelections.append(selection);
+    }
+    if (mParseErrorPos >= 0) {
+        QTextEdit::ExtraSelection err;
+        err.cursor = QTextCursor(document());
+        err.cursor.movePosition(QTextCursor::End);
+        int endpos = err.cursor.position();
+        if (mParseErrorPos <= endpos) {
+            err.cursor.setPosition(mParseErrorPos, QTextCursor::MoveAnchor);
+            err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+            while (err.cursor.anchor() == err.cursor.position() && mParseErrorPos > 0) {
+                mParseErrorPos -= 1;
+                err.cursor.setPosition(mParseErrorPos, QTextCursor::MoveAnchor);
+                err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+            }
+
+            if (err.cursor.anchor() == err.cursor.position()) {
+                err.cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+            }
+
+            QColor under = QColor(Qt::red).darker(175);
+
+            err.format.setUnderlineColor(under);
+            err.format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+            err.format.setToolTip(mParseError);
+            extraSelections.append(err);
+        }
+    }
+
+    if (mRunErrorPos >= 0) {
+        QTextEdit::ExtraSelection err;
+        err.cursor = QTextCursor(document());
+        err.cursor.movePosition(QTextCursor::End);
+        int endpos = err.cursor.position();
+        if (mRunErrorPos <= endpos) {
+            err.cursor.setPosition(mRunErrorPos, QTextCursor::MoveAnchor);
+            err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+            err.cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+            err.format.setToolTip(mRunError);
+            extraSelections.append(err);
+        }
+    }
+
+    setExtraSelections(extraSelections);
+}
+
+bool CodeEditor::event(QEvent* ev) {
+    if (ev->type() == QEvent::ToolTip) {
+        QHelpEvent* helpEvent = static_cast <QHelpEvent*>(ev);
+        QTextCursor cursor = cursorForPosition(helpEvent->pos());
+        cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+        cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+        foreach(QTextEdit::ExtraSelection s, extraSelections()) {
+            int pos = s.cursor.position();
+            if (pos <= cursor.selectionEnd() && pos >= cursor.selectionStart()) {
+                QToolTip::showText(helpEvent->globalPos(), s.format.toolTip());
+            }
+        }
+        return true;
+    }
+
+    return QPlainTextEdit::event(ev);
 }
 
 int CodeEditor::lineNumberAreaWidth()
@@ -165,64 +254,6 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 }
 
 
-
-void CodeEditor::highlightCurrentLine()
-{
-    QList<QTextEdit::ExtraSelection> extraSelections;
-
-    if (!isReadOnly()) {
-        QTextEdit::ExtraSelection selection;
-
-        QColor lineColor = QColor(Qt::blue).lighter(175);
-
-        selection.format.setBackground(lineColor);
-        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-        selection.cursor = textCursor();
-        selection.cursor.clearSelection();
-        extraSelections.append(selection);
-    }
-    if (mErrorPos >= 0) {
-        QTextEdit::ExtraSelection err;
-        err.cursor = QTextCursor(document());
-        err.cursor.movePosition(QTextCursor::End);
-        int endpos = err.cursor.position();
-        if (mErrorPos <= endpos) {
-            err.cursor.setPosition(mErrorPos, QTextCursor::MoveAnchor);
-            err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-            // err.cursor.select(QTextCursor::WordUnderCursor);
-            // qDebug() << "high" << err.cursor.anchor();
-            // qDebug() << "high" << err.cursor.position();
-
-            QColor under = QColor(Qt::red).darker(175);
-
-            err.format.setUnderlineColor(under);
-            err.format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
-            err.format.setToolTip(mError);
-            extraSelections.append(err);
-        }
-    }
-
-    setExtraSelections(extraSelections);
-}
-
-bool CodeEditor::event(QEvent* ev) {
-    if (ev->type() == QEvent::ToolTip) {
-        QHelpEvent* helpEvent = static_cast <QHelpEvent*>(ev);
-        QTextCursor cursor = cursorForPosition(helpEvent->pos());
-        cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
-        cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-        foreach(QTextEdit::ExtraSelection s, extraSelections()) {
-            int pos = s.cursor.position();
-            if (pos <= cursor.selectionEnd() && pos >= cursor.selectionStart()) {
-                QToolTip::showText(helpEvent->globalPos(), s.format.toolTip());
-            }
-        }
-        return true;
-    }
-
-    return QPlainTextEdit::event(ev);
-}
-
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
     QPainter painter(lineNumberArea);
@@ -242,9 +273,24 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
                              Qt::AlignRight, number);
         }
 
+
         block = block.next();
         top = bottom;
         bottom = top + (int) blockBoundingRect(block).height();
         ++blockNumber;
     }
+
+
+    if (mRunErrorPos < 0) return;
+
+    QTextCursor cursor = QTextCursor(document());
+    cursor.setPosition(mRunErrorPos);
+    block = cursor.block();
+    if (!block.isValid() || !block.isVisible()) return;
+
+    top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
+    if (top > event->rect().bottom()) return;
+
+    QIcon err = QIcon::fromTheme("error");
+    err.paint(&painter, 0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignLeft, QIcon::Normal, QIcon::On);
 }

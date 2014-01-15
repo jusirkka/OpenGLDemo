@@ -459,11 +459,15 @@ public:
         int name =  vals[start].value<int>();
         qDebug() << "glLinkProgram" << name;
         mParent->glLinkProgram(name);
-        int len;
-        mParent->glGetProgramiv(name, GL_INFO_LOG_LENGTH, &len);
-        char info[len];
-        mParent->glGetProgramInfoLog(name, len, &len, info);
-        qDebug() << QString(info);
+        int status;
+        mParent->glGetProgramiv(name, GL_LINK_STATUS, &status);
+        if (!status) {
+            int len;
+            mParent->glGetProgramiv(name, GL_INFO_LOG_LENGTH, &len);
+            char info[len];
+            mParent->glGetProgramInfoLog(name, len, &len, info);
+            throw RunError(info);
+        }
         mValue.setValue(0);
         return mValue;
     }
