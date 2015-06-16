@@ -1,0 +1,15 @@
+Execute "create prog";
+Execute "get locations";
+Execute "init buffers";
+Execute "init textures";
+Execute "init pot attributes";
+
+// ------------------
+// other
+// ------------------
+
+clearcolor vec(.1,.2,.2,1);
+enable depth_test;
+disable  cull_face;
+frontface ccw;
+cullface back;

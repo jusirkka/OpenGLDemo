@@ -1,0 +1,10 @@
+Shared Natural loc_vertex, loc_normal, loc_tex;
+
+vertexattribpointer loc_vertex, teapot, "vertex";
+vertexattribpointer loc_normal, teapot, "normal";
+vertexattribpointer loc_tex, teapot, "tex";
+
+
+enablevertexattribarray loc_vertex;
+enablevertexattribarray loc_normal;
+enablevertexattribarray loc_tex;

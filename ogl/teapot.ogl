@@ -1,0 +1,46 @@
+Shared Matrix camera, projection;
+Shared Natural loc_n, loc_vm, loc_pvm, loc_light, loc_material_colors, loc_light_colors, loc_specular;
+Shared Natural tex_plaid;
+Shared Natural time;
+
+clear color_buffer_bit | depth_buffer_bit;
+
+// ------------------
+// draw teapots
+// ------------------
+
+bindtexture texture_2d, tex_plaid;
+
+uniformmatrix4f loc_light_colors, mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 0));
+
+//    vec4 N = normalize(view * model * vec4(normal, 0));
+//    vec4 L = normalize(view * vec4(light.xyz, 0));
+//    vec4 V = vec4(normalize((view * model * vertex).xyz), 1);
+
+
+uniform1f loc_specular, 40;
+uniformmatrix4f loc_material_colors, mat(vec(.1, .1, .1, 0), vec(.1, .1, .1, 0), vec(.7, .7, .7, 0), vec(0, 0, 0, 0));
+uniform4f loc_light, normalize(camera * vec(1, 1, 0, 0));
+
+
+Matrix model;
+
+
+model = rotation(-80 + 3.0*time, vec(1, 0, 0, 1)) * mat(vec(1, 0.4, .2, 0), vec(0.4, 1, 0.4, 0), vec(0, 0, 1.5, 0), vec(0, 0, 0, 1));
+uniformmatrix4f loc_vm, camera * model;
+uniformmatrix4f loc_pvm, projection * camera * model;
+uniformmatrix4f loc_n, normal_transform(camera * model);
+
+draw teapot, "", triangles;
+
+bindtexture texture_2d, 0;
+uniform1f loc_specular, 10;
+
+uniformmatrix4f loc_material_colors, mat(vec(.1, .1, .1, 0), vec(0, .6, 0, 0), vec(.6, .6, .6, 0), vec(0, 0, 0, 0));
+
+model = translation(vec(-10 + 4*sin(time / 50.), 0, 4, 1)) * rotation(180 + 3.0*time, vec(sin(time/30.)*cos(time/40.), sin(time/50.), cos(time/30. + 0.1), 1));
+uniformmatrix4f loc_vm, camera * model;
+uniformmatrix4f loc_pvm, projection * camera * model;
+uniformmatrix4f loc_n, normal_transform(camera * model);
+
+draw teapot, "", triangles;

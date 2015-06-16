@@ -1,0 +1,43 @@
+clear color_buffer_bit | depth_buffer_bit;
+
+Shared Natural loc_vertex, loc_normal, loc_tex;
+
+enablevertexattribarray loc_vertex;
+enablevertexattribarray loc_normal;
+enablevertexattribarray loc_tex;
+
+vertexattribpointer loc_vertex, modelstore, "square:vertex";
+vertexattribpointer loc_normal, modelstore, "square:normal";
+vertexattribpointer loc_tex, modelstore, "square:tex";
+
+
+
+Shared Matrix camera, projection;
+Shared Natural loc_model, loc_view, loc_proj, loc_light, loc_material_colors, loc_light_colors, loc_specular;
+Shared Natural tex_plaid;
+
+
+bindtexture texture_2d, tex_plaid;
+
+uniform4f loc_light, vec(1, 1, 0, 0);
+uniformmatrix4f loc_light_colors, mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 0));
+
+
+uniform1f loc_specular, 40;
+
+uniformmatrix4f loc_view, camera;
+uniformmatrix4f loc_proj, projection;
+
+Matrix model;
+
+uniformmatrix4f loc_material_colors, mat(vec(.1, .1, .1, 0), vec(.1, .1, .1, 0), vec(.7, .7, .7, 0), vec(0, 0, 0, 0));
+
+model = rotation(-80, vec(1, 0, 0, 1));
+uniformmatrix4f loc_model, model;
+
+draw modelstore, "square", triangles;
+
+
+// disablevertexattribarray loc_vertex;
+// enablevertexattribarray loc_normal;
+// enablevertexattribarray loc_tex;
