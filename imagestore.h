@@ -13,6 +13,7 @@ namespace GL {
 class ImageStore : public QObject, public TexBlob
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA(IID "net.kvanttiapina.OpenGLDemos.TexBlob/1.0")
     Q_INTERFACES(GL::TexBlob)
 
 public:

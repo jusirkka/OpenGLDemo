@@ -26,14 +26,13 @@
 #include <QModelIndex>
 #include <QDir>
 
-namespace Ui {
-class MainWindow;
-}
+namespace Ui {class MainWindow;}
 
 namespace Demo {
 
 class GLWidget;
 class Project;
+class ScriptSelector;
 
 class MainWindow: public QMainWindow {
 
@@ -60,16 +59,16 @@ private slots:
     void on_actionSaveAll_triggered();
 
 
-    //! New command group.
+    //! New script.
     void on_actionNew_triggered();
 
-    //! Show a file dialog to open a group file.
+    //! Show a file dialog to open a script.
     void on_actionOpen_triggered();
 
-    //! Save the group.
+    //! Save the script.
     void on_actionSave_triggered();
 
-    //! Show a file dialog to save a group to a new file.
+    //! Show a file dialog to save the script to a new file.
     void on_actionSaveAs_triggered();
 
     //! As it says.
@@ -96,12 +95,16 @@ private slots:
     void on_actionPause_triggered();
     void fps_changed(int);
 
+    void initScript_changed(const QString&);
+    void drawScript_changed(const QString&);
+
     void selectionChanged();
-    void dataChanged();
-    void setAllModified(bool = true);
+    void setProjectModified();
 
     void on_actionAutocompile_toggled(bool on);
     void on_actionCompile_triggered();
+
+    void scriptModification_changed(bool edited);
 
 private:
 
@@ -109,7 +112,7 @@ private:
     //! Test if there are unsaved edits before clearing the project.
     bool maybeSaveProject();
     bool maybeSave();
-    void saveGroup(const QString& fname);
+    void saveScript(const QString& fname);
 
     //! Read saved state
     void readSettings();
@@ -117,9 +120,7 @@ private:
     //! Save current state
     void writeSettings();
 
-    void setupCombos();
-
-    void openProject(const QString& data, bool isDir);
+    void openProject(const QString& data);
 
 private:
 
@@ -128,6 +129,9 @@ private:
     GLWidget* mGLWidget;
     Project* mProject;
     QModelIndex mSelectedIndex;
+    ScriptSelector* mScripts;
+    bool mProjectModified;
+    int mNumEdits;
 };
 
 }

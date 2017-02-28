@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>816</width>
+    <width>847</width>
     <height>567</height>
    </rect>
   </property>
@@ -35,13 +35,13 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>816</width>
-     <height>25</height>
+     <width>847</width>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuItems">
     <property name="title">
-     <string>Items</string>
+     <string>&amp;Items</string>
     </property>
     <addaction name="actionNew"/>
     <addaction name="separator"/>
@@ -56,29 +56,16 @@
     <addaction name="actionAutocompile"/>
     <addaction name="actionCompile"/>
    </widget>
-   <widget class="QMenu" name="menuWindow">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <addaction name="actionStatusbar"/>
-    <addaction name="actionToolbar"/>
-    <addaction name="actionCommandDock"/>
-    <addaction name="actionEditorsDock"/>
-    <addaction name="actionGraphicsDock"/>
-    <addaction name="actionTextureDock"/>
-    <addaction name="actionModelDock"/>
-    <addaction name="actionAnimBar"/>
-   </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
-     <string>Help</string>
+     <string>He&amp;lp</string>
     </property>
     <addaction name="actionAbout"/>
     <addaction name="actionAboutQt"/>
    </widget>
    <widget class="QMenu" name="menuProject">
     <property name="title">
-     <string>Project</string>
+     <string>Proje&amp;ct</string>
     </property>
     <addaction name="actionNewProject"/>
     <addaction name="actionOpenProject"/>
@@ -86,13 +73,26 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionStatusbar"/>
+    <addaction name="actionToolbar"/>
+    <addaction name="actionDemoBar"/>
+    <addaction name="actionScriptsDock"/>
+    <addaction name="actionEditorsDock"/>
+    <addaction name="actionGraphicsDock"/>
+    <addaction name="actionTexturesDock"/>
+    <addaction name="actionModelsDock"/>
+   </widget>
    <addaction name="menuProject"/>
    <addaction name="menuItems"/>
-   <addaction name="menuWindow"/>
+   <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="commandDock">
+  <widget class="QDockWidget" name="scriptsDock">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
      <horstretch>0</horstretch>
@@ -112,12 +112,12 @@
     <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
-    <string>Command Groups</string>
+    <string>Sc&amp;ripts</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="commandDockContents">
+   <widget class="QWidget" name="scriptsDockContents">
     <property name="sizePolicy">
      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
       <horstretch>1</horstretch>
@@ -132,43 +132,7 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QLabel" name="initLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Init</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="initCombo"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="drawLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Draw</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QComboBox" name="drawCombo"/>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QListView" name="commandGroups">
+      <widget class="QListView" name="scripts">
        <property name="contextMenuPolicy">
         <enum>Qt::ActionsContextMenu</enum>
        </property>
@@ -205,7 +169,7 @@
     </sizepolicy>
    </property>
    <property name="windowTitle">
-    <string>Editors</string>
+    <string>Edit&amp;ors</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -233,7 +197,7 @@
     </sizepolicy>
    </property>
    <property name="windowTitle">
-    <string>OpenGL View</string>
+    <string>OpenGL &amp;View</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -242,14 +206,14 @@
     <layout class="QVBoxLayout" name="graphicsDockLayout"/>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="textureDock">
+  <widget class="QDockWidget" name="texturesDock">
    <property name="windowTitle">
-    <string>Textures</string>
+    <string>Te&amp;xtures</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="textureDockContents">
+   <widget class="QWidget" name="texturesDockContents">
     <layout class="QVBoxLayout" name="textureDockLayout">
      <item>
       <widget class="QListView" name="textures">
@@ -267,14 +231,14 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="modelDock">
+  <widget class="QDockWidget" name="modelsDock">
    <property name="windowTitle">
-    <string>Models</string>
+    <string>&amp;Models</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="modelDockContents">
+   <widget class="QWidget" name="modelsDockContents">
     <layout class="QVBoxLayout" name="modelDocklayout">
      <item>
       <widget class="QListView" name="models">
@@ -292,7 +256,7 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QToolBar" name="animBar">
+  <widget class="QToolBar" name="demoBar">
    <property name="windowTitle">
     <string>toolBar_2</string>
    </property>
@@ -310,12 +274,11 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="filenew">
-     <normaloff/>
-    </iconset>
+    <iconset theme="document-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>New...</string>
+    <string>&amp;New...</string>
    </property>
    <property name="toolTip">
     <string>Create new item</string>
@@ -329,15 +292,14 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="fileopen">
-     <normaloff/>
-    </iconset>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>&amp;Open</string>
    </property>
    <property name="toolTip">
-    <string>Open saved item</string>
+    <string>Open file to bind the item to</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -348,15 +310,14 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="filesave">
-     <normaloff/>
-    </iconset>
+    <iconset theme="document-save">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Save</string>
+    <string>&amp;Save</string>
    </property>
    <property name="toolTip">
-    <string>Save command group</string>
+    <string>Save the script</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -366,13 +327,21 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset theme="document-save-as">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
-    <string>Save as...</string>
+    <string>Sa&amp;ve as...</string>
    </property>
   </action>
   <action name="actionQuit">
+   <property name="icon">
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -386,7 +355,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Statusbar</string>
+    <string>Sh&amp;ow Statusbar</string>
    </property>
    <property name="toolTip">
     <string>Toggle statusbar visibility</string>
@@ -400,7 +369,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Toolbar</string>
+    <string>Show &amp;Toolbar</string>
    </property>
    <property name="toolTip">
     <string>Toggle toolbar visibility</string>
@@ -409,19 +378,18 @@
   <action name="actionAbout">
    <property name="icon">
     <iconset theme="package_favourite">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>About...</string>
+    <string>&amp;About...</string>
    </property>
   </action>
   <action name="actionAboutQt">
    <property name="text">
-    <string>About Qt</string>
+    <string>About &amp;Qt</string>
    </property>
   </action>
-  <action name="actionCommandDock">
+  <action name="actionScriptsDock">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -429,10 +397,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>CommandDock</string>
+    <string>&amp;Show ScriptsDock</string>
    </property>
    <property name="toolTip">
-    <string>Toggle CommandDock visibility</string>
+    <string>Toggle ScriptsDock visibility</string>
    </property>
   </action>
   <action name="actionEditorsDock">
@@ -443,7 +411,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>EditorsDock</string>
+    <string>Show &amp;EditorsDock</string>
    </property>
    <property name="toolTip">
     <string>Toggle EditorsDock visibility</string>
@@ -457,7 +425,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>GraphicsDock</string>
+    <string>Show &amp;GraphicsDock</string>
    </property>
    <property name="toolTip">
     <string>Toggle GraphicsDock visibility</string>
@@ -468,12 +436,11 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="folder_new">
-     <normaloff/>
-    </iconset>
+    <iconset theme="folder-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>New project...</string>
+    <string>&amp;New project...</string>
    </property>
    <property name="toolTip">
     <string>Create new project</string>
@@ -490,12 +457,11 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="folder_open">
-     <normaloff/>
-    </iconset>
+    <iconset theme="folder-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Open project...</string>
+    <string>&amp;Open project...</string>
    </property>
    <property name="toolTip">
     <string>Open existing project</string>
@@ -509,12 +475,11 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="editdelete">
-     <normaloff/>
-    </iconset>
+    <iconset theme="edit-delete">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Remove</string>
+    <string>Re&amp;move</string>
    </property>
    <property name="toolTip">
     <string>Delete item</string>
@@ -528,12 +493,11 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit">
-     <normaloff/>
-    </iconset>
+    <iconset theme="document-edit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Edit</string>
+    <string>&amp;Edit</string>
    </property>
    <property name="toolTip">
     <string>Edit</string>
@@ -546,8 +510,12 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset theme="edit-rename">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
-    <string>Rename</string>
+    <string>&amp;Rename</string>
    </property>
    <property name="toolTip">
     <string>Rename item</string>
@@ -560,8 +528,12 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset theme="document-save-all">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
-    <string>Save project</string>
+    <string>&amp;Save project</string>
    </property>
    <property name="toolTip">
     <string>Save project</string>
@@ -570,7 +542,7 @@
     <string>Ctrl+Shift+S</string>
    </property>
   </action>
-  <action name="actionTextureDock">
+  <action name="actionTexturesDock">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -578,13 +550,13 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>TextureDock</string>
+    <string>Show Te&amp;xturesDock</string>
    </property>
    <property name="toolTip">
-    <string>Toggle TextureDock visibility</string>
+    <string>Toggle TexturesDock visibility</string>
    </property>
   </action>
-  <action name="actionModelDock">
+  <action name="actionModelsDock">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -592,10 +564,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>ModelDock</string>
+    <string>Show &amp;ModelsDock</string>
    </property>
    <property name="toolTip">
-    <string>Toggle ModelDock visibility</string>
+    <string>Toggle ModelsDock visibility</string>
    </property>
   </action>
   <action name="actionReload">
@@ -604,17 +576,16 @@
    </property>
    <property name="icon">
     <iconset theme="reload">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Reload</string>
+    <string>Re&amp;load</string>
    </property>
    <property name="shortcut">
     <string>F5</string>
    </property>
   </action>
-  <action name="actionAnimBar">
+  <action name="actionDemoBar">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -622,7 +593,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>AnimationBar</string>
+    <string>Show &amp;DemoBar</string>
    </property>
    <property name="toolTip">
     <string>Toggle AnimationBar visibility</string>
@@ -630,9 +601,8 @@
   </action>
   <action name="actionPlay">
    <property name="icon">
-    <iconset theme="player_play">
-     <normaloff/>
-    </iconset>
+    <iconset theme="media-playback-start">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Play</string>
@@ -646,9 +616,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="player_pause">
-     <normaloff/>
-    </iconset>
+    <iconset theme="media-playback-pause">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Pause</string>
@@ -665,7 +634,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Autocompile</string>
+    <string>&amp;Autocompile</string>
    </property>
   </action>
   <action name="actionCompile">
@@ -673,10 +642,11 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="run"/>
+    <iconset theme="run">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Compile</string>
+    <string>&amp;Compile</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+B</string>
@@ -718,9 +688,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionCommandDock</sender>
+   <sender>actionScriptsDock</sender>
    <signal>toggled(bool)</signal>
-   <receiver>commandDock</receiver>
+   <receiver>scriptsDock</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -766,9 +736,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionTextureDock</sender>
+   <sender>actionTexturesDock</sender>
    <signal>toggled(bool)</signal>
-   <receiver>textureDock</receiver>
+   <receiver>texturesDock</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -782,9 +752,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionModelDock</sender>
+   <sender>actionModelsDock</sender>
    <signal>toggled(bool)</signal>
-   <receiver>modelDock</receiver>
+   <receiver>modelsDock</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -798,9 +768,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionAnimBar</sender>
+   <sender>actionDemoBar</sender>
    <signal>toggled(bool)</signal>
-   <receiver>animBar</receiver>
+   <receiver>demoBar</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">

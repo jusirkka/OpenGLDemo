@@ -46,7 +46,9 @@ using GL::ImageStore;
 using GL::ModelStore;
 
 Demo::Project::~Project() {
-    foreach(EditorTuple ed, mEditors) delete ed.editor;
+    foreach (CodeEditor* ed, mEditors) {
+        delete ed;
+    }
 }
 
 void Demo::Project::init_and_connect() {
@@ -69,19 +71,17 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target, bool autoCompileOn)
 
     init_and_connect();
 
-    appendEditor("Init", "clearcolor vec(.1,.2,.2,1);\n", "");
-    appendEditor("Draw", "clear color_buffer_bit;\n", "");
+    appendEditor("Init", "clearcolor vec(.1,.2,.2,1)\n", "");
+    appendEditor("Draw", "clear color_buffer_bit\n", "");
 
     ImageStore::Clean();
     ModelStore::Clean();
 
-    setInitGroup("Init");
-    setDrawGroup("Draw");
-
-    mModified = false;
+    setInitScript("Init");
+    setDrawScript("Draw");
 }
 
-Demo::Project::Project(const QString& fullpath, GLWidget* target, bool autoCompileOn)
+Demo::Project::Project(const QString& path, GLWidget* target, bool autoCompileOn)
     :QAbstractItemModel(target),
       mInit(0),
       mDraw(0),
@@ -90,112 +90,105 @@ Demo::Project::Project(const QString& fullpath, GLWidget* target, bool autoCompi
 {
     init_and_connect();
 
-    QFileInfo info(fullpath);
-    if (!info.exists()) throw BadProject(QString("Project file %1 does not exist").arg(fullpath));
-    if (!info.isFile() || !info.isReadable()) throw BadProject(QString("Project file %1 is not readable").arg(fullpath));
+    QFileInfo info(path);
+    if (!info.exists()) throw BadProject(QString("Project file %1 does not exist").arg(path));
+    if (!info.isFile() || !info.isReadable()) throw BadProject(QString("Project file %1 is not readable").arg(path));
 
     mProjectDir = info.absoluteDir();
     mProjectIni = info.fileName();
 
-    QSettings project(fullpath, QSettings::IniFormat);
+    QSettings project(path, QSettings::IniFormat);
 
-    project.beginGroup("Groups");
-    const QStringList gnames = project.childKeys();
-    foreach (const QString &gname, gnames) {
-        // check gfile
-        QString gfname_orig = project.value(gname).toString();
-        QString gfname = gfname_orig;
-        QFileInfo ginfo(gfname);
-        if (ginfo.isRelative()) {
-            gfname = mProjectDir.absoluteFilePath(gfname);
-            ginfo = QFileInfo(gfname);
+    project.beginGroup("Scripts");
+    foreach (const QString &key, project.childKeys()) {
+        QString value = project.value(key).toString();
+        QString fname = value;
+        QFileInfo info(fname);
+        if (info.isRelative()) {
+            fname = mProjectDir.absoluteFilePath(fname);
+            info = QFileInfo(fname);
         }
-        if (!ginfo.exists()) throw BadProject(QString("Group file %1 does not exist").arg(gfname_orig));
-        if (!ginfo.isFile() || !ginfo.isReadable()) throw BadProject(QString("Group file %1 is not readable").arg(gfname_orig));
+        if (!info.exists()) throw BadProject(QString("Script file \"%1\" does not exist").arg(value));
+        if (!info.isFile() || !info.isReadable()) throw BadProject(QString("Script file \"%1\" is not readable").arg(value));
 
-        QFile gfile(gfname);
-        gfile.open(QFile::ReadOnly);
+        QFile file(fname);
+        file.open(QFile::ReadOnly);
 
-        appendEditor(uniqueGroupName(gname), QString(gfile.readAll()), gfname_orig);
+        appendEditor(uniqueScriptName(key), QString(file.readAll()), value);
 
-        gfile.close();
+        file.close();
 
     }
     project.endGroup();
 
     project.beginGroup("Models");
-    NameList models;
-    const QStringList onames = project.childKeys();
-    foreach (const QString &oname, onames) {
-        QString fname_orig = project.value(oname).toString();
-        QString fname = fname_orig;
+    NameMap models;
+    foreach (const QString &key, project.childKeys()) {
+        QString value = project.value(key).toString();
+        QString fname = value;
         QFileInfo info(fname);
         if (info.isRelative()) {
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
         if (!info.exists() || !info.isFile() || !info.isReadable()) {
-            fname_orig = "";
+            value = "";
         }
 
-        NameTuple t;
-        t.name = oname;
-        t.filename = fname_orig;
-        models.append(t);
+        models[uniqueModelName(key)] = value;
     }
     project.endGroup();
 
     project.beginGroup("Textures");
-    NameList textures;
-    const QStringList inames = project.childKeys();
-    foreach (const QString &iname, inames) {
-        QString fname_orig = project.value(iname).toString();
-        QString fname = fname_orig;
+    NameMap textures;
+    foreach (const QString &key, project.childKeys()) {
+        QString value = project.value(key).toString();
+        QString fname = value;
         QFileInfo info(fname);
         if (info.isRelative()) {
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
         if (!info.exists() || !info.isFile() || !info.isReadable()) {
-            fname_orig = "";
+            value = "";
         }
 
-        NameTuple t;
-        t.name = iname;
-        t.filename = fname_orig;
-        textures.append(t);
+        textures[uniqueImageName(key)] = value;
     }
     project.endGroup();
 
-    if (project.status() != QSettings::NoError) throw BadProject(QString("%1 is not a valid project file").arg(fullpath));
-
-    ImageStore::Clean();
-    foreach(NameTuple t, textures) {
-        ImageStore::SetImage(uniqueImageName(t.name), t.filename);
-    }
+    if (project.status() != QSettings::NoError) throw BadProject(QString("%1 is not a valid project file").arg(path));
 
     ModelStore::Clean();
-    foreach(NameTuple t, models) {
-        ModelStore::SetModel(uniqueModelName(t.name), t.filename);
+    NameIterator itm(models);
+    while (itm.hasNext()) {
+        itm.next();
+        ModelStore::SetModel(itm.key(), itm.value());
     }
+
+    ImageStore::Clean();
+    NameIterator iti(textures);
+    while (iti.hasNext()) {
+        iti.next();
+        ImageStore::SetImage(iti.key(), iti.value());
+    }
+
 
     project.beginGroup("Roles");
     QString initKey = project.value("Init", "unknown_init").toString();
-    setInitGroup(initKey);
+    setInitScript(initKey);
     QString drawKey = project.value("Draw", "unknown_draw").toString();
-    setDrawGroup(drawKey);
+    setDrawScript(drawKey);
     project.endGroup();
-
-    mModified = false;
 }
 
 void Demo::Project::saveProject() {
     QSettings project(mProjectDir.absoluteFilePath(mProjectIni), QSettings::IniFormat);
     project.clear();
 
-    project.beginGroup("Groups");
-    for (int i = 0; i < mEditors.length(); ++i) {
-        project.setValue(mEditors[i].editor->objectName(), mEditors[i].filename);
+    project.beginGroup("Scripts");
+    foreach (CodeEditor* ed, mEditors) {
+        project.setValue(ed->objectName(), mScripts.value(ed->objectName()));
     }
     project.endGroup();
 
@@ -221,8 +214,6 @@ void Demo::Project::saveProject() {
         project.setValue(ModelStore::ModelName(i), ModelStore::FileName(i));
     }
     project.endGroup();
-
-    mModified = false;
 }
 
 void Demo::Project::setProjectFile(const QString& fname) {
@@ -248,56 +239,64 @@ void Demo::Project::runnerReady() {
     }
 }
 
-void Demo::Project::groupModified(bool) {
-    QModelIndex lower = index(0, groupParent());
-    QModelIndex upper = index(mEditors.length() - 1, groupParent());
+void Demo::Project::scriptModification_changed(bool edited) {
+    scriptStatus_changed();
+    emit scriptModificationChanged(edited);
+}
+
+void Demo::Project::scriptStatus_changed() {
+    QModelIndex lower = index(0, scriptParent());
+    QModelIndex upper = index(mEditors.size() - 1, scriptParent());
     emit dataChanged(lower, upper);
 }
 
-
-QString Demo::Project::initGroup() const {
+QString Demo::Project::initScript() const {
     if (mInit) return mInit->objectName();
     return "";
 }
 
-QString Demo::Project::drawGroup() const {
+QString Demo::Project::drawScript() const {
     if (mDraw) return mDraw->objectName();
     return "";
 }
 
-void Demo::Project::setInitGroup(QString grp) {
+void Demo::Project::setInitScript(const QString& name) {
     if (mInit) {
         disconnect(mTarget, SIGNAL(init()), mInit, SLOT(evaluate()));
     }
+
     mInit = 0;
-    foreach(EditorTuple ed, mEditors) {
-        if (ed.editor->objectName() == grp) {
-            mInit = ed.editor;
+    foreach (CodeEditor* ed, mEditors) {
+        if (ed->objectName() == name) {
+            mInit = ed;
             break;
         }
     }
+
     if (mInit) {
         connect(mTarget, SIGNAL(init()), mInit, SLOT(evaluate()));
     }
-    mModified = true;
+
     emit initChanged();
 }
 
-void Demo::Project::setDrawGroup(QString grp) {
+void Demo::Project::setDrawScript(const QString& name) {
     if (mDraw) {
         disconnect(mTarget, SIGNAL(draw()), mDraw, SLOT(evaluate()));
     }
+
     mDraw = 0;
-    foreach(EditorTuple ed, mEditors) {
-        if (ed.editor->objectName() == grp) {
-            mDraw = ed.editor;
+    foreach (CodeEditor* ed, mEditors) {
+        if (ed->objectName() == name) {
+            mDraw = ed;
             break;
         }
     }
+
     if (mDraw) {
         connect(mTarget, SIGNAL(draw()), mDraw, SLOT(evaluate()));
     }
-    mModified = true;
+
     emit drawChanged();
 }
 
@@ -306,13 +305,15 @@ void Demo::Project::dispatcher(const QString& curr, const QString& other) {
     qDebug() << "dispatch" << curr << other;
     CodeEditor* curr_ed = 0;
     CodeEditor* other_ed = 0;
-    foreach (EditorTuple ed, mEditors) {
-        if (ed.editor->objectName() == curr) {
-            curr_ed = ed.editor;
-        } else if (ed.editor->objectName() == other) {
-            other_ed = ed.editor;
+    foreach (CodeEditor* ed, mEditors) {
+        if (ed->objectName() == curr) {
+            curr_ed = ed;
+        } else if (ed->objectName() == other) {
+            other_ed = ed;
         }
+        if (curr_ed && other_ed) break;
     }
+
     if (curr_ed && other_ed) {
         curr_ed->appendChild(other_ed);
         other_ed->evaluate();
@@ -328,18 +329,15 @@ CodeEditor* Demo::Project::appendEditor(const QString& name, const QString& grou
     CodeEditor* editor = new CodeEditor(this);
     editor->setObjectName(name);
     setEditorText(editor, group);
-    EditorTuple t;
-    t.editor = editor;
-    t.filename = file;
-    mEditors.append(t);
+    mEditors.append(editor);
+    mScripts[editor->objectName()] = file;
     editor->parse();
     return editor;
 }
 
 void Demo::Project::toggleAutoCompile(bool on) {
     mAutoCompileOn = on;
-    foreach (EditorTuple t, mEditors) {
-        CodeEditor* ed = t.editor;
+    foreach (CodeEditor* ed, mEditors) {
         ed->toggleAutoParse(on);
     }
 }
@@ -373,11 +371,13 @@ static QString uniqueName(const QString& key, const QStringList& names) {
 
 }
 
-QString Demo::Project::uniqueGroupName(const QString& orig) const {
+QString Demo::Project::uniqueScriptName(const QString& orig) const {
     QStringList names;
-    foreach(EditorTuple ed, mEditors) {
-        names.append(ed.editor->objectName());
+
+    foreach (CodeEditor* ed, mEditors) {
+        names.append(ed->objectName());
     }
+
     return uniqueName(orig, names);
 }
 
@@ -400,8 +400,8 @@ QString Demo::Project::uniqueImageName(const QString& orig) const {
     return uniqueName(orig, names);
 }
 
-QModelIndex Demo::Project::groupParent() const{
-    return index(GroupRow, QModelIndex());
+QModelIndex Demo::Project::scriptParent() const{
+    return index(ScriptRow, QModelIndex());
 }
 
 QModelIndex Demo::Project::modelParent() const {
@@ -416,7 +416,7 @@ QModelIndex Demo::Project::index(int row, int column, const QModelIndex &parent)
 
     if (!hasIndex(row, column, parent)) return QModelIndex();
     if (!parent.isValid()) return createIndex(row, column, row);
-    if (parent.internalId() == GroupRow)
+    if (parent.internalId() == ScriptRow)
         return createIndex(row, column, NumRows + row);
     if (parent.internalId() == ModelRow)
         return createIndex(row, column, NumRows + mEditors.size() + row);
@@ -438,7 +438,7 @@ QModelIndex Demo::Project::parent(const QModelIndex &index) const {
     int id = index.internalId();
 
     if (id < NumRows) return QModelIndex();
-    if (id < NumRows + mEditors.size()) return createIndex(GroupRow, 0, GroupRow);
+    if (id < NumRows + mEditors.size()) return createIndex(ScriptRow, 0, ScriptRow);
     if (id < NumRows + mEditors.size() + ModelStore::Size()) return createIndex(ModelRow, 0, ModelRow);
     if (id < NumRows + mEditors.size() + ModelStore::Size() + ImageStore::Size()) return createIndex(TextureRow, 0, TextureRow);
 
@@ -452,7 +452,7 @@ QVariant Demo::Project::headerData(int, Qt::Orientation, int) const {
 int Demo::Project::rowCount(const QModelIndex& parent) const {
     if (!parent.isValid()) return NumRows;
     int id = parent.internalId();
-    if (id == GroupRow) return mEditors.size();
+    if (id == ScriptRow) return mEditors.size();
     if (id == ModelRow) return ModelStore::Size();
     if (id == TextureRow) return ImageStore::Size();
 
@@ -469,39 +469,42 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
         return QVariant();
     }
 
-    if (index.parent() == groupParent()) {
+
+
+    if (index.parent() == scriptParent()) {
+
         if (role == Qt::DisplayRole) {
-            return QVariant::fromValue(mEditors[index.row()].editor->objectName());
+            return QVariant::fromValue(mEditors[index.row()]->objectName());
         }
 
         if (role == Qt::DecorationRole) {
-            if (mEditors[index.row()].editor->hasParseError()) {
+            if (mEditors[index.row()]->hasParseError()) {
                 return QIcon::fromTheme("error");
             }
-            if (mEditors[index.row()].editor->hasRunError()) {
+            if (mEditors[index.row()]->hasRunError()) {
                 return QIcon::fromTheme("error");
             }
-            if (mEditors[index.row()].editor->document()->isModified()) {
-                return QIcon::fromTheme("filesave");
+            if (mEditors[index.row()]->document()->isModified()) {
+                return QIcon::fromTheme("document-save");
             }
             return QVariant();
         }
 
         if (role == Qt::ToolTipRole) {
-            return QVariant::fromValue(mEditors[index.row()].filename);
+            return QVariant::fromValue(mScripts.value(mEditors[index.row()]->objectName()));
         }
 
 
         if (role == FileNameRole) {
-            return QVariant::fromValue(mEditors[index.row()].filename);
+            return QVariant::fromValue(mScripts.value(mEditors[index.row()]->objectName()));
         }
 
-        if (role == GroupRole) {
-            return QVariant::fromValue(mEditors[index.row()].editor->toPlainText());
+        if (role == ScriptRole) {
+            return QVariant::fromValue(mEditors[index.row()]->toPlainText());
         }
 
         if (role == EditorRole) {
-            QWidget* widget = mEditors[index.row()].editor;
+            QWidget* widget = mEditors[index.row()];
             return QVariant::fromValue(widget);
         }
 
@@ -548,12 +551,11 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
     if (!index.isValid()) return false;
 
 
-    if (index.parent() == groupParent()) {
+    if (index.parent() == scriptParent()) {
         if (role == Qt::EditRole) {
             QString newname = value.toString();
-            if (mEditors[index.row()].editor->objectName() != newname) {
-                mEditors[index.row()].editor->setObjectName(uniqueGroupName(newname));
-                mModified = true;
+            if (mEditors[index.row()]->objectName() != newname) {
+                mEditors[index.row()]->setObjectName(uniqueScriptName(newname));
                 emit dataChanged(index, index);
             }
             return true;
@@ -561,17 +563,16 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
 
         if (role == FileRole) {
             QString fname = value.toString();
-            QString cfname = mEditors[index.row()].filename;
+            QString cfname = mScripts[mEditors[index.row()]->objectName()];
 
             QFile file(fname);
             if (file.open(QFile::ReadOnly)) {
-                setEditorText(mEditors[index.row()].editor, file.readAll());
+                setEditorText(mEditors[index.row()], file.readAll());
                 file.close();
             }
 
             if (cfname != fname) {
-                mEditors[index.row()].filename = fname;
-                mModified = true;
+                mScripts[mEditors[index.row()]->objectName()] = fname;
                 emit dataChanged(index, index);
             }
             return true;
@@ -579,16 +580,15 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
 
         if (role == FileNameRole) {
             QString fname = value.toString();
-            if (mEditors[index.row()].filename != fname) {
-                mEditors[index.row()].filename = fname;
-                mModified = true;
+            if (mScripts[mEditors[index.row()]->objectName()] != fname) {
+                mScripts[mEditors[index.row()]->objectName()] = fname;
                 emit dataChanged(index, index);
             }
             return true;
         }
 
-        if (role == GroupRole) {
-            setEditorText(mEditors[index.row()].editor, value.toString());
+        if (role == ScriptRole) {
+            setEditorText(mEditors[index.row()], value.toString());
             return true;
         }
         return false;
@@ -600,7 +600,6 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
             QString curr = ModelStore::ModelName(index.row());
             if (curr != newname) {
                 ModelStore::Rename(curr, uniqueModelName(newname));
-                mModified = true;
                 emit dataChanged(index, index);
             }
             return true;
@@ -621,7 +620,6 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
                 // TODO: throw error otherwise
                 ModelStore::SetModel(name, fname);
                 if (cfname != fname) {
-                    mModified = true;
                     emit dataChanged(index, index);
                 }
             }
@@ -637,7 +635,6 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
             QString curr = ImageStore::ImageName(index.row());
             if (curr != newname) {
                 ImageStore::Rename(curr, uniqueImageName(newname));
-                mModified = true;
                 emit dataChanged(index, index);
             }
             return true;
@@ -658,7 +655,6 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
                 // TODO: throw error otherwise
                 ImageStore::SetImage(name, fname);
                 if (cfname != fname) {
-                    mModified = true;
                     emit dataChanged(index, index);
                 }
             }
@@ -687,13 +683,13 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
         return false;
 
 
-    if (parent == groupParent()) {
+    if (parent == scriptParent()) {
 
         if (row >= mEditors.size())
             return false;
 
         beginRemoveRows(parent, row, row);
-        delete mEditors[row].editor;
+        delete mEditors[row];
         mEditors.removeAt(row);
         endRemoveRows();
 
@@ -716,7 +712,6 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
         endRemoveRows();
     }
 
-    mModified = true;
     emit dataChanged(index(row, 0, parent), index(row, 0, parent));
     return true;
 }
@@ -730,10 +725,10 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
     int row = rowCount(parent);
     QModelIndex new_idx = index(row, parent);
 
-    if (parent == groupParent()) {
+    if (parent == scriptParent()) {
 
         beginInsertRows(parent, row, row);
-        appendEditor(uniqueGroupName(name), "// new commands here\n", file);
+        appendEditor(uniqueScriptName(name), "// new commands here\n", file);
         endInsertRows();
 
     } else if (parent == modelParent()) {
@@ -772,7 +767,6 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
         return false;
     }
 
-    mModified = true;
     emit dataChanged(new_idx, new_idx);
 
     return true;

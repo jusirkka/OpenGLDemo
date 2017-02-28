@@ -50,6 +50,6 @@ public:
 
 } // namespace GL
 
-Q_DECLARE_INTERFACE(GL::TexBlob, "org.kvanttiapina.OpenGLDemos.TexBlob/1.0")
+Q_DECLARE_INTERFACE(GL::TexBlob, "net.kvanttiapina.OpenGLDemos.TexBlob/1.0")
 
 #endif // TEXBLOB_H

@@ -12,6 +12,7 @@ namespace GL {
 class Teapot : public QObject, public Blob
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA(IID "net.kvanttiapina.OpenGLDemos.Blob/1.0")
     Q_INTERFACES(GL::Blob)
 
 public:

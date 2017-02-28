@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>401</width>
-    <height>75</height>
+    <height>96</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,9 +31,9 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="groupButton">
+      <widget class="QPushButton" name="scriptButton">
        <property name="text">
-        <string>Group</string>
+        <string>Script</string>
        </property>
       </widget>
      </item>

@@ -20,8 +20,8 @@ Demo::NewDialog::~NewDialog() {
     delete mUI;
 }
 
-void Demo::NewDialog::on_groupButton_pressed() {
-    mParentRow = mProject->groupParent().row();
+void Demo::NewDialog::on_scriptButton_pressed() {
+    mParentRow = mProject->scriptParent().row();
     accept();
 }
 

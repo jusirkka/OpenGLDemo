@@ -108,7 +108,7 @@ public:
                   vals[start+1].value<Math3D::Real>(),
                   vals[start+2].value<Math3D::Real>(),
                   vals[start+3].value<Math3D::Real>());
-        qDebug() << "Vec";
+        // qDebug() << "Vec";
 
         mValue.setValue(v);
         return mValue;
@@ -139,7 +139,7 @@ public:
             }
         }
         Matrix4 m(values);
-        qDebug() << "Mat";
+        // qDebug() << "Mat";
 
 
         mValue.setValue(m);
@@ -165,7 +165,7 @@ public:
         Vector4 axis = vals[start + 1].value<Vector4>();
         Matrix4 m;
         m.setRotation(angle, axis);
-        qDebug() << "Rot";
+        // qDebug() << "Rot";
         mValue.setValue(m);
         return mValue;
     }
@@ -186,7 +186,7 @@ public:
         Vector4 tr = vals[start].value<Vector4>();
         Matrix4 m;
         m.setTranslation(tr);
-        qDebug() << "Tr";
+        // qDebug() << "Tr";
         mValue.setValue(m);
         return mValue;
     }
@@ -211,7 +211,7 @@ public:
         Math3D::Real z = vals[start+2].value<Math3D::Real>();
         Matrix4 m;
         m.setScaling(x, y, z);
-        qDebug() << "Sc";
+        // qDebug() << "Sc";
         mValue.setValue(m);
         return mValue;
     }
@@ -231,7 +231,7 @@ public:
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Vector4 x = vals[start].value<Vector4>();
         Vector4 u = x.normalized3();
-        qDebug() << "Norm";
+        // qDebug() << "Norm";
         mValue.setValue(u);
         return mValue;
     }
@@ -253,7 +253,7 @@ public:
         m = m.linear();
         m = m.transpose3();
         m = m.comatrix();
-        qDebug() << "NormalT";
+        // qDebug() << "NormalT";
         mValue.setValue(m);
         return mValue;
     }

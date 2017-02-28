@@ -88,7 +88,7 @@ public:
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        qDebug() << "glEnable" << vals[start].value<Math3D::Integer>();
+        // qDebug() << "glEnable" << vals[start].value<Math3D::Integer>();
         ::glEnable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
         return mValue;
@@ -107,7 +107,7 @@ public:
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        qDebug() << "glDisable" << vals[start].value<Math3D::Integer>();
+        // qDebug() << "glDisable" << vals[start].value<Math3D::Integer>();
         ::glDisable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
         return mValue;
@@ -129,7 +129,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         Math3D::Real near =  vals[start].value<Math3D::Real>();
         Math3D::Real far =  vals[start + 1].value<Math3D::Real>();
-        qDebug() << "glDepthRange" << near << far;
+        // qDebug() << "glDepthRange" << near << far;
         mParent->glDepthRangef(near, far);
         mValue.setValue(0);
         return mValue;
@@ -149,7 +149,7 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Math3D::Real w =  vals[start].value<Math3D::Real>();
-        qDebug() << "glLineWidth" << w;
+        // qDebug() << "glLineWidth" << w;
         ::glLineWidth(w);
         mValue.setValue(0);
         return mValue;
@@ -169,7 +169,7 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Math3D::Integer face =  vals[start].value<Math3D::Integer>();
-        qDebug() << "glFrontFace" << face;
+        // qDebug() << "glFrontFace" << face;
         ::glFrontFace(face);
         mValue.setValue(0);
         return mValue;
@@ -189,7 +189,7 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Math3D::Integer face =  vals[start].value<Math3D::Integer>();
-        qDebug() << "glCullFace" << face;
+        // qDebug() << "glCullFace" << face;
         ::glCullFace(face);
         mValue.setValue(0);
         return mValue;
@@ -215,7 +215,7 @@ public:
         Math3D::Integer g =  vals[start+1].value<Math3D::Integer>();
         Math3D::Integer b =  vals[start+2].value<Math3D::Integer>();
         Math3D::Integer a =  vals[start+3].value<Math3D::Integer>();
-        qDebug() << "glColorMask" << r << g << b << a;
+        // qDebug() << "glColorMask" << r << g << b << a;
         ::glColorMask(r, g, b, a);
         mValue.setValue(0);
         return mValue;
@@ -235,7 +235,7 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Math3D::Integer d =  vals[start].value<Math3D::Integer>();
-        qDebug() << "glDepthMask" << d;
+        // qDebug() << "glDepthMask" << d;
         ::glDepthMask(d);
         mValue.setValue(0);
         return mValue;
@@ -255,7 +255,7 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Math3D::Integer mask =  vals[start].value<Math3D::Integer>();
-        qDebug() << "glClear" << mask;
+        // qDebug() << "glClear" << mask;
         ::glClear(mask);
         mValue.setValue(0);
         return mValue;
@@ -275,7 +275,7 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Vector4 color =  vals[start].value<Vector4>();
-        qDebug() << "glClearColor" << color[X] << color[Y] << color[Z] << color[W];
+        // qDebug() << "glClearColor" << color[X] << color[Y] << color[Z] << color[W];
         ::glClearColor(color[X], color[Y], color[Z], color[W]);
         mValue.setValue(0);
         return mValue;
@@ -295,7 +295,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         Math3D::Real depth =  vals[start].value<Math3D::Real>();
-        qDebug() << "glClearDepth" << depth;
+        // qDebug() << "glClearDepth" << depth;
         mParent->glClearDepthf(depth);
         mValue.setValue(0);
         return mValue;
@@ -315,7 +315,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int type =  vals[start].value<int>();
-        qDebug() << "glCreateShader" << type;
+        // qDebug() << "glCreateShader" << type;
         int ret = mParent->glCreateShader(type);
         mParent->resources().append(ret);
         mValue.setValue(ret);
@@ -340,9 +340,9 @@ public:
         GLuint name =  vals[start].value<int>();
         QByteArray bytes = vals[start+1].value<QString>().toLatin1();
         const char *data = bytes.constData();
-        qDebug() << "glShaderSource" << name;
+        // qDebug() << "glShaderSource" << name;
         mParent->glShaderSource(name, 1, &data, 0);
-        qDebug() << "glCompileShader" << name;
+        // qDebug() << "glCompileShader" << name;
         mParent->glCompileShader(name);
         int status;
         mParent->glGetShaderiv(name, GL_COMPILE_STATUS, &status);
@@ -371,7 +371,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int name =  vals[start].value<int>();
-        qDebug() << "glDeleteShader" << name;
+        // qDebug() << "glDeleteShader" << name;
         mParent->glDeleteShader(name);
         mParent->resources().removeOne(name);
         mValue.setValue(0);
@@ -389,7 +389,7 @@ public:
     CreateProgram(Demo::GLWidget* p): GLProc("createprogram", Symbol::Integer, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) {
-        qDebug() << "glCreateProgram";
+        // qDebug() << "glCreateProgram";
         int ret = mParent->glCreateProgram();
         mParent->resources().append(ret);
         mValue.setValue(ret);
@@ -413,7 +413,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int prog =  vals[start].value<int>();
         int shader =  vals[start+1].value<int>();
-        qDebug() << "glAttachShader" << prog << shader;
+        // qDebug() << "glAttachShader" << prog << shader;
         mParent->glAttachShader(prog, shader);
         mValue.setValue(0);
         return mValue;
@@ -436,7 +436,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int prog =  vals[start].value<int>();
         int shader =  vals[start+1].value<int>();
-        qDebug() << "glDetachShader" << prog << shader;
+        // qDebug() << "glDetachShader" << prog << shader;
         mParent->glDetachShader(prog, shader);
         mValue.setValue(0);
         return mValue;
@@ -457,7 +457,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int name =  vals[start].value<int>();
-        qDebug() << "glLinkProgram" << name;
+        // qDebug() << "glLinkProgram" << name;
         mParent->glLinkProgram(name);
         int status;
         mParent->glGetProgramiv(name, GL_LINK_STATUS, &status);
@@ -487,7 +487,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int name =  vals[start].value<int>();
-        qDebug() << "glUseProgram" << name;
+        // qDebug() << "glUseProgram" << name;
         mParent->glUseProgram(name);
         mValue.setValue(0);
         return mValue;
@@ -508,7 +508,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int name =  vals[start].value<int>();
-        qDebug() << "glDeleteProgram" << name;
+        // qDebug() << "glDeleteProgram" << name;
         mParent->glDeleteProgram(name);
         mParent->resources().removeOne(name);
         mValue.setValue(0);
@@ -532,7 +532,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int prog =  vals[start].value<int>();
         QString name =  vals[start+1].value<QString>();
-        qDebug() << "glGetAttribLocation" << prog << name;
+        // qDebug() << "glGetAttribLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
         int loc = mParent->glGetAttribLocation(prog, data);
@@ -558,7 +558,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int prog =  vals[start].value<int>();
         QString name =  vals[start+1].value<QString>();
-        qDebug() << "glGetUniformLocation" << prog << name;
+        // qDebug() << "glGetUniformLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
         int loc = mParent->glGetUniformLocation(prog, data);
@@ -584,7 +584,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int loc =  vals[start].value<int>();
         Math3D::Real uniform =  vals[start+1].value<Math3D::Real>();
-        qDebug() << "glUniform1f" << loc << uniform;
+        // qDebug() << "glUniform1f" << loc << uniform;
         mParent->glUniform1f(loc, uniform);
         mValue.setValue(0);
         return mValue;
@@ -606,7 +606,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int loc =  vals[start].value<int>();
         int uniform =  vals[start+1].value<int>();
-        qDebug() << "glUniform1i" << loc << uniform;
+        // qDebug() << "glUniform1i" << loc << uniform;
         mParent->glUniform1i(loc, uniform);
         mValue.setValue(0);
         return mValue;
@@ -629,7 +629,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int loc =  vals[start].value<int>();
         Vector4 uni =  vals[start+1].value<Vector4>();
-        qDebug() << "glUniform4f" << loc << uni[X] << uni[Y] << uni[Z] << uni[W];
+        // qDebug() << "glUniform4f" << loc << uni[X] << uni[Y] << uni[Z] << uni[W];
         mParent->glUniform4f(loc, uni[X], uni[Y], uni[Z], uni[W]);
         mValue.setValue(0);
         return mValue;
@@ -653,7 +653,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         int loc =  vals[start].value<int>();
         Matrix4 uni =  vals[start+1].value<Matrix4>();
-        qDebug() << "glUniformMatrix4F" << loc;
+        // qDebug() << "glUniformMatrix4F" << loc;
         mParent->glUniformMatrix4fv(loc, 1, GL_FALSE, uni.readArray());
         mValue.setValue(0);
         return mValue;
@@ -670,7 +670,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) {
         GLuint ret;
-        qDebug() << "glGenBuffers";
+        // qDebug() << "glGenBuffers";
         mParent->glGenBuffers(1, &ret);
         mParent->buffers().append(ret);
         mValue.setValue(ret);
@@ -691,7 +691,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint name =  vals[start].value<int>();
-        qDebug() << "glDeleteBuffers" << name;
+        // qDebug() << "glDeleteBuffers" << name;
         mParent->glDeleteBuffers(1, &name);
         mParent->buffers().removeOne(name);
         mValue.setValue(0);
@@ -715,7 +715,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint target =  vals[start].value<int>();
         GLuint buffer =  vals[start+1].value<int>();
-        qDebug() << "glBindBuffer" << target << buffer;
+        // qDebug() << "glBindBuffer" << target << buffer;
         mParent->glBindBuffer(target, buffer);
         mValue.setValue(0);
         return mValue;
@@ -739,7 +739,7 @@ public:
         GLuint target =  vals[start].value<int>();
         const Blob& blob =  mParent->blob(vals[start+1].value<int>());
         GLuint usage =  vals[start+2].value<int>();
-        qDebug() << "glBufferData" << target << blob.name() << usage;
+        // qDebug() << "glBufferData" << target << blob.name() << usage;
         mParent->glBufferData(target, blob.bytelen(target), blob.bytes(target), usage);
         mValue.setValue(0);
         return mValue;
@@ -764,10 +764,15 @@ public:
         GLuint index =  vals[start].value<int>();
         const Blob& blob =  mParent->blob(vals[start+1].value<int>());
         QString attr =  vals[start+2].value<QString>();
-        qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
+        // qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
         const BlobSpec& spec = blob.spec(attr);
-        qDebug() << "VertexAttribPointer" << spec.size << spec.offset;
-        mParent->glVertexAttribPointer(index, spec.size, spec.type, spec.normalized, spec.stride, (const void*) spec.offset);
+        // qDebug() << "VertexAttribPointer" << spec.size << spec.offset;
+        mParent->glVertexAttribPointer(index,
+                                       spec.size,
+                                       spec.type,
+                                       spec.normalized,
+                                       spec.stride,
+                                       (const void*) (size_t) spec.offset);
         mValue.setValue(0);
         return mValue;
     }
@@ -792,7 +797,7 @@ public:
         const Blob& blob =  mParent->blob(vals[start].value<int>());
         QString attr =  vals[start + 1].value<QString>();
         GLuint mode =  vals[start + 2].value<int>();
-        qDebug() << "Draw" << blob.name() << attr << mode;
+        // qDebug() << "Draw" << blob.name() << attr << mode;
         blob.draw(mode, attr);
         mValue.setValue(0);
         return mValue;
@@ -813,7 +818,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint name =  vals[start].value<int>();
-        qDebug() << "glEnableVertexAttribArray" << name;
+        // qDebug() << "glEnableVertexAttribArray" << name;
         mParent->glEnableVertexAttribArray(name);
         mValue.setValue(0);
         return mValue;
@@ -833,7 +838,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint name =  vals[start].value<int>();
-        qDebug() << "glDisableVertexAttribArray" << name;
+        // qDebug() << "glDisableVertexAttribArray" << name;
         mParent->glDisableVertexAttribArray(name);
         mValue.setValue(0);
         return mValue;
@@ -854,7 +859,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint name =  vals[start].value<int>();
-        qDebug() << "ActiveTexture" << name;
+        // qDebug() << "ActiveTexture" << name;
         mParent->glActiveTexture(name);
         mValue.setValue(0);
         return mValue;
@@ -875,7 +880,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint target =  vals[start].value<int>();
-        qDebug() << "GenerateMipMap" << target;
+        // qDebug() << "GenerateMipMap" << target;
         mParent->glGenerateMipmap(target);
         mValue.setValue(0);
         return mValue;
@@ -897,7 +902,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint target =  vals[start].value<int>();
         GLuint texture =  vals[start + 1].value<int>();
-        qDebug() << "BindTexture" << target << texture;
+        // qDebug() << "BindTexture" << target << texture;
         glBindTexture(target, texture);
         mValue.setValue(0);
         return mValue;
@@ -914,7 +919,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) {
         GLuint ret;
-        qDebug() << "GenTexture";
+        // qDebug() << "GenTexture";
         glGenTextures(1, &ret);
         mParent->textures().append(ret);
         mValue.setValue(ret);
@@ -935,7 +940,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint name =  vals[start].value<int>();
-        qDebug() << "DeleteTexture" << name;
+        // qDebug() << "DeleteTexture" << name;
         glDeleteTextures(1, &name);
         mParent->textures().removeOne(name);
         mValue.setValue(0);
@@ -961,7 +966,7 @@ public:
         GLuint target =  vals[start].value<int>();
         GLuint name =  vals[start + 1].value<int>();
         GLuint param =  vals[start + 2].value<int>();
-        qDebug() << "TexParameter" << target << name << param;
+        // qDebug() << "TexParameter" << target << name << param;
         glTexParameteri(target, name, param);
         mValue.setValue(0);
         return mValue;
@@ -991,9 +996,9 @@ public:
         GLuint iformat =  vals[start + 2].value<int>();
         const TexBlob& blob =  mParent->texBlob(vals[start + 3].value<int>());
         QString attr =  vals[start + 4].value<QString>();
-        qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
+        // qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
         const TexBlobSpec spec = blob.spec(attr);
-        qDebug() << "TexImage2D" << spec.width << spec.height << spec.type;
+        // qDebug() << "TexImage2D" << spec.width << spec.height << spec.type;
         glTexImage2D(target, level, iformat, spec.width, spec.height, 0, spec.format, spec.type, blob.data(attr));
         mValue.setValue(0);
         return mValue;

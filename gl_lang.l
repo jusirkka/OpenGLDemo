@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "s_p_types.h"
-#include "g_p.h"
+#include "gl_lang_types.h"
+#include "gl_lang.h"
 
-#define yylval g_plval
-#define yylloc g_plloc
+#define yylval gl_lang_lval
+#define yylloc gl_lang_lloc
 
 #define YY_USER_ACTION  \
     yylloc.col = yylloc.prev_col; yylloc.prev_col += yyleng; yylloc.pos = yylloc.prev_pos; yylloc.prev_pos += yyleng;
@@ -17,12 +17,12 @@
 #define my_init_line \
     yylloc.row++; yylloc.prev_col = 0;
 
-#define YY_DECL int g_plex (void)
+#define YY_DECL int gl_lang_lex (void)
+
 
 %}
 
 
-%option header-file="s_p.h"
 
 dig             [0-9]
 unum            {dig}+
@@ -32,7 +32,7 @@ float_2         \.{unum}([Ee]{num})?
 float_3         {unum}[Ee]{num}
 float           {float_1}|{float_2}|{float_3}
 
-singlechar      [\*\/+\-\^=<>\!;,\(\)\[\]]
+singlechar      [\*\/+\-\^=<>\!,\(\)\[\]]
 
 id              [A-Za-z_][A-Za-z0-9_]*
 
@@ -81,7 +81,7 @@ execute         Execute
 
 "//".*\n       my_init_line; // eat up comment line
 
-\n             my_init_line;
+\n             my_init_line; return SEP;
 
 
 \"             {
@@ -110,7 +110,7 @@ execute         Execute
 
 char parser_error_buffer[256];
 
-void g_perror(const char *str) {
+void gl_lang_error(const char *str) {
     strcpy(parser_error_buffer, str);
 /*    fprintf(stderr,"error at line %d, column %d: %s\n",
             yylloc.first_line,

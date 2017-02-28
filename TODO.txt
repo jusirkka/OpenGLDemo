@@ -1,6 +1,5 @@
 - rest of the opengl es2 statements
 - shadersource command
-- bug: scene not updated after edits in sub groups
 - bug: segfault in draw teapot if buffer missing
 - obj:group support
 - undo/redo
@@ -8,5 +7,7 @@
 - plugin help
 - plugin config
 - re-entrant scanners / parsers
+- Script dependency tree in parser/runner
+- Imported variables are immutable, they are declared as shared exactly once
 - model scanner / parser: SPACE as token
-- TEXT add operations in group parser
+- Implement TEXT addition in script parser

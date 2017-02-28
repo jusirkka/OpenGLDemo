@@ -156,5 +156,3 @@ const QString& GL::ImageStore::imageName(int index) {
 }
 
 GL::ImageStore::~ImageStore() {}
-
-Q_EXPORT_PLUGIN2(pnp_gl_imagestore, GL::ImageStore)

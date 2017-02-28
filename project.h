@@ -35,10 +35,13 @@ class Project : public QAbstractItemModel
 
 public:
 
-    static const int FileRole = Qt::UserRole;
-    static const int GroupRole = Qt::UserRole + 1;
-    static const int EditorRole = Qt::UserRole + 2;
-    static const int FileNameRole = Qt::UserRole + 3;
+    enum ProjectRoles {
+        FileRole = Qt::UserRole,
+        ScriptRole,
+        EditorRole,
+        FileNameRole
+    };
+
 
 public:
     // create new project
@@ -49,16 +52,15 @@ public:
     const QDir& directory() const {return mProjectDir;}
     const QString& projectFile() const {return mProjectIni;}
     void setProjectFile(const QString& fname);
-    bool modified() const {return mModified;}
     bool autoCompileEnabled() const {return mAutoCompileOn;}
     void toggleAutoCompile(bool on);
 
     void saveProject();
 
-    QString initGroup() const;
-    QString drawGroup() const;
+    QString initScript() const;
+    QString drawScript() const;
 
-    QModelIndex groupParent() const;
+    QModelIndex scriptParent() const;
     QModelIndex modelParent() const;
     QModelIndex textureParent() const;
 
@@ -97,9 +99,12 @@ public:
 public slots:
 
     void runnerReady();
-    void groupModified(bool unused=true);
-    void setInitGroup(QString);
-    void setDrawGroup(QString);
+
+    void scriptModification_changed(bool edited);
+    void scriptStatus_changed();
+
+    void setInitScript(const QString&);
+    void setDrawScript(const QString&);
 
     void dispatcher(const QString& curr, const QString& other);
 
@@ -107,34 +112,28 @@ signals:
 
     void initChanged();
     void drawChanged();
+    void scriptModificationChanged(bool edited);
 
 private:
 
-    class EditorTuple {
-    public:
-        CodeEditor* editor;
-        QString filename;
+
+    typedef QMap<QString, QString> NameMap;
+    typedef QMapIterator<QString, QString> NameIterator;
+    typedef QList<CodeEditor*> EditorList;
+
+    enum RowNames {
+        ScriptRow = 0,
+        ModelRow,
+        TextureRow,
+        NumRows
     };
 
-    class NameTuple {
-    public:
-        QString name;
-        QString filename;
-    };
-
-    typedef QList<NameTuple> NameList;
-    typedef QList<EditorTuple> EditorList;
-
-    static const int GroupRow = 0;
-    static const int ModelRow = 1;
-    static const int TextureRow = 2;
-    static const int NumRows = 3;
 
 private:
 
-    CodeEditor* appendEditor(const QString& name, const QString& group, const QString& file);
+    CodeEditor* appendEditor(const QString& name, const QString& script, const QString& file);
     void init_and_connect();
-    QString uniqueGroupName(const QString& orig) const;
+    QString uniqueScriptName(const QString& orig) const;
     QString uniqueModelName(const QString& orig) const;
     QString uniqueImageName(const QString& orig) const;
 
@@ -144,10 +143,10 @@ private:
     QDir mProjectDir;
     QString mProjectIni;
     EditorList mEditors;
+    NameMap mScripts;
     CodeEditor* mInit;
     CodeEditor* mDraw;
     GLWidget* mTarget;
-    bool mModified;
     bool mAutoCompileOn;
 };
 

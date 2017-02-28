@@ -29,7 +29,7 @@ public:
 
 private slots:
 
-    void on_groupButton_pressed();
+    void on_scriptButton_pressed();
     void on_modelButton_pressed();
     void on_textureButton_pressed();
     void on_lineEdit_textEdited(const QString& text);

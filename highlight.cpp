@@ -13,12 +13,12 @@ using Demo::Constant;
 extern "C"
 {
 
-#include "s_p_types.h"
-#include "s_p.h"
+#include "gl_lang_types.h"
+#include "gl_lang_scanner.h"
 
 }
 
-#include "g_p.h"
+#include "gl_lang.h"
 
 Highlight::Highlight(QTextDocument* parent)
     :QSyntaxHighlighter(parent),
@@ -45,7 +45,7 @@ Highlight::Highlight(QTextDocument* parent)
 
 void Highlight::highlightBlock(const QString &text) {
 
-    s_plex_destroy();
+    gl_lang_lex_destroy();
     QString parsed = text;
     int pshift = 0;
     if (previousBlockState() == 1) {
@@ -53,15 +53,15 @@ void Highlight::highlightBlock(const QString &text) {
         pshift = -1;
     }
     setCurrentBlockState(0);
-    s_p_scan_string(parsed.toAscii().data());
+    gl_lang__scan_string(parsed.toUtf8().data());
 
     int text_start = 0;
     int text_length = 0;
 
-    int token = g_plex();
+    int token = gl_lang_lex();
     while (token > 0) {
         if (currentBlockState() == 1) {
-            text_length += s_pleng;
+            text_length += gl_lang_leng;
             if (token == ENDSTRING) {
                 setCurrentBlockState(0);
                 setFormat(text_start, text_length, mText);
@@ -69,29 +69,29 @@ void Highlight::highlightBlock(const QString &text) {
         } else {
             if (token == BEGINSTRING) {
                 setCurrentBlockState(1);
-                text_start = g_plloc.pos  + pshift;
-                text_length = s_pleng;
+                text_start = gl_lang_lloc.pos  + pshift;
+                text_length = gl_lang_leng;
                 if (text_start < 0) {
                     text_start = 0;
                     text_length = 0;
                 }
             } else {
                 if (mFormats.contains(token)) {
-                    setFormat(g_plloc.pos + pshift, s_pleng, mFormats[token]);
-                } else if (token == ID && Parser::Symbols().contains(s_ptext)) {
-                    Function* fun = dynamic_cast<Function*>(Parser::Symbols()[s_ptext]);
+                    setFormat(gl_lang_lloc.pos + pshift, gl_lang_leng, mFormats[token]);
+                } else if (token == ID && Parser::Symbols().contains(gl_lang_text)) {
+                    Function* fun = dynamic_cast<Function*>(Parser::Symbols()[gl_lang_text]);
                     if (fun) {
-                        setFormat(g_plloc.pos + pshift, s_pleng, mFunction);
+                        setFormat(gl_lang_lloc.pos + pshift, gl_lang_leng, mFunction);
                     } else {
-                        Constant* con = dynamic_cast<Constant*>(Parser::Symbols()[s_ptext]);
+                        Constant* con = dynamic_cast<Constant*>(Parser::Symbols()[gl_lang_text]);
                         if (con) {
-                            setFormat(g_plloc.pos + pshift, s_pleng, mConstant);
+                            setFormat(gl_lang_lloc.pos + pshift, gl_lang_leng, mConstant);
                         }
                     }
                 }
             }
         }
-        token = g_plex();
+        token = gl_lang_lex();
     }
 
     if (currentBlockState() == 1) {

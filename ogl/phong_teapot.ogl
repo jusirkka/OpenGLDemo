@@ -105,7 +105,7 @@ clearcolor vec(.1,.2,.2,1);
 enable depth_test;
 enable cull_face;
 frontface ccw;
-cullface back;
+// cullface back;
 linewidth 2;
 
 

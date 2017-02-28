@@ -6,11 +6,11 @@
 extern "C"
 {
 
-#include "s_o.h"
-#include "s_o_types.h"
+#include "wavefront_scanner.h"
+#include "wavefront_types.h"
 
-int g_oparse(void);
-extern int g_odebug;
+int wavefront_parse(void);
+extern int wavefront_debug;
 
 extern char model_error_buffer[256];
 
@@ -96,7 +96,7 @@ void GL::ModelStore::draw(unsigned int mode, const QString& attr) const {
         glDrawElements((GLenum) mode,
                        (GLsizei) model.elemLength / sizeof(GLuint),
                        GL_UNSIGNED_INT,
-                       (void*) model.elemOffset);
+                       (void*) (size_t) model.elemOffset);
     }
 }
 
@@ -242,12 +242,12 @@ void GL::ModelStore::parseModelData(const QString& path) {
         file.close();
     }
 
-    g_odebug = 0;
-    s_o_scan_string(inp.toAscii().data());
-    int err = g_oparse();
-    s_olex_destroy();
+    wavefront_debug = 0;
+    wavefront__scan_string(inp.toUtf8().data());
+    int err = wavefront_parse();
+    wavefront_lex_destroy();
 
-    if (err) throw ModelError(QString(model_error_buffer), g_olloc.row, g_olloc.col, g_olloc.pos);
+    if (err) throw ModelError(QString(model_error_buffer), wavefront_lloc.row, wavefront_lloc.col, wavefront_lloc.pos);
 }
 
 
@@ -345,6 +345,3 @@ const QString& GL::ModelStore::fileName(int index) {
 const QString& GL::ModelStore::modelName(int index) {
     return mNames[index];
 }
-
-
-Q_EXPORT_PLUGIN2(pnp_gl_modelstore, GL::ModelStore)

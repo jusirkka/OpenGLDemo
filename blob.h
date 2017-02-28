@@ -81,7 +81,7 @@ protected:
 
 } // namespace GL
 
-Q_DECLARE_INTERFACE(GL::Blob, "org.kvanttiapina.OpenGLDemos.Blob/1.0")
+Q_DECLARE_INTERFACE(GL::Blob, "net.kvanttiapina.OpenGLDemos.Blob/1.0")
 
 
 #endif // BLOB_H

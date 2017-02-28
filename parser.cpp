@@ -25,11 +25,11 @@
 extern "C"
 {
 
-#include "s_p.h"
-#include "s_p_types.h"
+#include "gl_lang_scanner.h"
+#include "gl_lang_types.h"
 
-int g_pparse(void);
-extern int g_pdebug;
+int gl_lang_parse(void);
+extern int gl_lang_debug;
 
 extern char parser_error_buffer[256];
 
@@ -49,12 +49,15 @@ using Math3D::Matrix4;
 // public GL interface
 
 void Demo::Parser::ParseIt(const QString& name, const QString& inp) {
-    s_plex_destroy();
+    gl_lang_lex_destroy();
     instance().init(name);
-    g_pdebug = 0;
-    s_p_scan_string(inp.toAscii().data());
-    int err = g_pparse();
-    if (err) throw ParseError(QString(parser_error_buffer), g_plloc.row, g_plloc.col, g_plloc.pos);
+    gl_lang_debug = 0;
+    // ensure that the source ends with a newline
+    QString src(inp);
+    src += "\n";
+    gl_lang__scan_string(src.toUtf8().data());
+    int err = gl_lang_parse();
+    if (err) throw ParseError(QString(parser_error_buffer), gl_lang_lloc.row, gl_lang_lloc.col, gl_lang_lloc.pos);
 }
 
 Demo::Runner* Demo::Parser::CreateRunner() {
@@ -244,7 +247,7 @@ void Demo::Parser::addSymbol(Symbol* sym, bool used) {
 
 
 void Demo::Parser::setCode(const QString& name) {
-    mAssignments.append(Assignment(name, mCurrent, mCurrImmed, g_plloc.pos));
+    mAssignments.append(Assignment(name, mCurrent, mCurrImmed, gl_lang_lloc.pos));
     mCurrent.clear();
     mCurrImmed.clear();
     mCodeSize = 0;

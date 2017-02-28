@@ -5,11 +5,11 @@ extern "C"
 {
     #include <stdio.h>
 
-    int g_oparse(void);
-    int g_olex(void);
-    void g_oerror(const char *);
+    int wavefront_parse(void);
+    int wavefront_lex(void);
+    void wavefront_error(const char *);
 
-    int s_owrap(void) {return 1;}
+    int wavefront_wrap(void) {return 1;}
 
 }
 

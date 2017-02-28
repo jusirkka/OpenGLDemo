@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "s_o_types.h"
-#include "g_o.h"
+#include "wavefront_types.h"
+#include "wavefront.h"
 
-#define yylval g_olval
-#define yylloc g_olloc
+#define yylval wavefront_lval
+#define yylloc wavefront_lloc
 
 #define YY_USER_ACTION  \
     yylloc.col = yylloc.prev_col; yylloc.prev_col += yyleng; yylloc.pos = yylloc.prev_pos; yylloc.prev_pos += yyleng;
@@ -17,12 +17,11 @@
 #define my_init_line \
     yylloc.row++; yylloc.prev_col = 0;
 
-#define YY_DECL int g_olex (void)
+#define YY_DECL int wavefront_lex (void)
 
 %}
 
 
-%option header-file="s_o.h"
 
 dig             [0-9]
 unum            {dig}+
@@ -131,7 +130,7 @@ unsupp          ^({unsupp1}|{unsupp2}|{unsupp3}){sep}
 
 char model_error_buffer[256];
 
-void g_oerror(const char *str) {
+void wavefront_error(const char *str) {
     strcpy(model_error_buffer, str);
 }
 

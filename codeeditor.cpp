@@ -40,6 +40,7 @@
 
 #include <QtGui>
 #include <QTimer>
+#include <QToolTip>
 
 #include "codeeditor.h"
 #include "parser.h"
@@ -62,8 +63,8 @@ CodeEditor::CodeEditor(Project* owner)
       mRunErrorPos(-1)
 {
     connect(this, SIGNAL(runnerReady()), owner, SLOT(runnerReady()));
-    connect(this->document(), SIGNAL(modificationChanged(bool)), owner, SLOT(groupModified(bool)));
-    connect(this, SIGNAL(statusChanged()), owner, SLOT(groupModified()));
+    connect(this->document(), SIGNAL(modificationChanged(bool)), owner, SLOT(scriptModification_changed(bool)));
+    connect(this, SIGNAL(statusChanged()), owner, SLOT(scriptStatus_changed()));
 
     lineNumberArea = new LineNumberArea(this);
 

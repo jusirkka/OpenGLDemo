@@ -26,9 +26,9 @@
 
 #include "mainwindow.h"
 
-Q_IMPORT_PLUGIN(pnp_gl_teapot)
-Q_IMPORT_PLUGIN(pnp_gl_imagestore)
-Q_IMPORT_PLUGIN(pnp_gl_modelstore)
+Q_IMPORT_PLUGIN(Teapot)
+Q_IMPORT_PLUGIN(ImageStore)
+Q_IMPORT_PLUGIN(ModelStore)
 
 
 
@@ -43,9 +43,11 @@ int main(int argc, char *argv[]) {
     app.setOrganizationName("Kvanttiapina");
     app.setApplicationName("OpenGLDemos");
 
-    QString demo;
+    QString demo("");
     QStringList args = QApplication::arguments();
-    if (args.size() > 1) demo = args.at(1);
+    if (args.size() > 1) {
+        demo = args.at(1);
+    }
 
     Demo::MainWindow mw(demo);
     mw.show();

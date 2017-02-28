@@ -5,11 +5,11 @@ extern "C"
 {
     #include <stdio.h>
 
-    int g_pparse(void);
-    int g_plex(void);
-    void g_perror(const char *);
+    int gl_lang_parse(void);
+    int gl_lang_lex(void);
+    void gl_lang_error(const char *);
 
-    int s_pwrap(void) {return 1;}
+    int gl_lang_wrap(void) {return 1;}
 
 }
 
@@ -137,7 +137,7 @@ using namespace Demo;
 %left <int_value> '*' '/' AND BAND
 %left <int_value> NEG '!'
 
-%token UNK BEGINSTRING ENDSTRING
+%token UNK BEGINSTRING ENDSTRING SEP
 
 // Grammar follows
 
@@ -155,13 +155,13 @@ elements:
     ;
 
 element:
-    ';'
+    SEP
     |
-    declaration ';'
+    declaration SEP
     |
-    assignment ';'
+    assignment SEP
     |
-    statement ';'
+    statement SEP
     ;
 
 declaration:
@@ -205,7 +205,7 @@ declaration:
             foreach (QString var, *($3)) {
                 if (Parser::Symbols().contains(var)) {
                     if (Parser::Symbols()[var]->type() != Symbol::Real) {
-                        HANDLE_ERROR(var.toAscii().constData(), demo_err_notarealvariable);
+                        HANDLE_ERROR(var.toUtf8().constData(), demo_err_notarealvariable);
                     }
                     dynamic_cast<Variable*>(Parser::Symbols()[var])->setUsed(true);
                 } else {
@@ -219,7 +219,7 @@ declaration:
             foreach (QString var, *($3)) {
                 if (Parser::Symbols().contains(var)) {
                     if (Parser::Symbols()[var]->type() != Symbol::Vector) {
-                        HANDLE_ERROR(var.toAscii().constData(), demo_err_notavectorvariable);
+                        HANDLE_ERROR(var.toUtf8().constData(), demo_err_notavectorvariable);
                     }
                     dynamic_cast<Variable*>(Parser::Symbols()[var])->setUsed(true);
                 } else {
@@ -233,7 +233,7 @@ declaration:
             foreach (QString var, *($3)) {
                 if (Parser::Symbols().contains(var)) {
                     if (Parser::Symbols()[var]->type() != Symbol::Matrix) {
-                        HANDLE_ERROR(var.toAscii().constData(), demo_err_notamatrixvariable);
+                        HANDLE_ERROR(var.toUtf8().constData(), demo_err_notamatrixvariable);
                     }
                     dynamic_cast<Variable*>(Parser::Symbols()[var])->setUsed(true);
                 } else {
@@ -247,7 +247,7 @@ declaration:
             foreach (QString var, *($3)) {
                 if (Parser::Symbols().contains(var)) {
                     if (Parser::Symbols()[var]->type() != Symbol::Text) {
-                        HANDLE_ERROR(var.toAscii().constData(), demo_err_notatextvariable);
+                        HANDLE_ERROR(var.toUtf8().constData(), demo_err_notatextvariable);
                     }
                     dynamic_cast<Variable*>(Parser::Symbols()[var])->setUsed(true);
                 } else {
@@ -261,7 +261,7 @@ declaration:
             foreach (QString var, *($3)) {
                 if (Parser::Symbols().contains(var)) {
                     if (Parser::Symbols()[var]->type() != Symbol::Integer) {
-                        HANDLE_ERROR(var.toAscii().constData(), demo_err_notaintegervariable);
+                        HANDLE_ERROR(var.toUtf8().constData(), demo_err_notaintegervariable);
                     }
                     dynamic_cast<Variable*>(Parser::Symbols()[var])->setUsed(true);
                 } else {
@@ -324,7 +324,7 @@ statement:
         {
             Function* emitter = dynamic_cast<Function*>(Parser::Symbols()["gl_emitter"]);
             if ($2 != Symbol::Text) {
-                HANDLE_ERROR("Exexute", demo_err_nottext);
+                HANDLE_ERROR("Execute", demo_err_nottext);
             }
             Parser::PushBack(Parser::cImmed, 0, 1);
             Parser::PushBackImmed(Parser::Name());

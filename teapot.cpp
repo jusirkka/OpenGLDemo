@@ -638,7 +638,7 @@ void GL::Teapot::draw(unsigned int mode, const QString&) const {
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &name);
     if (name == 0) return;
     foreach (Element item, mElements) {
-        glDrawElements((GLenum) mModes[item.mode][mode], (GLsizei) item.count, GL_UNSIGNED_INT, (void*) item.offset);
+        glDrawElements((GLenum) mModes[item.mode][mode], (GLsizei) item.count, GL_UNSIGNED_INT, (void*) (size_t) item.offset);
     }
 }
 
@@ -647,5 +647,3 @@ GL::Teapot::~Teapot() {
         delete (char*) c.data;
     }
 }
-
-Q_EXPORT_PLUGIN2(pnp_gl_teapot, GL::Teapot)
