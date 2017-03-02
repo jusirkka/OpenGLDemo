@@ -1,48 +1,33 @@
 %{
 
-
-extern "C"
-{
-    #include <stdio.h>
-
-    int wavefront_parse(void);
-    int wavefront_lex(void);
-    void wavefront_error(const char *);
-
-    int wavefront_wrap(void) {return 1;}
-
-}
-
-
-
 #include "modelstore.h"
 
-using namespace GL;
+int wavefront_lex(Demo::WF::ValueType*, Demo::WF::LocationType*, yyscan_t);
+
+using Demo::WF::Triplet;
 
 %}
 
-%debug
 %locations
+%define parse.trace
 
-%union
-{
-    float v_float;
-    int v_int;
-    int p_triplet[3];
-    TripletList* p_triplet_list;
-}
+%define api.prefix {wavefront_}
+%define api.pure full
+%define api.value.type {Demo::WF::ValueType}
 
+%parse-param {Demo::GL::ModelStore* models}
+%parse-param {yyscan_t scanner}
+%lex-param {yyscan_t scanner}
 
 %token UNK ENDLINE UNSUPP
 %token VERTEX TEXCOORD NORMAL FACE
 
-%token <p_triplet> VERT VERT_NORM VERT_TEX VERT_TEX_NORM
+%token <v_triplet> VERT VERT_NORM VERT_TEX VERT_TEX_NORM
 %token <v_int> INT
 %token <v_float> FLOAT
 
 %type <v_float> num
-%type <p_triplet_list> verts verts_norms verts_texes verts_texes_norms ints
-%destructor {delete ($$);} verts verts_norms verts_texes verts_texes_norms ints
+%type <v_triplet_list> verts verts_norms verts_texes verts_texes_norms ints
 
 
 // Grammar follows
@@ -104,12 +89,12 @@ supported:
 vertex:
     VERTEX num num num
         {
-            ModelStore::AppendVertex($2, $3, $4);
+            models->appendVertex($2, $3, $4);
         }
     |
     VERTEX num num num num
         {
-            ModelStore::AppendVertex($2, $3, $4);
+            models->appendVertex($2, $3, $4);
         }
     ;
 
@@ -128,7 +113,7 @@ num:
 normal:
     NORMAL num num num
         {
-            ModelStore::AppendNormal($2, $3, $4);
+            models->appendNormal($2, $3, $4);
         }
     ;
 
@@ -145,34 +130,34 @@ texcoord:
     |
     TEXCOORD num num
         {
-            ModelStore::AppendTex($2, $3);
+            models->appendTex($2, $3);
         }
     ;
 
 face:
     FACE ints
         {
-            ModelStore::AppendFace(*$2);
+            models->appendFace($2);
         }
     |
     FACE verts
         {
-            ModelStore::AppendFace(*$2);
+            models->appendFace($2);
         }
     |
     FACE verts_norms
         {
-            ModelStore::AppendFace(*$2);
+            models->appendFace($2);
         }
     |
     FACE verts_texes
         {
-            ModelStore::AppendFace(*$2);
+            models->appendFace($2);
         }
     |
     FACE verts_texes_norms
         {
-            ModelStore::AppendFace(*$2);
+            models->appendFace($2);
         }
 
     ;
@@ -180,65 +165,65 @@ face:
 verts:
     VERT
         {
-            $$ = new TripletList;
-            $$->append(Triplet($1[0], $1[1], $1[2]));
+            $$.clear();
+            $$.append(Triplet($1[0], $1[1], $1[2]));
         }
     |
     verts VERT
         {
-            $$->append(Triplet($2[0], $2[1], $2[2]));
+            $$.append(Triplet($2[0], $2[1], $2[2]));
         }
     ;
 
 ints:
     INT
         {
-            $$ = new TripletList;
-            $$->append(Triplet($1, 0, 0));
+            $$.clear();
+            $$.append(Triplet($1, 0, 0));
         }
     |
     ints INT
         {
-            $$->append(Triplet($2, 0, 0));
+            $$.append(Triplet($2, 0, 0));
         }
     ;
 
 verts_norms:
     VERT_NORM
         {
-            $$ = new TripletList;
-            $$->append(Triplet($1[0], $1[1], $1[2]));
+            $$.clear();
+            $$.append(Triplet($1[0], $1[1], $1[2]));
         }
     |
     verts_norms VERT_NORM
         {
-            $$->append(Triplet($2[0], $2[1], $2[2]));
+            $$.append(Triplet($2[0], $2[1], $2[2]));
         }
     ;
 
 verts_texes:
     VERT_TEX
         {
-            $$ = new TripletList;
-            $$->append(Triplet($1[0], $1[1], $1[2]));
+            $$.clear();
+            $$.append(Triplet($1[0], $1[1], $1[2]));
         }
     |
     verts_texes VERT_TEX
         {
-            $$->append(Triplet($2[0], $2[1], $2[2]));
+            $$.append(Triplet($2[0], $2[1], $2[2]));
         }
     ;
 
 verts_texes_norms:
     VERT_TEX_NORM
         {
-            $$ = new TripletList;
-            $$->append(Triplet($1[0], $1[1], $1[2]));
+            $$.clear();
+            $$.append(Triplet($1[0], $1[1], $1[2]));
         }
     |
     verts_texes_norms VERT_TEX_NORM
         {
-            $$->append(Triplet($2[0], $2[1], $2[2]));
+            $$.append(Triplet($2[0], $2[1], $2[2]));
         }
     ;
 

@@ -5,22 +5,22 @@
 #include <QGLFunctions>
 #include <QDebug>
 #include "math3d.h"
+#include "gl_lang_compiler.h"
 
 class QMouseEvent;
 
 class Camera;
 
+
+namespace Demo {
+
 namespace GL {
     class Blob;
     class TexBlob;
     class Emitter;
-    class ImageStore;
 }
 
-namespace Demo {
-
 class Variable;
-class Runner;
 
 class GLWidget : public QGLWidget, public QGLFunctions {
 
@@ -34,12 +34,15 @@ public:
 
 
     GLWidget(QWidget *parent = 0);
+    void addGLSymbols(SymbolMap& globals);
 
     ResourceList& resources() {return mResources;}
     ResourceList& buffers() {return mBuffers;}
     ResourceList& textures() {return mTextures;}
     const GL::Blob& blob(int index) const {return *mBlobs[index];}
     const GL::TexBlob& texBlob(int index) const {return *mTexBlobs[index];}
+    GL::Blob* blob(const SymbolMap& globals, const QString& name) const;
+    GL::TexBlob* texBlob(const SymbolMap& globals, const QString& name) const;
 
     void animStart();
     void animStop();
@@ -117,12 +120,11 @@ signals:
 
     void init();
     void draw();
-    void evaluate(const QString& curr, const QString& other);
 
 private:
 
     void defaults();
-    void addBlob(QObject*);
+    void addBlob(QObject* blob, SymbolMap& globals);
 
     void zoom();
     void spin();

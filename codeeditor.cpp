@@ -43,26 +43,21 @@
 #include <QToolTip>
 
 #include "codeeditor.h"
-#include "parser.h"
-#include "runner.h"
+#include "gl_lang_compiler.h"
+#include "gl_lang_runner.h"
 #include "project.h"
 #include "highlight.h"
 
-using Demo::Parser;
-using Demo::ParseError;
-using Demo::RunError;
-using Demo::Runner;
-using Demo::Project;
+using namespace Demo;
 
-
-CodeEditor::CodeEditor(Project* owner)
-    :QPlainTextEdit(),
-      mParseDelay(new QTimer(this)),
-      mRunner(0),
-      mParseErrorPos(-1),
-      mRunErrorPos(-1)
+CodeEditor::CodeEditor(Project* owner):
+    QPlainTextEdit(),
+    mCompileDelay(new QTimer(this)),
+    mCompileErrorPos(-1),
+    mRunErrorPos(-1),
+    mCompiler(new GL::Compiler())
 {
-    connect(this, SIGNAL(runnerReady()), owner, SLOT(runnerReady()));
+    connect(this, SIGNAL(compiled()), owner, SLOT(scriptCompiled()));
     connect(this->document(), SIGNAL(modificationChanged(bool)), owner, SLOT(scriptModification_changed(bool)));
     connect(this, SIGNAL(statusChanged()), owner, SLOT(scriptStatus_changed()));
 
@@ -75,54 +70,51 @@ CodeEditor::CodeEditor(Project* owner)
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
 
-    mParseDelay->setInterval(1000);
-    toggleAutoParse(owner->autoCompileEnabled());
+    mCompileDelay->setInterval(1000);
+    toggleAutoCompile(owner->autoCompileEnabled());
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setLineWrapMode(QPlainTextEdit::NoWrap);
 
-    mHighlight = new Highlight(document());
+    mHighlight = new Highlight(mCompiler, document());
 }
 
 
-void CodeEditor::toggleAutoParse(bool on) {
+void CodeEditor::toggleAutoCompile(bool on) {
     if (on) {
-        connect(this, SIGNAL(textChanged()), mParseDelay, SLOT(start()));
-        connect(mParseDelay, SIGNAL(timeout()), this, SLOT(parse()));
+        connect(this, SIGNAL(textChanged()), mCompileDelay, SLOT(start()));
+        connect(mCompileDelay, SIGNAL(timeout()), this, SLOT(compile()));
     } else {
-        mParseDelay->stop();
-        disconnect(this, SIGNAL(textChanged()), mParseDelay, SLOT(start()));
-        disconnect(mParseDelay, SIGNAL(timeout()), this, SLOT(parse()));
+        mCompileDelay->stop();
+        disconnect(this, SIGNAL(textChanged()), mCompileDelay, SLOT(start()));
+        disconnect(mCompileDelay, SIGNAL(timeout()), this, SLOT(compile()));
     }
 }
 
-void CodeEditor::parse() {
-    mParseDelay->stop();
-    int prevPos = mParseErrorPos;
+void CodeEditor::compile() {
+    mCompileDelay->stop();
+    int prevPos = mCompileErrorPos;
     try {
-        Parser::ParseIt(objectName(), toPlainText());
-        mKids.clear();
-        delete mRunner;
-        mRunner = Parser::CreateRunner();
-        mParseErrorPos = -1;
-        emit runnerReady();
-    } catch (ParseError& e) {
-        mParseError = e.msg();
-        mParseErrorPos = e.pos();
+        mCompiler->compile(toPlainText());
+        mCompileErrorPos = -1;
+        emit compiled();
+    } catch (GL::CompileError& e) {
+        mCompileError = e.msg();
+        mCompileErrorPos = e.pos();
     }
-    if (prevPos != mParseErrorPos) {
+    if (prevPos != mCompileErrorPos) {
         highlightCurrentLine();
         emit statusChanged();
     }
 }
 
-void CodeEditor::evaluate() {
-    if (!mRunner) return;
+void CodeEditor::run() {
+    if (!mCompiler->ready()) return;
     int prevPos = mRunErrorPos;
     try {
-        mRunner->evaluate();
+        mCompiler->run();
         mRunErrorPos = -1;
-    } catch (RunError& e) {
+    } catch (GL::RunError& e) {
         mRunError = e.msg();
         mRunErrorPos = e.pos();
     }
@@ -148,17 +140,17 @@ void CodeEditor::highlightCurrentLine()
         selection.cursor.clearSelection();
         extraSelections.append(selection);
     }
-    if (mParseErrorPos >= 0) {
+    if (mCompileErrorPos >= 0) {
         QTextEdit::ExtraSelection err;
         err.cursor = QTextCursor(document());
         err.cursor.movePosition(QTextCursor::End);
         int endpos = err.cursor.position();
-        if (mParseErrorPos <= endpos) {
-            err.cursor.setPosition(mParseErrorPos, QTextCursor::MoveAnchor);
+        if (mCompileErrorPos <= endpos) {
+            err.cursor.setPosition(mCompileErrorPos, QTextCursor::MoveAnchor);
             err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-            while (err.cursor.anchor() == err.cursor.position() && mParseErrorPos > 0) {
-                mParseErrorPos -= 1;
-                err.cursor.setPosition(mParseErrorPos, QTextCursor::MoveAnchor);
+            while (err.cursor.anchor() == err.cursor.position() && mCompileErrorPos > 0) {
+                mCompileErrorPos -= 1;
+                err.cursor.setPosition(mCompileErrorPos, QTextCursor::MoveAnchor);
                 err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
             }
 
@@ -170,7 +162,7 @@ void CodeEditor::highlightCurrentLine()
 
             err.format.setUnderlineColor(under);
             err.format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
-            err.format.setToolTip(mParseError);
+            err.format.setToolTip(mCompileError);
             extraSelections.append(err);
         }
     }

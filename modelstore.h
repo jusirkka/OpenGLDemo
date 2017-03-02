@@ -9,9 +9,28 @@
 #include "blob.h"
 #include "math3d.h"
 
+#define WAVEFRONT_LTYPE Demo::WF::LocationType
+#define WAVEFRONT_STYPE Demo::WF::ValueType
+
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
 using Math3D::Vector4;
 
-namespace GL {
+namespace Demo {
+
+namespace WF {
+
+class LocationType {
+public:
+    int row;
+    int col;
+    int pos;
+    int prev_col;
+    int prev_pos;
+};
 
 
 class ModelError {
@@ -22,6 +41,13 @@ public:
           erow(row),
           ecol(col),
           epos(pos)
+    {}
+
+    ModelError()
+        :emsg(),
+          erow(0),
+          ecol(0),
+          epos(0)
     {}
 
     const QString msg() const {return emsg;}
@@ -38,6 +64,7 @@ private:
 
 };
 
+
 class Triplet {
 public:
     Triplet(int v = 0, int t = 0, int n = 0):
@@ -51,58 +78,50 @@ public:
 
 typedef QList<Triplet> TripletList;
 
+class ValueType {
+public:
+    int v_int;
+    float v_float;
+    int v_triplet[3];
+    TripletList v_triplet_list;
+};
+
+}
+
+namespace GL {
 
 class ModelStore : public QObject, public Blob
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "net.kvanttiapina.OpenGLDemos.Blob/1.0")
-    Q_INTERFACES(GL::Blob)
+    Q_INTERFACES(Demo::GL::Blob)
 
 public:
 
-    // project interface
-    static void Clean();
-    static void SetModel(const QString& key, const QString& path = QString(""));
-    static int Size();
-    static const QString& ModelName(int);
-    static const QString& FileName(int);
-    static void Rename(const QString& from, const QString& to);
-    static void Remove(int index);
-
-    // grammar interface
-    static void AppendVertex(float, float, float);
-    static void AppendNormal(float, float, float);
-    static void AppendTex(float, float);
-    static void AppendFace(const TripletList&);
-
-
     ModelStore();
-    // b[ob interface implementation
-    void draw(unsigned int mode, const QString& attr) const;
-    ~ModelStore();
 
-
-
-private:
-
-    static ModelStore* instance();
-
-
+    // project interface
     void rename(const QString& from, const QString& to);
     void remove(int index, bool keepNames = false);
-    void setModel(const QString& key, const QString& path);
+    void setModel(const QString& key, const QString& path = QString());
     void clean();
     int size();
     const QString& fileName(int);
     const QString& modelName(int);
 
+    // grammar interface
     void appendVertex(float, float, float);
     void appendNormal(float, float, float);
     void appendTex(float, float);
-    void appendFace(const TripletList&);
+    void appendFace(const WF::TripletList&);
 
     void parseModelData(const QString& path);
+    void createError(WF::LocationType* loc, const QString& msg);
 
+    // blob interface implementation
+    void draw(unsigned int mode, const QString& attr) const;
+
+    ~ModelStore();
 
 
 private:
@@ -144,8 +163,28 @@ private:
     Vector4List mTexCoords;
     IndexList mIndices;
 
+    WF::ModelError mError;
+    yyscan_t mScanner;
 };
 
-} // namespace GL
+}} // namespace Demo::GL
+
+#define YYLLOC_DEFAULT(Current, Rhs, N) do if (N) {\
+    (Current).row = YYRHSLOC (Rhs, 1).row;\
+    (Current).col = YYRHSLOC (Rhs, 1).col;\
+    (Current).prev_col = YYRHSLOC (Rhs, 1).prev_col;\
+    (Current).pos = YYRHSLOC (Rhs, 1).pos;\
+    (Current).prev_pos = YYRHSLOC (Rhs, 1).prev_pos;\
+    } else {                                                               \
+    (Current).row = YYRHSLOC (Rhs, 0).row;\
+    (Current).col = YYRHSLOC (Rhs, 0).col;\
+    (Current).prev_col = YYRHSLOC (Rhs, 0).prev_col;\
+    (Current).pos = YYRHSLOC (Rhs, 0).pos;\
+    (Current).prev_pos = YYRHSLOC (Rhs, 0).prev_pos;\
+    } while (0)
+
+void wavefront_error(Demo::WF::LocationType*, Demo::GL::ModelStore*, yyscan_t, const char*);
+
+
 
 #endif // MODELSTORE_H

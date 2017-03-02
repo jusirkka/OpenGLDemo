@@ -26,6 +26,7 @@
 #include "codeeditor.h"
 #include "fpscontrol.h"
 #include "scriptselector.h"
+#include "constant.h"
 
 #include <QtDebug>
 #include <QMessageBox>
@@ -38,16 +39,29 @@
 #include <QApplication>
 #include <QImageReader>
 
+using namespace Demo;
 
-
-Demo::MainWindow::MainWindow(const QString& project):
+MainWindow::MainWindow(const QString& project):
     QMainWindow(),
     mLastDir(QDir::home()),
     mUI(new Ui::MainWindow),
     mProject(0),
     mProjectModified(false),
-    mNumEdits(0)
+    mNumEdits(0),
+    mGlobalSymbols()
 {
+
+    // Initialize globals
+
+    // constants
+    Constants cons;
+    foreach(Symbol* con, cons.contents) mGlobalSymbols[con->name()] = con;
+
+    // functions
+    Functions funcs;
+    foreach(Symbol* func, funcs.contents) mGlobalSymbols[func->name()] = func;
+
+
     mUI->setupUi(this);
 
     FPSControl* fps = new FPSControl();
@@ -60,6 +74,10 @@ Demo::MainWindow::MainWindow(const QString& project):
     mUI->demoBar->addWidget(mScripts);
 
     mGLWidget = new GLWidget(mUI->graphicsDockContents);
+
+    // Initialize GL globals
+    mGLWidget->addGLSymbols(mGlobalSymbols);
+
     mUI->graphicsDockLayout->addWidget(mGLWidget);
 
     mUI->centralwidget->hide();
@@ -413,7 +431,7 @@ void Demo::MainWindow::on_actionCompile_triggered() {
         if (index.parent() == mProject->scriptParent()) {
             QWidget* widget = mProject->data(index, Project::EditorRole).value<QWidget*>();
             CodeEditor* ed = qobject_cast<CodeEditor*>(widget);
-            ed->parse();
+            ed->compile();
         }
     }
 }
@@ -516,15 +534,15 @@ void Demo::MainWindow::openProject(const QString &path) {
     Project* newp(0);
     try {
         if (path.isEmpty()) {
-            newp = new Project(mLastDir, mGLWidget, mUI->actionAutocompile->isChecked());
+            newp = new Project(mLastDir, mGLWidget, mGlobalSymbols, mUI->actionAutocompile->isChecked());
             title = QString("%1: new project [*]").arg(QApplication::applicationName());
         } else {
             QFileInfo info(path);
             if (info.isDir()) {
-                newp = new Project(QDir(path), mGLWidget, mUI->actionAutocompile->isChecked());
+                newp = new Project(QDir(path), mGLWidget, mGlobalSymbols, mUI->actionAutocompile->isChecked());
                 title = QString("%1: new project [*]").arg(QApplication::applicationName());
             } else {
-                newp = new Project(path, mGLWidget, mUI->actionAutocompile->isChecked());
+                newp = new Project(path, mGLWidget, mGlobalSymbols, mUI->actionAutocompile->isChecked());
                 title = QString("%1: %2 [*]").arg(QApplication::applicationName(), path);
             }
         }

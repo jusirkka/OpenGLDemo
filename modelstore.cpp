@@ -3,91 +3,32 @@
 #include <QPluginLoader>
 #include <QFile>
 
-extern "C"
-{
-
+#include "wavefront_parser.h"
+#ifndef YYSTYPE
+#define YYSTYPE WAVEFRONT_STYPE
+#endif
+#ifndef YYLTYPE
+#define YYLTYPE WAVEFRONT_LTYPE
+#endif
 #include "wavefront_scanner.h"
-#include "wavefront_types.h"
-
-int wavefront_parse(void);
-extern int wavefront_debug;
-
-extern char model_error_buffer[256];
-
-}
 
 
 using Math3D::Vector4;
 
-static GL::ModelStore* staticInstance() {
-    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
-        GL::ModelStore* store = qobject_cast<GL::ModelStore*>(plugin);
-        if (store) return store;
-    }
-    return 0;
-}
+using namespace Demo::GL;
 
-GL::ModelStore* GL::ModelStore::instance() {
-    static GL::ModelStore* store = staticInstance();
-    return store;
-}
-
-
-void GL::ModelStore::Clean() {
-    instance()->clean();
-}
-
-void GL::ModelStore::SetModel(const QString& key, const QString& path) {
-    instance()->setModel(key, path);
-}
-
-int GL::ModelStore::Size() {
-    return instance()->size();
-}
-
-const QString& GL::ModelStore::ModelName(int idx) {
-    return instance()->modelName(idx);
-}
-
-const QString& GL::ModelStore::FileName(int idx) {
-    return instance()->fileName(idx);
-}
-
-void GL::ModelStore::Rename(const QString& from, const QString& to) {
-    instance()->rename(from, to);
-}
-
-void GL::ModelStore::Remove(int index) {
-    instance()->remove(index);
-}
-
-void GL::ModelStore::AppendVertex(float x, float y, float z) {
-    instance()->appendVertex(x, y, z);
-}
-
-void GL::ModelStore::AppendNormal(float x, float y, float z) {
-    instance()->appendNormal(x, y, z);
-}
-
-void GL::ModelStore::AppendTex(float u, float v) {
-    instance()->appendTex(u, v);
-}
-
-void GL::ModelStore::AppendFace(const TripletList& triplets) {
-    instance()->appendFace(triplets);
-}
-
-GL::ModelStore::ModelStore()
-    : QObject(),
-      Blob()
-{
+ModelStore::ModelStore():
+    QObject(),
+    Blob(),
+    mError(),
+    mScanner(0) {
     setObjectName("modelstore");
     mData[GL_ARRAY_BUFFER] = Data();
     mData[GL_ELEMENT_ARRAY_BUFFER] = Data();
 }
 
 
-void GL::ModelStore::draw(unsigned int mode, const QString& attr) const {
+void ModelStore::draw(unsigned int mode, const QString& attr) const {
     int name;
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &name);
     if (name == 0) return;
@@ -101,15 +42,15 @@ void GL::ModelStore::draw(unsigned int mode, const QString& attr) const {
 }
 
 
-void GL::ModelStore::appendVertex(float x, float y, float z) {
+void ModelStore::appendVertex(float x, float y, float z) {
     mVertices.append(VertexData(x, y, z));
 }
 
-void GL::ModelStore::appendNormal(float x, float y, float z) {
+void ModelStore::appendNormal(float x, float y, float z) {
     mNormals.append(Vector4(x, y, z));
 }
 
-void GL::ModelStore::appendTex(float u, float v) {
+void ModelStore::appendTex(float u, float v) {
     mTexCoords.append(Vector4(u, v));
 }
 
@@ -119,7 +60,7 @@ static unsigned int my_index(int x, unsigned int l) {
 
 }
 
-void GL::ModelStore::appendFace(const TripletList& ts) {
+void ModelStore::appendFace(const WF::TripletList& ts) {
     if (ts.size() < 3) return;
     unsigned int lv = mVertices.size();
     if (!lv) return;
@@ -152,10 +93,9 @@ void GL::ModelStore::appendFace(const TripletList& ts) {
 }
 
 
-GL::ModelStore::~ModelStore() {
-}
+ModelStore::~ModelStore() {}
 
-void GL::ModelStore::rename(const QString& from, const QString& to) {
+void ModelStore::rename(const QString& from, const QString& to) {
     if (mModels.contains(from)) {
         Model model = mModels[from];
         mModels.remove(from);
@@ -164,7 +104,7 @@ void GL::ModelStore::rename(const QString& from, const QString& to) {
     }
 }
 
-void GL::ModelStore::remove(int index, bool keepNames) {
+void ModelStore::remove(int index, bool keepNames) {
     QString name = mNames[index];
 
     mSpecs.remove(name + ":vertex");
@@ -233,25 +173,25 @@ static const char square [] =
     "f 1/1/1 2/2/1 3/3/1 4/4/1\n";
 
 
-void GL::ModelStore::parseModelData(const QString& path) {
+void ModelStore::parseModelData(const QString& path) {
     QString inp(square);
     if (!path.isEmpty()) {
         QFile file(path);
         file.open(QFile::ReadOnly);
-        inp = QString(file.readAll());
+        inp = QString(file.readAll()).append('\n');
         file.close();
     }
 
-    wavefront_debug = 0;
-    wavefront__scan_string(inp.toUtf8().data());
-    int err = wavefront_parse();
-    wavefront_lex_destroy();
+    wavefront_lex_init(&mScanner);
+    YY_BUFFER_STATE buf = wavefront__scan_string(inp.toUtf8().data(), mScanner);
+    int err = wavefront_parse(this, mScanner);
+    wavefront__delete_buffer(buf, mScanner);
 
-    if (err) throw ModelError(QString(model_error_buffer), wavefront_lloc.row, wavefront_lloc.col, wavefront_lloc.pos);
+    if (err) throw WF::ModelError(mError);
 }
 
 
-void GL::ModelStore::setModel(const QString& key, const QString& path) {
+void ModelStore::setModel(const QString& key, const QString& path) {
     try {
         parseModelData(path);
         if (mModels.contains(key)) {
@@ -310,7 +250,7 @@ void GL::ModelStore::setModel(const QString& key, const QString& path) {
         delete mData[GL_ELEMENT_ARRAY_BUFFER].data;
         mData[GL_ELEMENT_ARRAY_BUFFER] = Data(data, off1 + len);
 
-    } catch (ModelError& e) {
+    } catch (WF::ModelError& e) {
         qDebug() << e.msg() << e.row() << e.col();
     }
     mVertices.clear();
@@ -321,7 +261,7 @@ void GL::ModelStore::setModel(const QString& key, const QString& path) {
 
 
 
-void GL::ModelStore::clean() {
+void ModelStore::clean() {
     mNames.clear();
     mFileNames.clear();
     mModels.clear();
@@ -334,14 +274,23 @@ void GL::ModelStore::clean() {
 
 }
 
-int GL::ModelStore::size() {
+int ModelStore::size() {
     return mNames.size();
 }
 
-const QString& GL::ModelStore::fileName(int index) {
+const QString& ModelStore::fileName(int index) {
     return mFileNames[index];
 }
 
-const QString& GL::ModelStore::modelName(int index) {
+const QString& ModelStore::modelName(int index) {
     return mNames[index];
 }
+
+void ModelStore::createError(WF::LocationType* loc, const QString &msg) {
+    mError = WF::ModelError(msg, loc->row, loc->col, loc->pos);
+}
+
+void wavefront_error(Demo::WF::LocationType* loc, Demo::GL::ModelStore* models, yyscan_t, const char* msg) {
+    models->createError(loc, QString(msg));
+}
+

@@ -18,13 +18,15 @@
 //   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // ------------------------------------------------------------------------------
 
-#ifndef demo_mainwindow_h
-#define demo_mainwindow_h
+#ifndef DEMO_MAINWINDOW_H
+#define DEMO_MAINWINDOW_H
 
 #include <QMainWindow>
 #include <QStringList>
 #include <QModelIndex>
 #include <QDir>
+
+#include "gl_lang_compiler.h"
 
 namespace Ui {class MainWindow;}
 
@@ -33,6 +35,7 @@ namespace Demo {
 class GLWidget;
 class Project;
 class ScriptSelector;
+
 
 class MainWindow: public QMainWindow {
 
@@ -132,6 +135,7 @@ private:
     ScriptSelector* mScripts;
     bool mProjectModified;
     int mNumEdits;
+    SymbolMap mGlobalSymbols;
 };
 
 }

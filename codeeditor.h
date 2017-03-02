@@ -56,9 +56,12 @@ class LineNumberArea;
 class Highlight;
 
 namespace Demo {
-    class Runner;
-    class Project;
+
+namespace GL {
+class Compiler;
 }
+
+class Project;
 
 class CodeEditor : public QPlainTextEdit
 {
@@ -69,25 +72,22 @@ public:
     typedef QList<CodeEditor*> EditorList;
 
 public:
-    CodeEditor(Demo::Project* owner);
+    CodeEditor(Project* owner);
 
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
 
     bool event(QEvent *e);
 
-    Demo::Runner* runner() {return mRunner;}
-    void appendChild(CodeEditor* kid) {mKids.append(kid);}
-    const EditorList& children() const {return mKids;}
     bool hasRunError() const {return mRunErrorPos != -1;}
-    bool hasParseError() const {return mParseErrorPos != -1;}
+    bool hasCompileError() const {return mCompileErrorPos != -1;}
 
-    void toggleAutoParse(bool on);
+    void toggleAutoCompile(bool on);
 
 public slots:
 
-    void parse();
-    void evaluate();
+    void compile();
+    void run();
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -100,43 +100,41 @@ private slots:
 
 signals:
 
-    void runnerReady();
+    void compiled();
     void statusChanged();
 
 
 private:
 
     QWidget *lineNumberArea;
-    QTimer* mParseDelay;
-    Demo::Runner* mRunner;
+    QTimer* mCompileDelay;
     QString mRunError;
-    QString mParseError;
-    int mParseErrorPos;
+    QString mCompileError;
+    int mCompileErrorPos;
     int mRunErrorPos;
     Highlight* mHighlight;
-    EditorList mKids;
+    GL::Compiler* mCompiler;
 };
 
 
 class LineNumberArea : public QWidget
 {
 public:
-    LineNumberArea(CodeEditor *editor) : QWidget(editor) {
-        codeEditor = editor;
-    }
+    LineNumberArea(CodeEditor *editor) : QWidget(editor), mCodeEditor(editor) {}
 
     QSize sizeHint() const {
-        return QSize(codeEditor->lineNumberAreaWidth(), 0);
+        return QSize(mCodeEditor->lineNumberAreaWidth(), 0);
     }
 
 protected:
     void paintEvent(QPaintEvent *event) {
-        codeEditor->lineNumberAreaPaintEvent(event);
+        mCodeEditor->lineNumberAreaPaintEvent(event);
     }
 
 private:
-    CodeEditor *codeEditor;
+    CodeEditor *mCodeEditor;
 };
 
+} // namespace Demo
 
 #endif

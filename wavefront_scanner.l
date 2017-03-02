@@ -1,25 +1,31 @@
 %{
-#include <stdlib.h>
-#include <ctype.h>
 
-#include "wavefront_types.h"
-#include "wavefront.h"
-
-#define yylval wavefront_lval
-#define yylloc wavefront_lloc
+#include "modelstore.h"
+#include "wavefront_parser.h"
+#ifndef YYSTYPE
+#define YYSTYPE WAVEFRONT_STYPE
+#endif
+#ifndef YYLTYPE
+#define YYLTYPE WAVEFRONT_LTYPE
+#endif
 
 #define YY_USER_ACTION  \
-    yylloc.col = yylloc.prev_col; yylloc.prev_col += yyleng; yylloc.pos = yylloc.prev_pos; yylloc.prev_pos += yyleng;
+    yylloc->col = yylloc->prev_col; yylloc->prev_col += yyleng; yylloc->pos = yylloc->prev_pos; yylloc->prev_pos += yyleng;
 
 #define YY_USER_INIT  \
-    yylloc.prev_col = 0; yylloc.row = 0; yylloc.prev_pos = 0;
+    yylloc->prev_col = 0; yylloc->row = 0; yylloc->prev_pos = 0;
 
 #define my_init_line \
-    yylloc.row++; yylloc.prev_col = 0;
+    yylloc->row++; yylloc->prev_col = 0;
 
-#define YY_DECL int wavefront_lex (void)
+#define YY_DECL int wavefront_lex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param, yyscan_t yyscanner)
 
 %}
+
+%option reentrant
+%option bison-locations
+%option noyywrap
+%option prefix="wavefront_"
 
 
 
@@ -63,48 +69,48 @@ unsupp          ^({unsupp1}|{unsupp2}|{unsupp3}){sep}
 
 {triple_v}              {
                             char* first = index(yytext, '/');
-                            yylval.p_triplet[0] = strtof(yytext, &first);
-                            yylval.p_triplet[1] = 0;
-                            yylval.p_triplet[2] = 0;
+                            yylval->v_triplet[0] = strtof(yytext, &first);
+                            yylval->v_triplet[1] = 0;
+                            yylval->v_triplet[2] = 0;
                             return VERT;
                         }
 
 {triple_vt}             {
                             char* first = index(yytext, '/');
                             char* last = rindex(yytext, '/');
-                            yylval.p_triplet[0] = strtof(yytext, &first);
-                            yylval.p_triplet[1] = strtof(first + 1, &last);
-                            yylval.p_triplet[2] = 0;
+                            yylval->v_triplet[0] = strtof(yytext, &first);
+                            yylval->v_triplet[1] = strtof(first + 1, &last);
+                            yylval->v_triplet[2] = 0;
                             return VERT_TEX;
                         }
 
 {triple_vn}             {
                             char* first = index(yytext, '/');
                             char* last = rindex(yytext, '/');
-                            yylval.p_triplet[0] = strtof(yytext, &first);
-                            yylval.p_triplet[1] = 0;
-                            yylval.p_triplet[2] = strtof(last + 1, NULL);
+                            yylval->v_triplet[0] = strtof(yytext, &first);
+                            yylval->v_triplet[1] = 0;
+                            yylval->v_triplet[2] = strtof(last + 1, NULL);
                             return VERT_NORM;
                         }
 
 {triple_vtn}            {
                             char* first = index(yytext, '/');
                             char* last = rindex(yytext, '/');
-                            yylval.p_triplet[0] = strtof(yytext, &first);
-                            yylval.p_triplet[1] = strtof(first + 1, &last);
-                            yylval.p_triplet[2] = strtof(last + 1, NULL);
+                            yylval->v_triplet[0] = strtof(yytext, &first);
+                            yylval->v_triplet[1] = strtof(first + 1, &last);
+                            yylval->v_triplet[2] = strtof(last + 1, NULL);
                             return VERT_TEX_NORM;
                         }
 
-{float_1}                yylval.v_float = strtod(yytext, NULL); return FLOAT;
-{float_2}                yylval.v_float = strtod(yytext, NULL); return FLOAT;
-{float_3}                yylval.v_float = strtod(yytext, NULL); return FLOAT;
-{num}                  yylval.v_int = (int) strtol(yytext, NULL, 0); return INT;
+{float_1}                yylval->v_float = strtod(yytext, NULL); return FLOAT;
+{float_2}                yylval->v_float = strtod(yytext, NULL); return FLOAT;
+{float_3}                yylval->v_float = strtod(yytext, NULL); return FLOAT;
+{num}                  yylval->v_int = (int) strtol(yytext, NULL, 0); return INT;
 
 
 
 
-
+^{space}\n            my_init_line; // eat up empty line
 ^{space}"#".*\n       my_init_line; // eat up comment line
 
 
@@ -127,10 +133,4 @@ unsupp          ^({unsupp1}|{unsupp2}|{unsupp3}){sep}
 
 
 %%
-
-char model_error_buffer[256];
-
-void wavefront_error(const char *str) {
-    strcpy(model_error_buffer, str);
-}
 

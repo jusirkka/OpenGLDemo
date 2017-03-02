@@ -2,27 +2,30 @@
 #include <QTextCharFormat>
 
 #include "highlight.h"
-#include "parser.h"
+#include "gl_lang_compiler.h"
+#include "gl_lang_parser.h"
+#ifndef YYSTYPE
+#define YYSTYPE GL_LANG_STYPE
+#endif
+#ifndef YYLTYPE
+#define YYLTYPE GL_LANG_LTYPE
+#endif
+#include "gl_lang_scanner.h"
+
 #include "constant.h"
 
-using Demo::Parser;
+using Demo::GL::Compiler;
 using Demo::Symbol;
 using Demo::Function;
 using Demo::Constant;
+using Demo::GL::LocationType;
+using Demo::GL::ValueType;
+using Demo::GL::Compiler;
 
-extern "C"
-{
-
-#include "gl_lang_types.h"
-#include "gl_lang_scanner.h"
-
-}
-
-#include "gl_lang.h"
-
-Highlight::Highlight(QTextDocument* parent)
-    :QSyntaxHighlighter(parent),
-      mCommentExp("//[^\n]*")
+Highlight::Highlight(Compiler* c, QTextDocument* parent):
+    QSyntaxHighlighter(parent),
+    mCompiler(c),
+    mCommentExp("//[^\n]*")
 {
     mComment.setForeground(Qt::gray);
     mReserved.setForeground(Qt::blue);
@@ -45,7 +48,6 @@ Highlight::Highlight(QTextDocument* parent)
 
 void Highlight::highlightBlock(const QString &text) {
 
-    gl_lang_lex_destroy();
     QString parsed = text;
     int pshift = 0;
     if (previousBlockState() == 1) {
@@ -53,15 +55,21 @@ void Highlight::highlightBlock(const QString &text) {
         pshift = -1;
     }
     setCurrentBlockState(0);
-    gl_lang__scan_string(parsed.toUtf8().data());
+
+    gl_lang_lex_init(&mScanner);
+    YY_BUFFER_STATE buf = gl_lang__scan_string(parsed.toUtf8().data(), mScanner);
 
     int text_start = 0;
     int text_length = 0;
 
-    int token = gl_lang_lex();
+    LocationType* loc = gl_lang_get_lloc(mScanner);
+    ValueType* val = gl_lang_get_lval(mScanner);
+    int token = gl_lang_lex(val, loc, mScanner);
     while (token > 0) {
+        int token_len = gl_lang_get_leng(mScanner);
+        QString token_text(gl_lang_get_text(mScanner));
         if (currentBlockState() == 1) {
-            text_length += gl_lang_leng;
+            text_length += token_len;
             if (token == ENDSTRING) {
                 setCurrentBlockState(0);
                 setFormat(text_start, text_length, mText);
@@ -69,30 +77,34 @@ void Highlight::highlightBlock(const QString &text) {
         } else {
             if (token == BEGINSTRING) {
                 setCurrentBlockState(1);
-                text_start = gl_lang_lloc.pos  + pshift;
-                text_length = gl_lang_leng;
+                text_start = loc->pos  + pshift;
+                text_length = token_len;
                 if (text_start < 0) {
                     text_start = 0;
                     text_length = 0;
                 }
             } else {
                 if (mFormats.contains(token)) {
-                    setFormat(gl_lang_lloc.pos + pshift, gl_lang_leng, mFormats[token]);
-                } else if (token == ID && Parser::Symbols().contains(gl_lang_text)) {
-                    Function* fun = dynamic_cast<Function*>(Parser::Symbols()[gl_lang_text]);
+                    setFormat(loc->pos + pshift, token_len, mFormats[token]);
+                } else if (token == ID && mCompiler->symbols().contains(token_text)) {
+                    Function* fun = dynamic_cast<Function*>(mCompiler->symbols()[token_text]);
                     if (fun) {
-                        setFormat(gl_lang_lloc.pos + pshift, gl_lang_leng, mFunction);
+                        setFormat(loc->pos + pshift, token_len, mFunction);
                     } else {
-                        Constant* con = dynamic_cast<Constant*>(Parser::Symbols()[gl_lang_text]);
+                        Constant* con = dynamic_cast<Constant*>(mCompiler->symbols()[token_text]);
                         if (con) {
-                            setFormat(gl_lang_lloc.pos + pshift, gl_lang_leng, mConstant);
+                            setFormat(loc->pos + pshift, token_len, mConstant);
                         }
+                        // TODO: variables
                     }
                 }
             }
         }
-        token = gl_lang_lex();
+        token = gl_lang_lex(val, loc, mScanner);
     }
+
+    gl_lang__delete_buffer(buf, mScanner);
+
 
     if (currentBlockState() == 1) {
         setFormat(text_start, text_length, mText);
@@ -104,4 +116,8 @@ void Highlight::highlightBlock(const QString &text) {
             index = mCommentExp.indexIn(text, index + length);
         }
     }
+}
+
+Highlight::~Highlight() {
+    gl_lang_lex_destroy(mScanner);
 }

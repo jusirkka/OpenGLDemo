@@ -2,7 +2,7 @@
 #include "gl_widget.h"
 #include "patch.h"
 
-
+using namespace Demo;
 
 static float control_points[] = {
     //    0

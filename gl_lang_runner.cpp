@@ -1,22 +1,26 @@
-#include "runner.h"
+#include "gl_lang_runner.h"
 #include "gl_functions.h"
 
 using Math3D::Real;
 using Math3D::Vector4;
 using Math3D::Matrix4;
 
+using namespace Demo::GL;
 
-Demo::Runner::Runner(
-    const AssignmentList& ass,
-    const VariableList& vars,
-    const FunctionList& funcs,
-    int stackSize)
-    : QObject(),
-        mAssignments(ass),
-        mVariables(vars),
-        mFunctions(funcs)
-{
+Runner::Runner():
+    QObject(),
+    mAssignments(),
+    mVariables(),
+    mFunctions() {}
+
+void Runner::setup(const Compiler::AssignmentList& ass,
+                   const Compiler::VariableList& vars,
+                   const Compiler::FunctionList& funcs,
+                   int stackSize) {
     mStack.resize(stackSize);
+    mAssignments = ass;
+    mVariables = vars;
+    mFunctions = funcs;
     for (int i = 0; i < mVariables.length(); i++) {
         const Variable* v = mVariables.at(i);
         mIndex[v->name()] = i;
@@ -28,7 +32,7 @@ Demo::Runner::Runner(
 }
 
 
-void Demo::Runner::evaluate() {
+void Runner::run() {
     foreach (Assignment ass, mAssignments) {
         try {
             Variable* v = mVariables[mIndex[ass.var]];
@@ -41,18 +45,18 @@ void Demo::Runner::evaluate() {
 }
 
 
-Demo::Runner::~Runner() {
+Runner::~Runner() {
     // variables are owned by runner, other symbols are shared
     foreach(Variable* v, mVariables) {
+        // TODO: check
         delete v;
     }
-    emit shared_deleted(mShared);
 }
 
 static void neg_f(QVariant& right, int lrtype) {
 
-    static Demo::QFunc funcs[] = {
-        Demo::Neg<int>, Demo::Neg<Real>, Demo::Neg<Vector4>, Demo::Neg<Matrix4>, 0,
+    static QFunc funcs[] = {
+        Neg<int>, Neg<Real>, Neg<Vector4>, Neg<Matrix4>, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0,
@@ -65,11 +69,11 @@ static void neg_f(QVariant& right, int lrtype) {
 
 static void take_f(QVariant& left, int index, int lrtype) {
 
-    static Demo::QIFunc funcs[] = {
+    static QIFunc funcs[] = {
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0,
-        Demo::Take<Vector4>, 0, 0, 0, 0,
-        Demo::Vec<Matrix4>, 0, 0, 0, 0,
+        Take<Vector4>, 0, 0, 0, 0,
+        Vec<Matrix4>, 0, 0, 0, 0,
         0, 0, 0, 0, 0
     };
 
@@ -78,11 +82,11 @@ static void take_f(QVariant& left, int index, int lrtype) {
 
 static void add_f(QVariant& left, const QVariant& right, int lrtype) {
 
-    static Demo::QQFunc funcs[] = {
-        Demo::Add<int, int>, Demo::Add<int, Real>, 0, 0, 0,
-        Demo::Add<Real, int>, Demo::Add<Real, Real>, 0, 0, 0,
-        0, 0, Demo::Add<Vector4, Vector4>, 0, 0,
-        0, 0, 0, Demo::Add<Matrix4, Matrix4>, 0,
+    static QQFunc funcs[] = {
+        Add<int, int>, Add<int, Real>, 0, 0, 0,
+        Add<Real, int>, Add<Real, Real>, 0, 0, 0,
+        0, 0, Add<Vector4, Vector4>, 0, 0,
+        0, 0, 0, Add<Matrix4, Matrix4>, 0,
         0, 0, 0, 0, 0
     };
 
@@ -91,11 +95,11 @@ static void add_f(QVariant& left, const QVariant& right, int lrtype) {
 
 static void sub_f(QVariant& left, const QVariant& right, int lrtype) {
 
-    static Demo::QQFunc funcs[] = {
-        Demo::Sub<int, int>, Demo::Sub<int, Real>, 0, 0, 0,
-        Demo::Sub<Real, int>, Demo::Sub<Real, Real>, 0, 0, 0,
-        0, 0, Demo::Sub<Vector4, Vector4>, 0, 0,
-        0, 0, 0, Demo::Sub<Matrix4, Matrix4>, 0,
+    static QQFunc funcs[] = {
+        Sub<int, int>, Sub<int, Real>, 0, 0, 0,
+        Sub<Real, int>, Sub<Real, Real>, 0, 0, 0,
+        0, 0, Sub<Vector4, Vector4>, 0, 0,
+        0, 0, 0, Sub<Matrix4, Matrix4>, 0,
         0, 0, 0, 0, 0
     };
 
@@ -104,11 +108,11 @@ static void sub_f(QVariant& left, const QVariant& right, int lrtype) {
 
 static void mul_f(QVariant& left, const QVariant& right, int lrtype) {
 
-    static Demo::QQFunc funcs[] = {
-        Demo::Mul<int, int>, Demo::Mul<int, Real>, Demo::Mul<int, Vector4>, Demo::Mul<int, Matrix4>, 0,
-        Demo::Mul<Real, int>, Demo::Mul<Real, Real>, Demo::Mul<Real, Vector4>, Demo::Mul<Real, Matrix4>, 0,
-        Demo::Mul<Vector4, int>, Demo::Mul<Vector4, Real>, 0, 0, 0,
-        Demo::Mul<Matrix4, int>, Demo::Mul<Matrix4, Real>, Demo::Mul<Matrix4, Vector4>, Demo::Mul<Matrix4, Matrix4>, 0,
+    static QQFunc funcs[] = {
+        Mul<int, int>, Mul<int, Real>, Mul<int, Vector4>, Mul<int, Matrix4>, 0,
+        Mul<Real, int>, Mul<Real, Real>, Mul<Real, Vector4>, Mul<Real, Matrix4>, 0,
+        Mul<Vector4, int>, Mul<Vector4, Real>, 0, 0, 0,
+        Mul<Matrix4, int>, Mul<Matrix4, Real>, Mul<Matrix4, Vector4>, Mul<Matrix4, Matrix4>, 0,
         0, 0, 0, 0, 0
     };
 
@@ -118,9 +122,9 @@ static void mul_f(QVariant& left, const QVariant& right, int lrtype) {
 
 static bool div_f(QVariant& left, const QVariant& right, int lrtype) {
 
-    static Demo::BQQFunc funcs[] = {
-        Demo::Div<int, int>, Demo::Div<int, Real>, 0, 0, 0,
-        Demo::Div<Real, int>, Demo::Div<Real, Real>, 0, 0, 0,
+    static BQQFunc funcs[] = {
+        Div<int, int>, Div<int, Real>, 0, 0, 0,
+        Div<Real, int>, Div<Real, Real>, 0, 0, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0
@@ -132,12 +136,12 @@ static bool div_f(QVariant& left, const QVariant& right, int lrtype) {
 
 static bool eq_f(QVariant& left, const QVariant& right, int lrtype) {
 
-    static Demo::BQQFunc funcs[] = {
-        Demo::Eq<int, int>, Demo::Eq<int, Real>, 0, 0, 0,
-        Demo::Eq<Real, int>, Demo::Eq<Real, Real>, 0, 0, 0,
-        0, 0, Demo::Eq<Vector4, Vector4>, 0, 0,
-        0, 0, 0, Demo::Eq<Matrix4, Matrix4>, 0,
-        0, 0, 0, 0, Demo::Eq<QString, QString>
+    static BQQFunc funcs[] = {
+        Eq<int, int>, Eq<int, Real>, 0, 0, 0,
+        Eq<Real, int>, Eq<Real, Real>, 0, 0, 0,
+        0, 0, Eq<Vector4, Vector4>, 0, 0,
+        0, 0, 0, Eq<Matrix4, Matrix4>, 0,
+        0, 0, 0, 0, Eq<QString, QString>
     };
 
     return funcs[lrtype](left, right);
@@ -145,9 +149,9 @@ static bool eq_f(QVariant& left, const QVariant& right, int lrtype) {
 
 static bool gt_f(QVariant& left, const QVariant& right, int lrtype) {
 
-    static Demo::BQQFunc funcs[] = {
-        Demo::Gt<int, int>, Demo::Gt<int, Real>, 0, 0, 0,
-        Demo::Gt<Real, int>, Demo::Gt<Real, Real>, 0, 0, 0,
+    static BQQFunc funcs[] = {
+        Gt<int, int>, Gt<int, Real>, 0, 0, 0,
+        Gt<Real, int>, Gt<Real, Real>, 0, 0, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0
@@ -158,9 +162,9 @@ static bool gt_f(QVariant& left, const QVariant& right, int lrtype) {
 
 static bool lt_f(QVariant& left, const QVariant& right, int lrtype) {
 
-    static Demo::BQQFunc funcs[] = {
-        Demo::Lt<int, int>, Demo::Lt<int, Real>, 0, 0, 0,
-        Demo::Lt<Real, int>, Demo::Lt<Real, Real>, 0, 0, 0,
+    static BQQFunc funcs[] = {
+        Lt<int, int>, Lt<int, Real>, 0, 0, 0,
+        Lt<Real, int>, Lt<Real, Real>, 0, 0, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0,
         0, 0, 0, 0, 0
@@ -171,7 +175,7 @@ static bool lt_f(QVariant& left, const QVariant& right, int lrtype) {
 
 
 
-const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack& immed, int pos) {
+const QVariant& Runner::evalCode(const CodeStack& code,  const ValueStack& immed, int pos) {
 
     const unsigned int* codes = code.data();
 
@@ -186,91 +190,91 @@ const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack&
 
         switch (Code(codes[ic])) {
 
-        case Parser::cImmed:
+        case Compiler::cImmed:
             mStack[++sPos] = immed[dPos++];
             break;
 
-        case Parser::cNeg:
+        case Compiler::cNeg:
             neg_f(mStack[sPos], lrType);
             break;
-        case Parser::cAdd:
+        case Compiler::cAdd:
             add_f(mStack[sPos-1], mStack[sPos], lrType);
             --sPos;
             break;
-        case Parser::cSub:
+        case Compiler::cSub:
             sub_f(mStack[sPos-1], mStack[sPos], lrType);
             --sPos;
             break;
-        case Parser::cMul:
+        case Compiler::cMul:
             mul_f(mStack[sPos-1], mStack[sPos], lrType);
             --sPos;
             break;
-        case Parser::cDiv:
+        case Compiler::cDiv:
             if (!div_f(mStack[sPos-1], mStack[sPos], lrType)) {
                 throw RunError("Division by zero error", pos);
             }
             --sPos;
             break;
 
-        case Parser::cEqual:
+        case Compiler::cEqual:
             mStack[sPos-1].setValue(int(eq_f(mStack[sPos-1], mStack[sPos], lrType)));
             --sPos;
             break;
-        case Parser::cNEqual:
+        case Compiler::cNEqual:
             mStack[sPos-1].setValue(int(!eq_f(mStack[sPos-1], mStack[sPos], lrType)));
             --sPos;
             break;
-        case Parser::cLess:
+        case Compiler::cLess:
             mStack[sPos-1].setValue(int(lt_f(mStack[sPos-1], mStack[sPos], lrType)));
             --sPos;
             break;
-        case Parser::cLessOrEq:
+        case Compiler::cLessOrEq:
             mStack[sPos-1].setValue(int(!gt_f(mStack[sPos-1], mStack[sPos], lrType)));
             --sPos;
             break;
-        case Parser::cGreater:
+        case Compiler::cGreater:
             mStack[sPos-1].setValue(int(gt_f(mStack[sPos-1], mStack[sPos], lrType)));
             --sPos;
             break;
-        case Parser::cGreaterOrEq:
+        case Compiler::cGreaterOrEq:
             mStack[sPos-1].setValue(int(!lt_f(mStack[sPos-1], mStack[sPos], lrType)));
             --sPos;
             break;
 
-        case Parser::cBAnd:
+        case Compiler::cBAnd:
             mStack[sPos-1].setValue(mStack[sPos-1].value<int>() & mStack[sPos].value<int>());
             --sPos;
             break;
-        case Parser::cBOr:
+        case Compiler::cBOr:
             mStack[sPos-1].setValue(mStack[sPos-1].value<int>() | mStack[sPos].value<int>());
             --sPos;
             break;
 
-        case Parser::cAnd:
+        case Compiler::cAnd:
             mStack[sPos-1].setValue(mStack[sPos-1].value<int>() && mStack[sPos].value<int>());
             --sPos;
             break;
-        case Parser::cOr:
+        case Compiler::cOr:
             mStack[sPos-1].setValue(mStack[sPos-1].value<int>() || mStack[sPos].value<int>());
             --sPos;
             break;
-        case Parser::cNot:
+        case Compiler::cNot:
             mStack[sPos].setValue(int(!mStack[sPos].value<int>()));
             break;
 
-        case Parser::cFun:
+        case Compiler::cFun:
             {
-                Function* fun = mFunctions[(codes[++ic]) - Parser::FirstFunction];
+                Function* fun = mFunctions[(codes[++ic]) - Compiler::FirstFunction];
                 sPos -= fun->argTypes().size() - 1;
                 mStack[sPos] = fun->execute(mStack, sPos);
             }
             break;
 
-        case Parser::cVar:
-            mStack[++sPos] = mVariables[(codes[++ic]) - Parser::FirstVariable]->value();
+        case Compiler::cVar:
+            mStack[++sPos] = mVariables[(codes[++ic]) - Compiler::FirstVariable]->value();
             break;
 
-        case Parser::cTake:
+        case Compiler::cTake:
             {
                 int index = mStack[sPos].value<int>();
                 if (index < 0 || index > 3) {
@@ -281,7 +285,7 @@ const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack&
             }
             break;
 
-        case Parser::cGuard:
+        case Compiler::cGuard:
             {
                 if (stopFlag) return mStack[sPos];
 
@@ -312,11 +316,11 @@ const QVariant& Demo::Runner::evalCode(const CodeStack& code,  const ValueStack&
     return mStack[sPos];
 }
 
-unsigned Demo::Runner::LRType(unsigned code) {
+unsigned Runner::LRType(unsigned code) {
     return (code >> 12) & 0xff;
 }
 
-unsigned Demo::Runner::Code(unsigned code) {
+unsigned Runner::Code(unsigned code) {
     return code & 0xfff;
 }
 

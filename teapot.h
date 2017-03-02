@@ -7,13 +7,14 @@
 
 #include "blob.h"
 
+namespace Demo {
 namespace GL {
 
 class Teapot : public QObject, public Blob
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "net.kvanttiapina.OpenGLDemos.Blob/1.0")
-    Q_INTERFACES(GL::Blob)
+    Q_INTERFACES(Demo::GL::Blob)
 
 public:
 
@@ -49,6 +50,6 @@ private:
     ModeMap mSupported;
 };
 
-} // namespace GL
+}} // namespace Demo::GL
 
 #endif // TEAPOT_H

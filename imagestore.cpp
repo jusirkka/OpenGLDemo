@@ -3,56 +3,17 @@
 #include <QDebug>
 #include <QPluginLoader>
 
-GL::ImageStore::ImageStore()
-    : QObject(),
-      TexBlob()
-{
+using namespace Demo::GL;
+
+ImageStore::ImageStore():
+    QObject(),
+    TexBlob() {
     setObjectName("imagestore");
 }
 
-static GL::ImageStore* staticInstance() {
-    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
-        GL::ImageStore* store = qobject_cast<GL::ImageStore*>(plugin);
-        if (store) return store;
-    }
-    return 0;
-}
-
-GL::ImageStore* GL::ImageStore::instance() {
-    static GL::ImageStore* store = staticInstance();
-    return store;
-}
-
-void GL::ImageStore::Clean() {
-    instance()->clean();
-}
-
-void GL::ImageStore::SetImage(const QString& key, const QString& path) {
-    instance()->setImage(key, path);
-}
-
-int GL::ImageStore::Size() {
-    return instance()->size();
-}
-
-const QString& GL::ImageStore::ImageName(int idx) {
-    return instance()->imageName(idx);
-}
-
-const QString& GL::ImageStore::FileName(int idx) {
-    return instance()->fileName(idx);
-}
-
-void GL::ImageStore::Rename(const QString& from, const QString& to) {
-    instance()->rename(from, to);
-}
-
-void GL::ImageStore::Remove(int index) {
-    instance()->remove(index);
-}
 
 
-const void* GL::ImageStore::data(const QString& key) const {
+const void* ImageStore::data(const QString& key) const {
     qDebug() << "GL::ImageStore::data" << key;
     if (mImages.contains(key)) {
         qDebug() << "has" << mImages[key].size() << "bytes";
@@ -61,7 +22,7 @@ const void* GL::ImageStore::data(const QString& key) const {
     return 0;
 }
 
-const GL::TexBlobSpec GL::ImageStore::spec(const QString& key) const {
+const TexBlobSpec ImageStore::spec(const QString& key) const {
     if (mImages.contains(key)) {
         const QImage& image = mImages[key];
         return TexBlobSpec(image.width(), image.height(), GL_RGBA, GL_UNSIGNED_BYTE);
@@ -69,7 +30,7 @@ const GL::TexBlobSpec GL::ImageStore::spec(const QString& key) const {
     return TexBlobSpec();
 }
 
-void GL::ImageStore::rename(const QString& from, const QString& to) {
+void ImageStore::rename(const QString& from, const QString& to) {
     if (mImages.contains(from)) {
         QImage image = mImages[from];
         mImages.remove(from);
@@ -78,7 +39,7 @@ void GL::ImageStore::rename(const QString& from, const QString& to) {
     }
 }
 
-void GL::ImageStore::remove(int index) {
+void ImageStore::remove(int index) {
     mImages.remove(mNames[index]);
     mNames.removeAt(index);
     mFileNames.removeAt(index);
@@ -121,7 +82,7 @@ static const char* const plaid[] = {
 };
 
 
-void GL::ImageStore::setImage(const QString& key, const QString& path) {
+void ImageStore::setImage(const QString& key, const QString& path) {
     if (mImages.contains(key)) {
         mFileNames[mNames.indexOf(key)] = path;
     } else {
@@ -137,22 +98,22 @@ void GL::ImageStore::setImage(const QString& key, const QString& path) {
 
 
 
-void GL::ImageStore::clean() {
+void ImageStore::clean() {
     mNames.clear();
     mFileNames.clear();
     mImages.clear();
 }
 
-int GL::ImageStore::size() {
+int ImageStore::size() {
     return mNames.size();
 }
 
-const QString& GL::ImageStore::fileName(int index) {
+const QString& ImageStore::fileName(int index) {
     return mFileNames[index];
 }
 
-const QString& GL::ImageStore::imageName(int index) {
+const QString& ImageStore::imageName(int index) {
     return mNames[index];
 }
 
-GL::ImageStore::~ImageStore() {}
+ImageStore::~ImageStore() {}

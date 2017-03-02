@@ -6,8 +6,19 @@
 #include <QRegExp>
 #include <QMap>
 
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
 
 class QTextDocument;
+
+namespace Demo {
+namespace GL {
+class Compiler;
+}
+}
 
 class Highlight : public QSyntaxHighlighter
 {
@@ -15,7 +26,8 @@ class Highlight : public QSyntaxHighlighter
 
 public:
 
-    Highlight(QTextDocument* parent = 0);
+    Highlight(Demo::GL::Compiler* compiler, QTextDocument* parent);
+    ~Highlight();
 
 protected:
 
@@ -24,6 +36,7 @@ protected:
 private:
     typedef QMap<int, QTextCharFormat> FormatMap;
 
+    Demo::GL::Compiler* mCompiler;
     QRegExp mCommentExp;
     QTextCharFormat mComment;
     QTextCharFormat mReserved;
@@ -32,6 +45,7 @@ private:
     QTextCharFormat mConstant;
     QTextCharFormat mText;
     FormatMap mFormats;
+    yyscan_t mScanner;
 };
 
 

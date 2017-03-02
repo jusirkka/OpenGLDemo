@@ -1,7 +1,7 @@
 #ifndef RUNNER_H
 #define RUNNER_H
 
-#include "parser.h"
+#include "gl_lang_compiler.h"
 
 #include <QString>
 #include <QStringList>
@@ -11,6 +11,7 @@
 #include <QtDebug>
 
 namespace Demo {
+namespace GL {
 
 class RunError {
 
@@ -38,28 +39,30 @@ class Runner: public QObject {
 
 public:
 
+    Runner();
 
-    Runner(
-       const Parser::AssignmentList& ass,
-       const Parser::VariableList& vars,
-       const Parser::FunctionList& funcs,
-       int stackSize);
+
+    void setup(
+            const Compiler::AssignmentList& ass,
+            const Compiler::VariableList& vars,
+            const Compiler::FunctionList& funcs,
+            int stackSize);
 
 
     ~Runner();
 
 public slots:
 
-    void evaluate();
+    void run();
 
 private:
 
-    typedef Parser::CodeStack CodeStack;
-    typedef Parser::ValueStack ValueStack;
-    typedef Parser::AssignmentList AssignmentList;
-    typedef Parser::VariableList VariableList;
-    typedef Parser::FunctionList FunctionList;
-    typedef Parser::Assignment Assignment;
+    typedef Compiler::CodeStack CodeStack;
+    typedef Compiler::ValueStack ValueStack;
+    typedef Compiler::AssignmentList AssignmentList;
+    typedef Compiler::VariableList VariableList;
+    typedef Compiler::FunctionList FunctionList;
+    typedef Compiler::Assignment Assignment;
 
     typedef QMap<QString, int> IndexMap;
 
@@ -81,10 +84,6 @@ private:
     ValueStack mStack;
     QStringList mShared;
     IndexMap mIndex;
-
-signals:
-
-    void shared_deleted(const QStringList&);
 };
 
 
@@ -136,6 +135,6 @@ typedef void (*QQFunc)(QVariant&, const QVariant&);
 typedef bool (*BQQFunc)(QVariant&, const QVariant&);
 
 
-}
+}}
 
 #endif // RUNNER_H

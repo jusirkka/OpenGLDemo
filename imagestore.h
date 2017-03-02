@@ -8,36 +8,24 @@
 
 #include "texblob.h"
 
+namespace Demo {
 namespace GL {
 
-class ImageStore : public QObject, public TexBlob
-{
+class ImageStore : public QObject, public TexBlob {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "net.kvanttiapina.OpenGLDemos.TexBlob/1.0")
-    Q_INTERFACES(GL::TexBlob)
+    Q_INTERFACES(Demo::GL::TexBlob)
 
 public:
 
-    static void Clean();
-    static void SetImage(const QString& key, const QString& path = QString(""));
-    static int Size();
-    static const QString& ImageName(int);
-    static const QString& FileName(int);
-    static void Rename(const QString& from, const QString& to);
-    static void Remove(int index);
 
     ImageStore();
 
-    // text blob implementation
+    // tex blob implementation
     const void* data(const QString& key) const;
     const TexBlobSpec spec(const QString& key) const;
 
     ~ImageStore();
-
-private:
-
-    static ImageStore* instance();
-
 
     void rename(const QString& from, const QString& to);
     void remove(int index);
@@ -59,6 +47,6 @@ private:
     QStringList mFileNames;
 };
 
-} // namespace GL
+}} // namespace Demo::GL
 
 #endif

@@ -5,16 +5,19 @@
 #include <QDir>
 
 #include "codeeditor.h"
-
-namespace GL {
-
-class ImageStore;
-
-}
+#include "symbol.h"
 
 namespace Demo {
 
 class GLWidget;
+
+
+namespace GL {
+
+class ImageStore;
+class ModelStore;
+
+}
 
 class BadProject {
 
@@ -45,9 +48,9 @@ public:
 
 public:
     // create new project
-    Project(const QDir& pdir, GLWidget* target, bool autoCompileOn);
+    Project(const QDir& pdir, GLWidget* target, SymbolMap& globals, bool autoCompileOn);
     // parse existing project
-    Project(const QString& fullpath, GLWidget* target, bool autoCompileOn);
+    Project(const QString& fullpath, GLWidget* target, SymbolMap& globals, bool autoCompileOn);
 
     const QDir& directory() const {return mProjectDir;}
     const QString& projectFile() const {return mProjectIni;}
@@ -94,19 +97,20 @@ public:
 
     bool appendRow(const QString& name, const QString& file, const QModelIndex& parent);
 
+
+    void dispatch(const QString& other) const;
+
     virtual ~Project();
 
 public slots:
 
-    void runnerReady();
+    void scriptCompiled();
 
     void scriptModification_changed(bool edited);
     void scriptStatus_changed();
 
     void setInitScript(const QString&);
     void setDrawScript(const QString&);
-
-    void dispatcher(const QString& curr, const QString& other);
 
 signals:
 
@@ -132,7 +136,6 @@ private:
 private:
 
     CodeEditor* appendEditor(const QString& name, const QString& script, const QString& file);
-    void init_and_connect();
     QString uniqueScriptName(const QString& orig) const;
     QString uniqueModelName(const QString& orig) const;
     QString uniqueImageName(const QString& orig) const;
@@ -142,8 +145,11 @@ private:
 
     QDir mProjectDir;
     QString mProjectIni;
+    SymbolMap& mGlobalSymbols;
     EditorList mEditors;
     NameMap mScripts;
+    GL::ImageStore* mImages;
+    GL::ModelStore* mModels;
     CodeEditor* mInit;
     CodeEditor* mDraw;
     GLWidget* mTarget;

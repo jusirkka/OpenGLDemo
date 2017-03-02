@@ -1,6 +1,6 @@
 #include "gl_widget.h"
-#include "parser.h"
-#include "runner.h"
+#include "gl_lang_compiler.h"
+#include "gl_lang_runner.h"
 #include "gl_functions.h"
 #include "camera.h"
 #include "imagestore.h"
@@ -16,39 +16,18 @@ using Math3D::Matrix4;
 using Math3D::Vector4;
 using Math3D::Real;
 
-Demo::GLWidget::GLWidget(QWidget *parent):
+using namespace Demo;
+
+GLWidget::GLWidget(QWidget *parent):
     QGLWidget(parent),
     QGLFunctions(),
     mInitialized(false),
     mDim(500),
     mMover(new Mover(this))
 {
-    GL::Functions funcs(this);
-    foreach(Symbol* func, funcs.contents) Parser::AddSymbol(func);
-    GL::Constants constants;
-    foreach(Symbol* c, constants.contents) Parser::AddSymbol(c);
-
-    mCameraVar = dynamic_cast<Variable*>(Parser::Symbols()["camera"])->clone();
-    mProjectionVar = dynamic_cast<Variable*>(Parser::Symbols()["projection"])->clone();
-    mCamera = new Camera(Vector4(0, 1.25, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
-    mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
 
     mTime = 0;
-    mTimeVar = dynamic_cast<Variable*>(Parser::Symbols()["time"])->clone();
-    mTimeVar->setValue(QVariant::fromValue(mTime));
-
-    // retrieve blobs
-    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
-        addBlob(plugin);
-    }
-
-    QDir pluginsDir(qApp->applicationDirPath());
-    pluginsDir.cd("plugins");
-
-    foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-        addBlob(loader.instance());
-    }
+    mCamera = new Camera(Vector4(0, 1.25, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
 
     mTimer = new QTimer(this);
     mTimer->setInterval(1000/25);
@@ -58,37 +37,94 @@ Demo::GLWidget::GLWidget(QWidget *parent):
     connect(mAnimTimer, SIGNAL(timeout()), this, SLOT(anim()));
 }
 
+void GLWidget::addGLSymbols(SymbolMap& globals) {
 
-void Demo::GLWidget::addBlob(QObject* plugin) {
+    GL::Functions funcs(this);
+    foreach(Symbol* func, funcs.contents) globals[func->name()] = func;
+    GL::Constants constants;
+    foreach(Symbol* c, constants.contents) globals[c->name()] = c;
+
+    // shared matrices
+    globals["camera"] = new Var::Shared::Matrix("camera");
+    globals["projection"] = new Var::Shared::Matrix("projection");
+    // shared time variable
+    globals["time"] = new Var::Shared::Natural("time");
+
+    mCameraVar = dynamic_cast<Variable*>(globals["camera"])->clone();
+    mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+
+    mTimeVar = dynamic_cast<Variable*>(globals["time"])->clone();
+    mTimeVar->setValue(QVariant::fromValue(mTime));
+
+    mProjectionVar = dynamic_cast<Variable*>(globals["projection"])->clone();
+
+    // retrieve blobs
+    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
+        addBlob(plugin, globals);
+    }
+
+    QDir pluginsDir(qApp->applicationDirPath());
+    pluginsDir.cd("plugins");
+
+    foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+        addBlob(loader.instance(), globals);
+    }
+
+
+}
+
+void GLWidget::addBlob(QObject* plugin, SymbolMap& globals) {
     GL::Blob* blob = qobject_cast<GL::Blob*>(plugin);
     if (blob) {
-        if (Parser::Symbols().contains(blob->name())) {
+        if (globals.contains(blob->name())) {
             qWarning() << "Cannot load blob:" << blob->name() << "is a reserved symbol";
             return;
         }
         int index = mBlobs.length();
-        Parser::AddSymbol(new Demo::Constant(blob->name(), index));
+        globals[blob->name()] = new Demo::Constant(blob->name(), index);
         mBlobs.append(blob);
         return;
     }
 
     GL::TexBlob* texBlob = qobject_cast<GL::TexBlob*>(plugin);
     if (texBlob) {
-        if (Parser::Symbols().contains(texBlob->name())) {
+        if (globals.contains(texBlob->name())) {
             qWarning() << "Cannot load blob:" << texBlob->name() << "is a reserved symbol";
             return;
         }
         int index = mTexBlobs.length();
-        Parser::AddSymbol(new Demo::Constant(texBlob->name(), index));
+        globals[texBlob->name()] = new Demo::Constant(texBlob->name(), index);
         mTexBlobs.append(texBlob);
 
         return;
     }
 }
 
+static int findIndex(const SymbolMap& globals, const QString& name) {
+    if (!globals.contains(name)) return -1;
+    Constant* c = dynamic_cast<Constant*>(globals[name]);
+    if (!c) return -1;
+    bool ok;
+    int index = c->value().toInt(&ok);
+    if (!ok) return -1;
+    return index;
+}
+
+GL::Blob* Demo::GLWidget::blob(const SymbolMap& globals, const QString& name) const {
+    int index = findIndex(globals, name);
+    if (index < 0 || index >= mBlobs.size()) return 0;
+    return mBlobs[index];
+}
+
+GL::TexBlob* Demo::GLWidget::texBlob(const SymbolMap& globals, const QString& name) const {
+    int index = findIndex(globals, name);
+    if (index < 0 || index >= mTexBlobs.size()) return 0;
+    return mTexBlobs[index];
+}
+
 Demo::GLWidget::~GLWidget() {
     delete mCamera;
-    delete mCameraVar;
 }
 
 

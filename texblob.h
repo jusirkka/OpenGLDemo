@@ -4,6 +4,7 @@
 #include <QtPlugin>
 #include <QMap>
 
+namespace Demo {
 namespace GL {
 
 
@@ -48,8 +49,8 @@ public:
 
 };
 
-} // namespace GL
+}} // namespace Demo::GL
 
-Q_DECLARE_INTERFACE(GL::TexBlob, "net.kvanttiapina.OpenGLDemos.TexBlob/1.0")
+Q_DECLARE_INTERFACE(Demo::GL::TexBlob, "net.kvanttiapina.OpenGLDemos.TexBlob/1.0")
 
 #endif // TEXBLOB_H

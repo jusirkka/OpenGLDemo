@@ -17,12 +17,13 @@ using Math3D::Vector4;
 using Math3D::Matrix4;
 
 
+namespace Demo {
 namespace GL {
 
-class RunError {
+class GLError {
 
 public:
-    RunError(const QString& msg)
+    GLError(const QString& msg)
         :emsg(msg)
     {}
 
@@ -43,7 +44,7 @@ public:
           mParent(p)
     {}
 
-#define ALT(item) case item: throw RunError(#item); break
+#define ALT(item) case item: throw GLError(#item); break
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
 
@@ -351,7 +352,7 @@ public:
             mParent->glGetShaderiv(name, GL_INFO_LOG_LENGTH, &len);
             char info[len];
             mParent->glGetShaderInfoLog(name, len, &len, info);
-            throw RunError(info);
+            throw GLError(info);
         }
         mValue.setValue(0);
         return mValue;
@@ -466,7 +467,7 @@ public:
             mParent->glGetProgramiv(name, GL_INFO_LOG_LENGTH, &len);
             char info[len];
             mParent->glGetProgramInfoLog(name, len, &len, info);
-            throw RunError(info);
+            throw GLError(info);
         }
         mValue.setValue(0);
         return mValue;
@@ -1009,36 +1010,6 @@ public:
 
 
 
-class Emitter: public Demo::Function {
-
-public:
-
-    Emitter(Demo::GLWidget* p)
-        :Function("gl_emitter", Symbol::Integer),
-          mParent(p)
-    {
-        int argt = Symbol::Text;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-    }
-
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        QString other = vals[start].value<QString>();
-        QString me = vals[start+1].value<QString>();
-        emit mParent->evaluate(me, other);
-        mValue.setValue(0);
-        return mValue;
-    }
-
-    ~Emitter() {}
-
-private:
-
-    Demo::GLWidget* mParent;
-
-};
-
-
 
 
 class Functions {
@@ -1089,7 +1060,6 @@ public:
         contents.append(new DeleteTexture(p));
         contents.append(new TexParameter(p));
         contents.append(new TexImage2D(p));
-        contents.append(new Emitter(p));
     }
 };
 
@@ -1179,5 +1149,5 @@ public:
 };
 
 #undef CONST
-}
+}}
 #endif // GL_FUNCTIONS_H

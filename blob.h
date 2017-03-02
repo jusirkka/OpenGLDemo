@@ -4,6 +4,7 @@
 #include <QtPlugin>
 #include <QMap>
 
+namespace Demo {
 namespace GL {
 
 
@@ -79,9 +80,9 @@ protected:
 
 };
 
-} // namespace GL
+}} // namespace Demo::GL
 
-Q_DECLARE_INTERFACE(GL::Blob, "net.kvanttiapina.OpenGLDemos.Blob/1.0")
+Q_DECLARE_INTERFACE(Demo::GL::Blob, "net.kvanttiapina.OpenGLDemos.Blob/1.0")
 
 
 #endif // BLOB_H

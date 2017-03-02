@@ -22,6 +22,7 @@
 #define DEMO_SYMBOL_H
 
 #include <QString>
+#include <QMap>
 #include <QList>
 
 namespace Demo {
@@ -53,6 +54,9 @@ class Symbol {
 
         QString mName;
 };
+
+typedef QMap<QString, Symbol*> SymbolMap;
+
 
 } // namespace Demo
 #endif // DEMO_SYMBOL_H

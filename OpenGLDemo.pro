@@ -13,9 +13,9 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    parser.cpp \
     gl_widget.cpp \
-    runner.cpp \
+    gl_lang_compiler.cpp \
+    gl_lang_runner.cpp \
     teapot.cpp \
     camera.cpp \
     project.cpp \
@@ -33,11 +33,11 @@ HEADERS  += mainwindow.h \
     gl_functions.h \
     constant.h \
     function.h \
-    parser.h \
     symbol.h \
     variable.h \
     gl_widget.h \
-    runner.h \
+    gl_lang_compiler.h \
+    gl_lang_runner.h \
     blob.h \
     teapot.h \
     camera.h \
@@ -50,8 +50,6 @@ HEADERS  += mainwindow.h \
     patch.h \
     modelstore.h \
     fpscontrol.h \
-    wavefront_types.h \
-    gl_lang_types.h \
     scriptselector.h
 
 FORMS    += mainwindow.ui \
@@ -61,45 +59,47 @@ FORMS    += mainwindow.ui \
 
 OTHER_FILES += \
     TODO.txt \
-    wavefront.y \
-    wavefront.l \
-    gl_lang.l \
-    gl_lang.y
+    wavefront_parser.y \
+    wavefront_scanner.l \
+    gl_lang_parser.y \
+    gl_lang_scanner.l
 
 
 DEFINES += YYERROR_VERBOSE QT_STATICPLUGIN
 
-MY_YACC_SOURCES = wavefront.y gl_lang.y
 
-my_yacc_source.commands = yacc -t ${QMAKE_FILE_IN} -p ${QMAKE_FILE_BASE}_ && mv y.tab.c ${QMAKE_FILE_BASE}.cpp
-my_yacc_source.input = MY_YACC_SOURCES
-my_yacc_source.output = ${QMAKE_FILE_BASE}.cpp
-my_yacc_source.variable_out = SOURCES
-my_yacc_source.CONFIG += target_predeps
+MY_BISON_SOURCES = wavefront_parser.y gl_lang_parser.y
 
-my_yacc_header.commands = yacc -t -d ${QMAKE_FILE_IN}  -p ${QMAKE_FILE_BASE}_ && rm y.tab.c && mv y.tab.h ${QMAKE_FILE_BASE}.h
-my_yacc_header.input = MY_YACC_SOURCES
-my_yacc_header.output = ${QMAKE_FILE_BASE}.h
-my_yacc_header.variable_out = HEADERS
-my_yacc_header.CONFIG += target_predeps
+my_bison_src.commands = bison ${QMAKE_FILE_IN} -o ${QMAKE_FILE_BASE}.cpp
+my_bison_src.input = MY_BISON_SOURCES
+my_bison_src.output = ${QMAKE_FILE_BASE}.cpp
+my_bison_src.variable_out = SOURCES
+my_bison_src.CONFIG += target_predeps
 
-QMAKE_EXTRA_COMPILERS += my_yacc_source
-QMAKE_EXTRA_COMPILERS += my_yacc_header
+my_bison_hdr.commands = bison --defines=${QMAKE_FILE_BASE}.h ${QMAKE_FILE_IN} && rm ${QMAKE_FILE_BASE}.tab.c
+my_bison_hdr.input = MY_BISON_SOURCES
+my_bison_hdr.output = ${QMAKE_FILE_BASE}.h
+my_bison_hdr.variable_out = HEADERS
+my_bison_hdr.CONFIG += target_predeps
 
-MY_LEX_SOURCES = wavefront.l gl_lang.l
+QMAKE_EXTRA_COMPILERS += my_bison_src
+QMAKE_EXTRA_COMPILERS += my_bison_hdr
 
-my_lex_source.commands = flex -P${QMAKE_FILE_BASE}_ -t ${QMAKE_FILE_IN} > ${QMAKE_FILE_BASE}_scanner.c
-my_lex_source.input = MY_LEX_SOURCES
-my_lex_source.output = ${QMAKE_FILE_BASE}_scanner.c
-my_lex_source.variable_out = SOURCES
-my_lex_source.CONFIG += target_predeps
+MY_FLEX_SOURCES = wavefront_scanner.l gl_lang_scanner.l
 
-my_lex_header.commands = flex -P${QMAKE_FILE_BASE}_ --header-file=${QMAKE_FILE_BASE}_scanner.h -t ${QMAKE_FILE_IN} > /dev/null
-my_lex_header.input = MY_LEX_SOURCES
-my_lex_header.output = ${QMAKE_FILE_BASE}_scanner.h
-my_lex_header.variable_out = HEADERS
-my_lex_header.CONFIG += target_predeps
+my_flex_src.commands = flex -o ${QMAKE_FILE_BASE}.cpp ${QMAKE_FILE_IN}
+my_flex_src.input = MY_FLEX_SOURCES
+my_flex_src.output = ${QMAKE_FILE_BASE}.cpp
+my_flex_src.variable_out = SOURCES
+my_flex_src.CONFIG += target_predeps
 
-QMAKE_EXTRA_COMPILERS += my_lex_source
-QMAKE_EXTRA_COMPILERS += my_lex_header
+my_flex_hdr.commands = flex --header-file=${QMAKE_FILE_BASE}.h -t ${QMAKE_FILE_IN} > /dev/null
+my_flex_hdr.input = MY_FLEX_SOURCES
+my_flex_hdr.output = ${QMAKE_FILE_BASE}.h
+my_flex_hdr.variable_out = HEADERS
+my_flex_hdr.CONFIG += target_predeps
+
+QMAKE_EXTRA_COMPILERS += my_flex_src
+QMAKE_EXTRA_COMPILERS += my_flex_hdr
+
 
