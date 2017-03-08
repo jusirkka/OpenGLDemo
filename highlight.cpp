@@ -41,6 +41,8 @@ Highlight::Highlight(Compiler* c, QTextDocument* parent):
     mFormats[SHARED] = mReserved;
     mFormats[REAL] = mReserved;
     mFormats[EXECUTE] = mReserved;
+    mFormats[FROM] = mReserved;
+    mFormats[IMPORT] = mReserved;
     mFormats[INT] = mNumeric;
     mFormats[FLOAT] = mNumeric;
 
@@ -62,9 +64,11 @@ void Highlight::highlightBlock(const QString &text) {
     int text_start = 0;
     int text_length = 0;
 
-    LocationType* loc = gl_lang_get_lloc(mScanner);
-    ValueType* val = gl_lang_get_lval(mScanner);
-    int token = gl_lang_lex(val, loc, mScanner);
+    LocationType loc;
+    gl_lang_set_lloc(&loc, mScanner);
+    ValueType val;
+    gl_lang_set_lval(&val, mScanner);
+    int token = gl_lang_lex(&val, &loc, mScanner);
     while (token > 0) {
         int token_len = gl_lang_get_leng(mScanner);
         QString token_text(gl_lang_get_text(mScanner));
@@ -77,7 +81,7 @@ void Highlight::highlightBlock(const QString &text) {
         } else {
             if (token == BEGINSTRING) {
                 setCurrentBlockState(1);
-                text_start = loc->pos  + pshift;
+                text_start = loc.pos  + pshift;
                 text_length = token_len;
                 if (text_start < 0) {
                     text_start = 0;
@@ -85,22 +89,23 @@ void Highlight::highlightBlock(const QString &text) {
                 }
             } else {
                 if (mFormats.contains(token)) {
-                    setFormat(loc->pos + pshift, token_len, mFormats[token]);
-                } else if (token == ID && mCompiler->symbols().contains(token_text)) {
-                    Function* fun = dynamic_cast<Function*>(mCompiler->symbols()[token_text]);
+                    setFormat(loc.pos + pshift, token_len, mFormats[token]);
+                } else if (token == ID && mCompiler->hasSymbol(token_text)) {
+                    const Symbol* sym = mCompiler->symbol(token_text);
+                    const Function* fun = dynamic_cast<const Function*>(sym);
                     if (fun) {
-                        setFormat(loc->pos + pshift, token_len, mFunction);
+                        setFormat(loc.pos + pshift, token_len, mFunction);
                     } else {
-                        Constant* con = dynamic_cast<Constant*>(mCompiler->symbols()[token_text]);
+                        const Constant* con = dynamic_cast<const Constant*>(sym);
                         if (con) {
-                            setFormat(loc->pos + pshift, token_len, mConstant);
+                            setFormat(loc.pos + pshift, token_len, mConstant);
                         }
                         // TODO: variables
                     }
                 }
             }
         }
-        token = gl_lang_lex(val, loc, mScanner);
+        token = gl_lang_lex(&val, &loc, mScanner);
     }
 
     gl_lang__delete_buffer(buf, mScanner);

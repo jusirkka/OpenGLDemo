@@ -1,14 +1,14 @@
-Execute "create prog";
-Execute "get locations";
-Execute "init models";
-Execute "init textures";
+Execute "create prog"
+Execute "get locations"
+Execute "init models"
+Execute "init textures"
 
 // ------------------
 // other
 // ------------------
 
-clearcolor vec(.1,.2,.2,1);
-enable depth_test;
-disable  cull_face;
-frontface ccw;
-cullface back;
+clearcolor vec(.1,.2,.2,1)
+enable depth_test
+disable  cull_face
+frontface ccw
+cullface back

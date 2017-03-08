@@ -95,6 +95,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(Enable)
+
     ~Enable() {}
 };
 
@@ -113,6 +115,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(Disable)
 
     ~Disable() {}
 };
@@ -136,6 +140,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(DepthRange)
+
     ~DepthRange() {}
 };
 
@@ -155,6 +161,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(LineWidth)
 
     ~LineWidth() {}
 };
@@ -176,6 +184,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(FrontFace)
+
     ~FrontFace() {}
 };
 
@@ -195,6 +205,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(CullFace)
 
     ~CullFace() {}
 };
@@ -222,6 +234,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(ColorMask)
+
     ~ColorMask() {}
 };
 
@@ -241,6 +255,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(DepthMask)
 
     ~DepthMask() {}
 };
@@ -262,6 +278,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(Clear)
+
     ~Clear() {}
 };
 
@@ -281,6 +299,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(ClearColor)
 
     ~ClearColor() {}
 };
@@ -302,6 +322,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(ClearDepth)
+
     virtual ~ClearDepth() {}
 };
 
@@ -322,6 +344,8 @@ public:
         mValue.setValue(ret);
         return mValue;
     }
+
+    CLONEMETHOD(CreateShader)
 
     virtual ~CreateShader() {}
 };
@@ -358,6 +382,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(CompileShader)
+
     virtual ~CompileShader() {}
 };
 
@@ -379,6 +405,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(DeleteShader)
+
     virtual ~DeleteShader() {}
 };
 
@@ -396,6 +424,8 @@ public:
         mValue.setValue(ret);
         return mValue;
     }
+
+    CLONEMETHOD(CreateProgram)
 
     virtual ~CreateProgram() {}
 };
@@ -420,6 +450,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(AttachShader)
+
     virtual ~AttachShader() {}
 };
 
@@ -442,6 +474,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(DetachShader)
 
     virtual ~DetachShader() {}
 };
@@ -473,6 +507,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(LinkProgram)
+
     virtual ~LinkProgram() {}
 };
 
@@ -493,6 +529,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(UseProgram)
 
     virtual ~UseProgram() {}
 };
@@ -515,6 +553,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(DeleteProgram)
 
     virtual ~DeleteProgram() {}
 };
@@ -540,6 +580,8 @@ public:
         mValue.setValue(loc);
         return mValue;
     }
+
+    CLONEMETHOD(GetAttribLocation)
 
     virtual ~GetAttribLocation() {}
 };
@@ -567,6 +609,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(GetUniformLocation)
+
     virtual ~GetUniformLocation() {}
 };
 
@@ -591,6 +635,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(Uniform1F)
+
     virtual ~Uniform1F() {}
 };
 
@@ -612,6 +658,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(Uniform1I)
 
     virtual ~Uniform1I() {}
 };
@@ -635,6 +683,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(Uniform4F)
 
     virtual ~Uniform4F() {}
 };
@@ -660,6 +710,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(UniformMatrix4F)
+
     virtual ~UniformMatrix4F() {}
 };
 
@@ -677,6 +729,8 @@ public:
         mValue.setValue(ret);
         return mValue;
     }
+
+    CLONEMETHOD(GenBuffer)
 
     virtual ~GenBuffer() {}
 };
@@ -698,6 +752,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(DeleteBuffer)
 
     virtual ~DeleteBuffer() {}
 };
@@ -722,6 +778,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(BindBuffer)
+
     ~BindBuffer() {}
 };
 
@@ -745,6 +803,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(BufferData)
 
     ~BufferData() {}
 };
@@ -778,6 +838,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(VertexAttribPointer)
+
     ~VertexAttribPointer() {}
 };
 
@@ -804,6 +866,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(Draw)
+
     ~Draw() {}
 };
 
@@ -825,6 +889,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(EnableVertexAttribArray)
+
     ~EnableVertexAttribArray() {}
 };
 
@@ -844,6 +910,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(DisableVertexAttribArray)
 
     ~DisableVertexAttribArray() {}
 };
@@ -866,6 +934,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(ActiveTexture)
+
     ~ActiveTexture() {}
 };
 
@@ -886,6 +956,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(GenerateMipMap)
 
     ~GenerateMipMap() {}
 };
@@ -909,6 +981,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(BindTexture)
+
     ~BindTexture() {}
 };
 
@@ -926,6 +1000,8 @@ public:
         mValue.setValue(ret);
         return mValue;
     }
+
+    CLONEMETHOD(GenTexture)
 
     virtual ~GenTexture() {}
 };
@@ -947,6 +1023,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(DeleteTexture)
 
     virtual ~DeleteTexture() {}
 };
@@ -972,6 +1050,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(TexParameter)
 
     virtual ~TexParameter() {}
 };
@@ -1004,6 +1084,8 @@ public:
         mValue.setValue(0);
         return mValue;
     }
+
+    CLONEMETHOD(TexImage2D)
 
     ~TexImage2D() {}
 };

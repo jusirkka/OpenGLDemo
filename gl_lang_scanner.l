@@ -46,6 +46,8 @@ natural         Natural
 text            Text
 shared          Shared
 execute         Execute
+from            From
+import          import
 
 %x INSTRING
 
@@ -72,6 +74,8 @@ execute         Execute
 {text}          return TEXT;
 {shared}        return SHARED;
 {execute}       return EXECUTE;
+{from}          return FROM;
+{import}        return IMPORT;
 
 {id}            {
                     yylval->v_string = yytext;

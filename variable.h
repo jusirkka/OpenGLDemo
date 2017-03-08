@@ -39,254 +39,81 @@ public:
 
     unsigned index() const {return mIndex;}
     void setIndex(unsigned idx) {mIndex = idx;}
+    virtual bool shared() const = 0;
 
     virtual Variable* clone() const = 0;
-
-    bool used() const {return mUsed;}
-    void setUsed(bool used) {mUsed = used;}
-
-    virtual bool shared() const {return false;}
 
     virtual ~Variable() {}
 
 protected:
 
-    Variable(const QString name)
-        : Symbol(name),
-          mIndex(0),
-          mUsed(false)
-    {}
+    Variable(const QString name): Symbol(name), mIndex(0) {}
 
 protected:
 
     int mIndex;
-    bool mUsed;
 
 };
 
-class SharedData: public QSharedData {
-
+template <typename T> class LocalVar: public Variable {
 public:
-
-    SharedData() {}
-
-
-    ~SharedData() {}
-
-public:
-
-    QVariant value;
-};
-
-
-
-class SharedVar: public Variable {
-
-public:
-
-    const QVariant& value() const {return d->value;}
-
-    bool shared() const {return true;}
-
-    virtual ~SharedVar() {}
-
-protected:
-
-    SharedVar(const QString& name)
-        : Variable(name)
-    {d = new SharedData;}
-
-
-
-protected:
-
-    QExplicitlySharedDataPointer<SharedData> d;
-
-};
-
-class LocalVar: public Variable {
-
-public:
-
+    LocalVar(const QString& name): Variable(name), mValue() {}
     const QVariant& value() const {return mValue;}
-
-
+    void setValue(const QVariant& val) {mValue.setValue(val.value<T>());}
+    int type() const {return qMetaTypeId<T>();}
+    LocalVar* clone() const {return new LocalVar(*this);}
+    bool shared() const {return false;}
     virtual ~LocalVar() {}
-
 protected:
-
-    LocalVar(const QString& name):
-        Variable(name),
-        mValue() {}
-
-protected:
-
     QVariant mValue;
 };
 
 
+class SharedData: public QSharedData {
+public:
+    SharedData() {}
+    ~SharedData() {}
+public:
+    QVariant value;
+};
+
+template <typename T> class SharedVar: public Variable {
+public:
+    SharedVar(const QString& name): Variable(name) {d = new SharedData;}
+    const QVariant& value() const {return d->value;}
+    void setValue(const QVariant& val) {d->value.setValue(val.value<T>());}
+    int type() const {return qMetaTypeId<T>();}
+    bool shared() const {return true;}
+    SharedVar* clone() const {return new SharedVar(*this);}
+    virtual ~SharedVar() {}
+protected:
+    QExplicitlySharedDataPointer<SharedData> d;
+};
 
 
 namespace Var {
 
 namespace Local {
-
-class Matrix: public LocalVar {
-
-public:
-
-    Matrix(const QString& name): LocalVar(name) {}
-
-    int type() const {return Symbol::Matrix;}
-    void setValue(const QVariant& val) {mValue.setValue(val.value<Math3D::Matrix4>());}
-
-    Matrix* clone() const {return new Matrix(*this);}
-    ~Matrix() {}
-
-};
-
-class Vector: public LocalVar {
-
-public:
-
-    Vector(const QString& name): LocalVar(name) {}
-
-    int type() const {return Symbol::Vector;}
-    void setValue(const QVariant& val) {mValue.setValue(val.value<Math3D::Vector4>());}
-
-    Vector* clone() const {return new Vector(*this);}
-
-    ~Vector() {}
-
-};
-
-class Real: public LocalVar {
-
-public:
-
-    Real(const QString& name): LocalVar(name) {}
-
-    int type() const {return Symbol::Real;}
-    void setValue(const QVariant& val) {mValue.setValue(val.value<Math3D::Real>());}
-
-    Real* clone() const {return new Real(*this);}
-
-    ~Real() {}
-
-};
-
-class Natural: public LocalVar {
-
-public:
-
-    Natural(const QString& name): LocalVar(name) {}
-
-    int type() const {return Symbol::Integer;}
-    void setValue(const QVariant& val) {mValue.setValue(val.value<Math3D::Integer>());}
-
-    Natural* clone() const {return new Natural(*this);}
-
-    ~Natural() {}
-
-};
-
-class Text: public LocalVar {
-
-public:
-
-    Text(const QString& name): LocalVar(name) {}
-
-    int type() const {return Symbol::Text;}
-    void setValue(const QVariant& val) {mValue.setValue(val.value<QString>());}
-
-
-    Text* clone() const {return new Text(*this);}
-
-    ~Text() {}
-
-};
-
-} // namespace Local
+typedef LocalVar<Math3D::Integer> Natural;
+typedef LocalVar<Math3D::Real> Real;
+typedef LocalVar<Math3D::Matrix4> Matrix;
+typedef LocalVar<Math3D::Vector4> Vector;
+typedef LocalVar<QString> Text;
+}
 
 namespace Shared {
+typedef SharedVar<Math3D::Integer> Natural;
+typedef SharedVar<Math3D::Real> Real;
+typedef SharedVar<Math3D::Matrix4> Matrix;
+typedef SharedVar<Math3D::Vector4> Vector;
+typedef SharedVar<QString> Text;
+}
 
-class Matrix: public SharedVar {
+Variable* Create(int kind, const QString& name, bool shared);
 
-public:
+} // namespace Var
 
-    Matrix(const QString& name): SharedVar(name) {}
+typedef QMap<QString, Variable*> VariableMap;
 
-    int type() const {return Symbol::Matrix;}
-    void setValue(const QVariant& val) {d->value.setValue(val.value<Math3D::Matrix4>());}
-
-    Matrix* clone() const {return new Matrix(*this);}
-
-    ~Matrix() {}
-
-};
-
-class Vector: public SharedVar {
-
-public:
-
-    Vector(const QString& name): SharedVar(name) {}
-
-    int type() const {return Symbol::Vector;}
-    void setValue(const QVariant& val) {d->value.setValue(val.value<Math3D::Vector4>());}
-
-    Vector* clone() const {return new Vector(*this);}
-
-    ~Vector() {}
-
-};
-
-class Real: public SharedVar {
-
-public:
-
-    Real(const QString& name): SharedVar(name) {}
-
-    int type() const {return Symbol::Real;}
-    void setValue(const QVariant& val) {d->value.setValue(val.value<Math3D::Real>());}
-
-    Real* clone() const {return new Real(*this);}
-
-    ~Real() {}
-
-};
-
-class Natural: public SharedVar {
-
-public:
-
-    Natural(const QString& name): SharedVar(name) {}
-
-    int type() const {return Symbol::Integer;}
-    void setValue(const QVariant& val) {d->value.setValue(val.value<Math3D::Integer>());}
-
-    Natural* clone() const {return new Natural(*this);}
-
-    ~Natural() {}
-
-};
-
-class Text: public SharedVar {
-
-public:
-
-    Text(const QString& name): SharedVar(name) {}
-
-    int type() const {return Symbol::Text;}
-    void setValue(const QVariant& val) {d->value.setValue(val.value<QString>());}
-
-
-    Text* clone() const {return new Text(*this);}
-
-    ~Text() {}
-
-};
-
-} // namespace Shared
-
-}} // namespace Demo::Var
+} // namespace Demo
 #endif // DEMO_VARIABLE_H

@@ -39,7 +39,7 @@ class Runner: public QObject {
 
 public:
 
-    Runner();
+    Runner(QObject* parent = 0);
 
 
     void setup(

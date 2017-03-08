@@ -26,7 +26,10 @@ SOURCES += main.cpp\
     patch.cpp \
     modelstore.cpp \
     fpscontrol.cpp \
-    scriptselector.cpp
+    scriptselector.cpp \
+    scope.cpp \
+    symbol.cpp \
+    variable.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -50,7 +53,8 @@ HEADERS  += mainwindow.h \
     patch.h \
     modelstore.h \
     fpscontrol.h \
-    scriptselector.h
+    scriptselector.h \
+    scope.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

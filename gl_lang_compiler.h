@@ -44,7 +44,7 @@ typedef void* yyscan_t;
 
 namespace Demo {
 
-class Project;
+class Scope;
 
 namespace GL {
 
@@ -62,7 +62,8 @@ public:
 
 class ValueType {
 public:
-    int v_int;
+    bool v_bool;
+    Math3D::Integer v_int;
     Math3D::Real v_real;
     QChar v_char;
     QString v_string;
@@ -164,12 +165,15 @@ public:
         notaintegervariable,
         expectedarithmetictype,
         nottext,
+        assimported,
+        notimported,
+        scriptnotfound,
         numerrors
     };
 
 
 
-    Compiler();
+    Compiler(const QString& name, Scope* globalScope, QObject* parent = 0);
 
     // GL interface
     void compile(const QString& script);
@@ -177,8 +181,6 @@ public:
     void run();
 
     // grammar interface
-    const SymbolMap& symbols() const;
-    void addSymbol(Symbol* sym, bool used = true);
     void setCode(const QString& name);
     void pushBack(unsigned op, unsigned lrtype, int inc);
     void setJump();
@@ -187,6 +189,17 @@ public:
     void pushBackImmed(Math3D::Real constVal);
     void pushBackImmed(const QVariant& constVal);
     void createError(const QString& item, Error err);
+
+    void addVariable(Variable* v);
+    bool hasSymbol(const QString& sym) const;
+    Symbol* symbol(const QString& sym) const;
+    bool isImported(const Variable* var) const;
+    const QStringList& subscripts() const;
+    bool isExported(const QString& v, const QString& script) const;
+    void addImported(const QString& v, const QString& script);
+    const VariableMap& exports() const;
+    bool isScript(const QString& name) const;
+    void addSubscript(const QString& name);
 
     ~Compiler();
 
@@ -207,14 +220,16 @@ public:
         cTI, cTS, cTV, cTM, cTT
     };
 
-    // code offsets
-    static const int FirstVariable = 1000;
-    static const int FirstFunction = 2000;
 
+public slots:
+
+    void compileLater();
+
+signals:
+
+    void resetting();
 
 private:
-
-    typedef QMap<QString, int> CountMap;
 
     static const char* explanations[];
 
@@ -226,33 +241,14 @@ private:
 
     void reset();
 
-    class Dispatcher: public Function {
-
-    public:
-
-        Dispatcher(Project* p);
-
-        const QVariant& execute(const QVector<QVariant>& vals, int start);
-
-        ~Dispatcher() {}
-
-    private:
-
-        Project* mParent;
-
-    };
-
-
-
 private:
 
-    SymbolMap mSymbols;
     AssignmentList mAssignments;
     VariableList mVariables;
-    FunctionList mFunctions;
+    VariableMap mExports;
+    SymbolMap mSymbols;
     CodeStack mCurrent;
     ValueStack mCurrImmed;
-    CountMap mSharedCounts;
     int mStackSize;
     int mStackPos;
     int mCodeSize;
@@ -261,6 +257,11 @@ private:
     CompileError mError;
     Runner* mRunner;
     bool mReady;
+    bool mRecompile;
+    QString mSource;
+    Scope* mGlobalScope;
+    QStringList mImportScripts;
+    QStringList mSubscripts;
 };
 
 

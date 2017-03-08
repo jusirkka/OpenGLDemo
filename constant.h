@@ -46,6 +46,8 @@ class Constant: public Symbol {
         int type() const {return mType;}
         const QVariant& value() const {return mValue;}
 
+        CLONEMETHOD(Constant)
+
         ~Constant() {}
 
     private:

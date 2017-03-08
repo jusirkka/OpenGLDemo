@@ -34,7 +34,7 @@ public:
 
 
     GLWidget(QWidget *parent = 0);
-    void addGLSymbols(SymbolMap& globals);
+    void addGLSymbols(SymbolMap& globals, VariableMap& exports);
 
     ResourceList& resources() {return mResources;}
     ResourceList& buffers() {return mBuffers;}

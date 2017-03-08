@@ -14,9 +14,9 @@ ImageStore::ImageStore():
 
 
 const void* ImageStore::data(const QString& key) const {
-    qDebug() << "GL::ImageStore::data" << key;
+    // qDebug() << "GL::ImageStore::data" << key;
     if (mImages.contains(key)) {
-        qDebug() << "has" << mImages[key].size() << "bytes";
+        // qDebug() << "has" << mImages[key].size() << "bytes";
         return mImages[key].bits();
     }
     return 0;

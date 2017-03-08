@@ -37,7 +37,7 @@ GLWidget::GLWidget(QWidget *parent):
     connect(mAnimTimer, SIGNAL(timeout()), this, SLOT(anim()));
 }
 
-void GLWidget::addGLSymbols(SymbolMap& globals) {
+void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
 
     GL::Functions funcs(this);
     foreach(Symbol* func, funcs.contents) globals[func->name()] = func;
@@ -45,18 +45,18 @@ void GLWidget::addGLSymbols(SymbolMap& globals) {
     foreach(Symbol* c, constants.contents) globals[c->name()] = c;
 
     // shared matrices
-    globals["camera"] = new Var::Shared::Matrix("camera");
-    globals["projection"] = new Var::Shared::Matrix("projection");
+    exports["camera"] = new Var::Shared::Matrix("camera");
+    exports["projection"] = new Var::Shared::Matrix("projection");
     // shared time variable
-    globals["time"] = new Var::Shared::Natural("time");
+    exports["time"] = new Var::Shared::Natural("time");
 
-    mCameraVar = dynamic_cast<Variable*>(globals["camera"])->clone();
+    mCameraVar = exports["camera"]->clone();
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
 
-    mTimeVar = dynamic_cast<Variable*>(globals["time"])->clone();
+    mTimeVar = exports["time"]->clone();
     mTimeVar->setValue(QVariant::fromValue(mTime));
 
-    mProjectionVar = dynamic_cast<Variable*>(globals["projection"])->clone();
+    mProjectionVar = exports["projection"]->clone();
 
     // retrieve blobs
     foreach (QObject *plugin, QPluginLoader::staticInstances()) {
@@ -277,7 +277,7 @@ void Demo::GLWidget::anim() {
 
 
 void Demo::GLWidget::defaults() {
-    qDebug() << "resetting to defaults";
+    // qDebug() << "resetting to defaults";
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
@@ -306,19 +306,19 @@ void Demo::GLWidget::defaults() {
     glUseProgram(0);
     foreach (int name, mResources) {
         if (glIsShader(name)) {
-            qDebug() << "deleting shader" << name;
+            // qDebug() << "deleting shader" << name;
             glDeleteShader(name);
         } else if (glIsProgram(name)) {
-            qDebug() << "deleting program" << name;
+            // qDebug() << "deleting program" << name;
            glDeleteProgram(name);
         }
     }
 
     QVector<GLuint> tmp = mBuffers.toVector();
-    qDebug() << "deleting buffers" << mBuffers;
+    // qDebug() << "deleting buffers" << mBuffers;
     glDeleteBuffers(tmp.size(), tmp.constData());
     tmp = mTextures.toVector();
-    qDebug() << "deleting textures" << mTextures;
+    // qDebug() << "deleting textures" << mTextures;
     glDeleteTextures(tmp.size(), tmp.constData());
 
     switch (glGetError()) {

@@ -1,5 +1,6 @@
 #include "gl_lang_runner.h"
 #include "gl_functions.h"
+#include "scope.h"
 
 using Math3D::Real;
 using Math3D::Vector4;
@@ -7,8 +8,8 @@ using Math3D::Matrix4;
 
 using namespace Demo::GL;
 
-Runner::Runner():
-    QObject(),
+Runner::Runner(QObject* parent):
+    QObject(parent),
     mAssignments(),
     mVariables(),
     mFunctions() {}
@@ -25,9 +26,6 @@ void Runner::setup(const Compiler::AssignmentList& ass,
         const Variable* v = mVariables.at(i);
         mIndex[v->name()] = i;
         mVariables[i] = v->clone();
-        if (v->shared() && v->used()) {
-            mShared << v->name();
-        }
     }
 }
 
@@ -36,9 +34,9 @@ void Runner::run() {
     foreach (Assignment ass, mAssignments) {
         try {
             Variable* v = mVariables[mIndex[ass.var]];
-            v->setValue(evalCode(ass.code, ass.immed, ass.pos));
             // qDebug() << v->name() << "=" << v->value();
-        } catch (GL::RunError& e) {
+            v->setValue(evalCode(ass.code, ass.immed, ass.pos));
+        } catch (RunError& e) {
             throw RunError(e.msg(), ass.pos);
         }
     }
@@ -263,42 +261,42 @@ const QVariant& Runner::evalCode(const CodeStack& code,  const ValueStack& immed
             break;
 
         case Compiler::cFun:
-            {
-                Function* fun = mFunctions[(codes[++ic]) - Compiler::FirstFunction];
-                sPos -= fun->argTypes().size() - 1;
-                mStack[sPos] = fun->execute(mStack, sPos);
-            }
+        {
+            Function* fun = mFunctions[codes[++ic] - Scope::FunctionOffset];
+            sPos -= fun->argTypes().size() - 1;
+            mStack[sPos] = fun->execute(mStack, sPos);
+        }
             break;
 
         case Compiler::cVar:
-            mStack[++sPos] = mVariables[(codes[++ic]) - Compiler::FirstVariable]->value();
+            mStack[++sPos] = mVariables[codes[++ic] - Scope::VariableOffset]->value();
             break;
 
         case Compiler::cTake:
-            {
-                int index = mStack[sPos].value<int>();
-                if (index < 0 || index > 3) {
-                    throw RunError("Out of range error", pos);
-                }
-                take_f(mStack[sPos-1], index, lrType);
-                --sPos;
+        {
+            int index = mStack[sPos].value<int>();
+            if (index < 0 || index > 3) {
+                throw RunError("Out of range error", pos);
             }
+            take_f(mStack[sPos-1], index, lrType);
+            --sPos;
+        }
             break;
 
         case Compiler::cGuard:
-            {
-                if (stopFlag) return mStack[sPos];
+        {
+            if (stopFlag) return mStack[sPos];
 
-                jumpFlag = !mStack[sPos].value<int>();
-                if (jumpFlag) {
-                    dPos += codes[ic + 2];
-                    ic += codes[ic + 1] + 2;
-                } else {
-                    stopFlag = true;
-                    ic += 2;
-                }
-                --sPos;
+            jumpFlag = !mStack[sPos].value<int>();
+            if (jumpFlag) {
+                dPos += codes[ic + 2];
+                ic += codes[ic + 1] + 2;
+            } else {
+                stopFlag = true;
+                ic += 2;
             }
+            --sPos;
+        }
             break;
 
 

@@ -32,6 +32,8 @@
 using Math3D::Vector4;
 using Math3D::Matrix4;
 
+
+
 namespace Demo {
 
 
@@ -83,6 +85,8 @@ class StdFunction: public Function {
             return mValue;
         }
 
+        CLONEMETHOD(StdFunction)
+
         ~StdFunction() {}
 
     private:
@@ -113,6 +117,8 @@ public:
         mValue.setValue(v);
         return mValue;
     }
+
+    CLONEMETHOD(Vecx)
 
     ~Vecx() {}
 };
@@ -146,6 +152,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(Mat)
+
     ~Mat() {}
 };
 
@@ -170,6 +178,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(Rot)
+
     ~Rot() {}
 };
 
@@ -190,6 +200,8 @@ public:
         mValue.setValue(m);
         return mValue;
     }
+
+    CLONEMETHOD(Tr)
 
     ~Tr() {}
 };
@@ -216,6 +228,8 @@ public:
         return mValue;
     }
 
+    CLONEMETHOD(Sc)
+
     ~Sc() {}
 };
 
@@ -235,6 +249,8 @@ public:
         mValue.setValue(u);
         return mValue;
     }
+
+    CLONEMETHOD(Norm)
 
     ~Norm() {}
 };
@@ -257,6 +273,8 @@ public:
         mValue.setValue(m);
         return mValue;
     }
+
+    CLONEMETHOD(NormalT)
 
     ~NormalT() {}
 };
@@ -298,6 +316,8 @@ public:
 #undef FUN
 
 };
+
+typedef QList<Function*> FunctionList;
 
 } // namespace DEMO
 #endif // DEMO_FUNCTION_H

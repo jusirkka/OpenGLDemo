@@ -1,20 +1,21 @@
-Shared Natural loc_vertex, loc_normal, loc_tex;
-Shared Natural loc_img, loc_n, loc_vm, loc_pvm, loc_light, loc_material_colors, loc_light_colors, loc_specular;
-Shared Natural prog;
-Shared Natural loc_scale;
+Shared Natural loc_vertex, loc_normal, loc_tex
+Shared Natural loc_img, loc_n, loc_vm, loc_pvm, loc_light, loc_material_colors, loc_light_colors, loc_specular
+Shared Natural loc_scale
 
-useprogram prog;
+From "create prog" import prog
 
-loc_n = getuniformlocation(prog, "n_matrix");
-loc_vm = getuniformlocation(prog, "vm_matrix");
-loc_pvm = getuniformlocation(prog, "pvm_matrix");
-loc_light = getuniformlocation(prog, "light");
-loc_material_colors = getuniformlocation(prog, "material_colors");
-loc_light_colors = getuniformlocation(prog, "light_colors");
-loc_specular = getuniformlocation(prog, "specular");
-loc_img = getuniformlocation(prog, "img");
-loc_scale = getuniformlocation(prog, "scale");
+useprogram prog
 
-loc_vertex = getattriblocation(prog, "vertex");
-loc_normal = getattriblocation(prog, "normal");
-loc_tex = getattriblocation(prog, "tex");
+loc_n = getuniformlocation(prog, "n_matrix")
+loc_vm = getuniformlocation(prog, "vm_matrix")
+loc_pvm = getuniformlocation(prog, "pvm_matrix")
+loc_light = getuniformlocation(prog, "light")
+loc_material_colors = getuniformlocation(prog, "material_colors")
+loc_light_colors = getuniformlocation(prog, "light_colors")
+loc_specular = getuniformlocation(prog, "specular")
+loc_img = getuniformlocation(prog, "img")
+loc_scale = getuniformlocation(prog, "scale")
+
+loc_vertex = getattriblocation(prog, "vertex")
+loc_normal = getattriblocation(prog, "normal")
+loc_tex = getattriblocation(prog, "tex")

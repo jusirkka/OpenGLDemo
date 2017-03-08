@@ -57,11 +57,13 @@ class Highlight;
 
 namespace Demo {
 
+
 namespace GL {
 class Compiler;
 }
 
 class Project;
+class Scope;
 
 class CodeEditor : public QPlainTextEdit
 {
@@ -72,7 +74,7 @@ public:
     typedef QList<CodeEditor*> EditorList;
 
 public:
-    CodeEditor(Project* owner);
+    CodeEditor(const QString& name, Scope* globals, Project* owner);
 
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
@@ -83,6 +85,14 @@ public:
     bool hasCompileError() const {return mCompileErrorPos != -1;}
 
     void toggleAutoCompile(bool on);
+    void rename(const QString& name);
+
+    const QString& fileName();
+    void setFileName(const QString&);
+
+    GL::Compiler* compiler() const;
+
+    ~CodeEditor();
 
 public slots:
 
@@ -114,6 +124,7 @@ private:
     int mRunErrorPos;
     Highlight* mHighlight;
     GL::Compiler* mCompiler;
+    QString mPath;
 };
 
 

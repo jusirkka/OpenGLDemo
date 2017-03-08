@@ -50,13 +50,15 @@
 
 using namespace Demo;
 
-CodeEditor::CodeEditor(Project* owner):
+CodeEditor::CodeEditor(const QString& name, Scope* globals, Project* owner):
     QPlainTextEdit(),
     mCompileDelay(new QTimer(this)),
     mCompileErrorPos(-1),
     mRunErrorPos(-1),
-    mCompiler(new GL::Compiler())
+    mCompiler(new GL::Compiler(name, globals, this))
 {
+    setObjectName(name);
+
     connect(this, SIGNAL(compiled()), owner, SLOT(scriptCompiled()));
     connect(this->document(), SIGNAL(modificationChanged(bool)), owner, SLOT(scriptModification_changed(bool)));
     connect(this, SIGNAL(statusChanged()), owner, SLOT(scriptStatus_changed()));
@@ -79,6 +81,7 @@ CodeEditor::CodeEditor(Project* owner):
     mHighlight = new Highlight(mCompiler, document());
 }
 
+CodeEditor::~CodeEditor() {}
 
 void CodeEditor::toggleAutoCompile(bool on) {
     if (on) {
@@ -89,6 +92,23 @@ void CodeEditor::toggleAutoCompile(bool on) {
         disconnect(this, SIGNAL(textChanged()), mCompileDelay, SLOT(start()));
         disconnect(mCompileDelay, SIGNAL(timeout()), this, SLOT(compile()));
     }
+}
+
+void CodeEditor::rename(const QString& name) {
+    setObjectName(name);
+    mCompiler->setObjectName(name);
+}
+
+const QString& CodeEditor::fileName() {
+    return mPath;
+}
+
+void CodeEditor::setFileName(const QString& path) {
+    mPath = path;
+}
+
+GL::Compiler* CodeEditor::compiler() const {
+    return mCompiler;
 }
 
 void CodeEditor::compile() {

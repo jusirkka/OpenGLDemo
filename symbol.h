@@ -34,15 +34,16 @@ class Symbol {
 
         typedef QList<int> TypeList;
 
-        static const int Integer = 1001;
-        static const int Real = 1002;
-        static const int Vector = 1003;
-        static const int Matrix = 1004;
-        static const int Text = 1005;
+        static const int Integer;
+        static const int Real;
+        static const int Vector;
+        static const int Matrix;
+        static const int Text;
 
         const QString& name() const {return mName;}
 
         virtual int type() const = 0;
+        virtual Symbol* clone() const = 0;
 
         virtual ~Symbol() {}
 
@@ -59,4 +60,8 @@ typedef QMap<QString, Symbol*> SymbolMap;
 
 
 } // namespace Demo
+
+#define CLONEMETHOD(T) T* clone() const {return new T(*this);}
+
+
 #endif // DEMO_SYMBOL_H

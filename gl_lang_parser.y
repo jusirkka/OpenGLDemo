@@ -29,7 +29,7 @@ using Demo::GL::Compiler;
 %lex-param {yyscan_t scanner}
 
 
-%type <v_string_list> identifiers shared_identifiers
+%type <v_string_list> variables
 
 %type <v_int_list> parameters arglist
 
@@ -39,6 +39,8 @@ using Demo::GL::Compiler;
 %type <v_int> expression terms factors factor statement
 %type <v_int> rel_op eq_op add_op sign and_op or_op
 %type <v_int> literal paren_or_variable paren_or_variable_comp function_call
+%type <v_bool> shared
+%type <v_int> typename
 
 
 
@@ -48,7 +50,7 @@ using Demo::GL::Compiler;
 
 %token <v_string> ID
 
-%token VECTOR MATRIX TEXT NATURAL SHARED REAL EXECUTE
+%token VECTOR MATRIX TEXT NATURAL SHARED REAL EXECUTE FROM IMPORT
 
 %nonassoc <v_int> '<' '>' EQ NE LE GE
 %left <v_int> '+' '-' OR BOR
@@ -75,6 +77,8 @@ elements:
 element:
     SEP
     |
+    import_from SEP
+    |
     declaration SEP
     |
     assignment SEP
@@ -82,123 +86,92 @@ element:
     statement SEP
     ;
 
-declaration:
-    REAL identifiers
+
+import_from:
+    FROM BEGINSTRING text ENDSTRING IMPORT variables
         {
-            foreach (QString var, $2) {
-                compiler->addSymbol(new Var::Local::Real(var));
-            }
-        }
-    |
-    VECTOR identifiers
-        {
-            foreach (QString var, $2) {
-                compiler->addSymbol(new Var::Local::Vector(var));
-            }
-        }
-    |
-    MATRIX identifiers
-        {
-            foreach (QString var, $2) {
-                compiler->addSymbol(new Var::Local::Matrix(var));
-            }
-        }
-    |
-    TEXT identifiers
-        {
-            foreach (QString var, $2) {
-                compiler->addSymbol(new Var::Local::Text(var));
-            }
-        }
-    |
-    NATURAL identifiers
-        {
-            foreach (QString var, $2) {
-                compiler->addSymbol(new Var::Local::Natural(var));
-            }
-        }
-    |
-    SHARED REAL shared_identifiers
-        {
-            foreach (QString var, $3) {
-                if (compiler->symbols().contains(var)) {
-                    if (compiler->symbols()[var]->type() != Symbol::Real) {
-                        HANDLE_ERROR(var.toUtf8().constData(), Compiler::notarealvariable);
-                    }
-                    dynamic_cast<Variable*>(compiler->symbols()[var])->setUsed(true);
+            foreach (QString name, $6) {
+                qDebug() << $3 << name;
+                if (compiler->isExported(name, $3)) {
+                    compiler->addImported(name, $3);
                 } else {
-                    compiler->addSymbol(new Var::Shared::Real(var));
-                }
-            }
-        }
-    |
-    SHARED VECTOR shared_identifiers
-        {
-            foreach (QString var, $3) {
-                if (compiler->symbols().contains(var)) {
-                    if (compiler->symbols()[var]->type() != Symbol::Vector) {
-                        HANDLE_ERROR(var.toUtf8().constData(), Compiler::notavectorvariable);
-                    }
-                    dynamic_cast<Variable*>(compiler->symbols()[var])->setUsed(true);
-                } else {
-                    compiler->addSymbol(new Var::Shared::Vector(var));
-                }
-            }
-        }
-    |
-    SHARED MATRIX shared_identifiers
-        {
-            foreach (QString var, $3) {
-                if (compiler->symbols().contains(var)) {
-                    if (compiler->symbols()[var]->type() != Symbol::Matrix) {
-                        HANDLE_ERROR(var.toUtf8().constData(), Compiler::notamatrixvariable);
-                    }
-                    dynamic_cast<Variable*>(compiler->symbols()[var])->setUsed(true);
-                } else {
-                    compiler->addSymbol(new Var::Shared::Matrix(var));
-                }
-            }
-        }
-    |
-    SHARED TEXT shared_identifiers
-        {
-            foreach (QString var, $3) {
-                if (compiler->symbols().contains(var)) {
-                    if (compiler->symbols()[var]->type() != Symbol::Text) {
-                        HANDLE_ERROR(var.toUtf8().constData(), Compiler::notatextvariable);
-                    }
-                    dynamic_cast<Variable*>(compiler->symbols()[var])->setUsed(true);
-                } else {
-                    compiler->addSymbol(new Var::Shared::Text(var));
-                }
-            }
-        }
-    |
-    SHARED NATURAL shared_identifiers
-        {
-            foreach (QString var, $3) {
-                if (compiler->symbols().contains(var)) {
-                    if (compiler->symbols()[var]->type() != Symbol::Integer) {
-                        HANDLE_ERROR(var.toUtf8().constData(), Compiler::notaintegervariable);
-                    }
-                    dynamic_cast<Variable*>(compiler->symbols()[var])->setUsed(true);
-                } else {
-                    compiler->addSymbol(new Var::Shared::Natural(var));
+                    HANDLE_ERROR(name, Compiler::notimported);
                 }
             }
         }
     ;
 
 
+declaration:
+    shared typename variables
+        {
+            foreach (QString name, $3) {
+                compiler->addVariable(Var::Create($2, name, $1));
+            }
+        }
+    ;
+
+shared:
+    /* empty */
+        {$$ = false;}
+    |
+    SHARED
+        {$$ = true;}
+    ;
+
+typename:
+    NATURAL
+       {$$ = Symbol::Integer;}
+    |
+    REAL
+        {$$ = Symbol::Real;}
+    |
+    VECTOR
+        {$$ = Symbol::Vector;}
+    |
+    MATRIX
+        {$$ = Symbol::Matrix;}
+    |
+    TEXT
+        {$$ = Symbol::Text;}
+    ;
+
+variables:
+    ID
+        {
+            if (compiler->hasSymbol($1)) {
+                HANDLE_ERROR($1, Compiler::declared);
+            }
+            $$.clear();
+            $$.append($1);
+        }
+    |
+    variables ',' ID
+        {
+            if (compiler->hasSymbol($3)) {
+                HANDLE_ERROR($3, Compiler::declared);
+            }
+            if ($$.contains($3)) {
+                HANDLE_ERROR($3, Compiler::duplicate);
+            }
+            $$.append($3);
+        }
+    ;
+
+
+
 assignment:
     ID rhs
         {
-            if (!compiler->symbols().contains(QString($1))) {
+            if (!compiler->hasSymbol($1)) {
                 HANDLE_ERROR($1, Compiler::notdeclared);
             }
-            Variable* var = dynamic_cast<Variable*>(compiler->symbols()[QString($1)]);
+            Variable* var = dynamic_cast<Variable*>(compiler->symbol($1));
             if (!var) {
                 HANDLE_ERROR($1, Compiler::notvariable);
+            }
+            if (compiler->isImported(var)) {
+                HANDLE_ERROR($1, Compiler::assimported);
             }
             if (var->type() == $2 || (var->type() == Symbol::Real && $2 == Symbol::Integer)) {
                 compiler->setCode(var->name());
@@ -212,10 +185,10 @@ assignment:
 statement:
     ID  parameters
         {
-            if (!compiler->symbols().contains(QString($1))) {
+            if (!compiler->hasSymbol($1)) {
                 HANDLE_ERROR($1, Compiler::notdeclared);
             }
-            Function* fun = dynamic_cast<Function*>(compiler->symbols()[QString($1)]);
+            Function* fun = dynamic_cast<Function*>(compiler->symbol($1));
             if (!fun) {
                 HANDLE_ERROR($1, Compiler::notfunction);
             }
@@ -230,7 +203,7 @@ statement:
                 if (ta == Symbol::Real && te == Symbol::Integer) continue;
                 HANDLE_ERROR($1, Compiler::incompatibleargs);
             }
-            // qDebug() << "Code:" << opname(Compiler::cFun) << fun->name();
+            // qDebug() << "Code:" << opname(Compiler::cFun) << fun->name() << fun->index();
             compiler->pushBack(Compiler::cFun, 0, 1 - $2.size());
             compiler->pushBack(fun->index(), 0, 0);
 
@@ -238,12 +211,17 @@ statement:
             compiler->setCode("gl_result");
         }
     |
-    EXECUTE expression
+    EXECUTE BEGINSTRING text ENDSTRING
         {
-            Function* dispatcher = dynamic_cast<Function*>(compiler->symbols()["dispatch"]);
-            if ($2 != Symbol::Text) {
-                HANDLE_ERROR("Execute", Compiler::nottext);
+            if (compiler->isScript($3)) {
+                compiler->addSubscript($3);
+            } else {
+                HANDLE_ERROR($3, Compiler::scriptnotfound);
             }
+            compiler->pushBack(Compiler::cImmed, 0, 1);
+            compiler->pushBackImmed($3);
+
+            Function* dispatcher = dynamic_cast<Function*>(compiler->symbol("dispatch"));
             compiler->pushBack(Compiler::cFun, 0, 0);
             compiler->pushBack(dispatcher->index(), 0, 0);
 
@@ -310,64 +288,8 @@ guard:
 
 
 
-identifiers:
-    ID
-        {
-            if (compiler->symbols().contains(QString($1))) {
-                HANDLE_ERROR($1, Compiler::declared);
-            }
-            $$.clear();
-            $$.append(QString($1));
-        }
-    |
-    identifiers ',' ID
-        {
-            if (compiler->symbols().contains(QString($3))) {
-                HANDLE_ERROR($3, Compiler::declared);
-            }
-            if ($$.contains(QString($3))) {
-                HANDLE_ERROR($3, Compiler::duplicate);
-            }
-            $$.append(QString($3));
-        }
-    ;
 
 
-shared_identifiers:
-    ID
-        {
-            if (compiler->symbols().contains(QString($1))) {
-                Symbol* sym = compiler->symbols()[QString($1)];
-                Variable* var = dynamic_cast<Variable*>(sym);
-                if (!var) {
-                    HANDLE_ERROR($1, Compiler::notavariable);
-                }
-                if (!var->shared()) {
-                    HANDLE_ERROR($1, Compiler::notasharedvariable);
-                }
-            }
-            $$.clear();
-            $$.append(QString($1));
-        }
-    |
-    shared_identifiers ',' ID
-        {
-            if (compiler->symbols().contains(QString($3))) {
-                Symbol* sym = compiler->symbols()[QString($3)];
-                Variable* var = dynamic_cast<Variable*>(sym);
-                if (!var) {
-                    HANDLE_ERROR($3, Compiler::notavariable);
-                }
-                if (!var->shared()) {
-                    HANDLE_ERROR($3, Compiler::notasharedvariable);
-                }
-            }
-            if ($$.contains(QString($3))) {
-                HANDLE_ERROR($3, Compiler::duplicate);
-            }
-            $$.append(QString($3));
-        }
-    ;
 
 expression:
     terms
@@ -620,10 +542,10 @@ paren_or_variable:
     |
     ID
         {
-            if (!compiler->symbols().contains(QString($1))) {
+            if (!compiler->hasSymbol($1)) {
                 HANDLE_ERROR($1, Compiler::notdeclared);
             }
-            Symbol* sym = compiler->symbols()[QString($1)];
+            Symbol* sym = compiler->symbol($1);
             Variable* var = dynamic_cast<Variable*>(sym);
             if (var) {
                 // qDebug() << "Code:" << opname(Compiler::cVar) << sym->name();
@@ -646,10 +568,10 @@ paren_or_variable:
 function_call:
     ID '(' parameters ')'
         {
-            if (!compiler->symbols().contains(QString($1))) {
+            if (!compiler->hasSymbol($1)) {
                 HANDLE_ERROR($1, Compiler::notdeclared);
             }
-            Function* fun = dynamic_cast<Function*>(compiler->symbols()[QString($1)]);
+            Function* fun = dynamic_cast<Function*>(compiler->symbol($1));
             if (!fun) {
                 HANDLE_ERROR($1, Compiler::notfunction);
             }

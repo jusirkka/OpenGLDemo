@@ -49,6 +49,9 @@ int main(int argc, char *argv[]) {
         demo = args.at(1);
     }
 
+    qRegisterMetaType<Math3D::Vector4>();
+    qRegisterMetaType<Math3D::Matrix4>();
+
     Demo::MainWindow mw(demo);
     mw.show();
 

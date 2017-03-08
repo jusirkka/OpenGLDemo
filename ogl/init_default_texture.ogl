@@ -1,12 +1,14 @@
-Shared Natural tex_plaid, loc_img, loc_scale;
+Shared Natural tex_plaid
 
-activetexture texture0;
-uniform1i loc_img, 0;
+From "get locations" import loc_img, loc_scale
 
-uniform1f loc_scale, 4;
+activetexture texture0
+uniform1i loc_img, 0
 
-tex_plaid = gentexture();
+uniform1f loc_scale, 4
 
-bindtexture texture_2d, tex_plaid;
-teximage2d texture_2d, 0, rgba, imagestore, "plaid";
-generatemipmap texture_2d;
+tex_plaid = gentexture()
+
+bindtexture texture_2d, tex_plaid
+teximage2d texture_2d, 0, rgba, imagestore, "plaid"
+generatemipmap texture_2d

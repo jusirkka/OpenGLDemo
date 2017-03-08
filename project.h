@@ -10,7 +10,7 @@
 namespace Demo {
 
 class GLWidget;
-
+class Scope;
 
 namespace GL {
 
@@ -48,9 +48,9 @@ public:
 
 public:
     // create new project
-    Project(const QDir& pdir, GLWidget* target, SymbolMap& globals, bool autoCompileOn);
+    Project(const QDir& pdir, GLWidget* target, const Scope* globals, bool autoCompileOn);
     // parse existing project
-    Project(const QString& fullpath, GLWidget* target, SymbolMap& globals, bool autoCompileOn);
+    Project(const QString& fullpath, GLWidget* target, const Scope* globals, bool autoCompileOn);
 
     const QDir& directory() const {return mProjectDir;}
     const QString& projectFile() const {return mProjectIni;}
@@ -98,8 +98,6 @@ public:
     bool appendRow(const QString& name, const QString& file, const QModelIndex& parent);
 
 
-    void dispatch(const QString& other) const;
-
     virtual ~Project();
 
 public slots:
@@ -135,7 +133,6 @@ private:
 
 private:
 
-    CodeEditor* appendEditor(const QString& name, const QString& script, const QString& file);
     QString uniqueScriptName(const QString& orig) const;
     QString uniqueModelName(const QString& orig) const;
     QString uniqueImageName(const QString& orig) const;
@@ -145,9 +142,7 @@ private:
 
     QDir mProjectDir;
     QString mProjectIni;
-    SymbolMap& mGlobalSymbols;
-    EditorList mEditors;
-    NameMap mScripts;
+    Scope* mGlobals;
     GL::ImageStore* mImages;
     GL::ModelStore* mModels;
     CodeEditor* mInit;

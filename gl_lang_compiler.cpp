@@ -33,7 +33,7 @@
 #endif
 #include "gl_lang_scanner.h"
 
-#include "project.h"
+#include "scope.h"
 
 
 const char* Demo::GL::Compiler::explanations[] = {
@@ -60,7 +60,10 @@ const char* Demo::GL::Compiler::explanations[] = {
     "type of variable %1 is not Text",
     "type of variable %1 is not Natural",
     "expected arithmetic type in %1 expression",
-    "%1 expects a text expression"
+    "%1 expects a text expression",
+    "cannot assign to imported variable %1",
+    "variable %1 has not been exported",
+    "script \"%1\" not found"
 };
 
 using Math3D::Real;
@@ -70,16 +73,21 @@ using Math3D::Matrix4;
 using namespace Demo::GL;
 
 
-Compiler::Compiler()
-    : QObject(),
+Compiler::Compiler(const QString &name, Scope* globalScope, QObject *parent):
+    QObject(parent),
     mStackSize(0),
     mStackPos(0),
     mCodeSize(0),
     mImmedSize(0),
     mScanner(0),
     mError(),
-    mRunner(new Runner()),
-    mReady(false) {
+    mRunner(new Runner(this)),
+    mReady(false),
+    mRecompile(false),
+    mGlobalScope(globalScope) {
+
+    setObjectName(name);
+
 }
 
 
@@ -90,32 +98,30 @@ Compiler::Compiler()
 void Compiler::compile(const QString& script) {
     reset();
     gl_lang_lex_init(&mScanner);
+    mSource = script;
     // ensure that the source ends with a newline
-    QString src = script;
-    YY_BUFFER_STATE buf = gl_lang__scan_string(src.append('\n').toUtf8().data(), mScanner);
+    YY_BUFFER_STATE buf = gl_lang__scan_string(mSource.append('\n').toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
     gl_lang__delete_buffer(buf, mScanner);
 
     if (err) throw CompileError(mError);
 
-
-    mRunner->setup(mAssignments, mVariables, mFunctions, mStackSize);
-
+    mRunner->setup(mAssignments, mVariables, mGlobalScope->functions(), mStackSize);
     mReady = true;
-
-    foreach(Variable* v, mVariables) {
-        if (v->shared() && v->used()) {
-            if (!mSharedCounts.contains(v->name())) {
-                mSharedCounts[v->name()] = 0;
-            }
-            mSharedCounts[v->name()] = mSharedCounts[v->name()] + 1;
-            qDebug() << "created: count of" << v->name() << "is" << mSharedCounts[v->name()];
-        }
-    }
-
 }
 
 void Compiler::run() {
+    if (!mReady) {
+        throw RunError("Not compiled ", 0);
+    }
+    if (mRecompile) {
+        try {
+            compile(mSource);
+        } catch (CompileError& e){
+            throw RunError(QString("Compilation failed: %1").arg(e.msg()), e.pos());
+        }
+    }
+    // qDebug() << "running" << objectName();
     mRunner->run();
 }
 
@@ -133,12 +139,16 @@ Compiler::~Compiler() {
     gl_lang_lex_destroy(mScanner);
 }
 
-
+void Compiler::compileLater() {
+    mRecompile = true;
+}
 
 void Compiler::reset() {
 
+    emit resetting();
 
     mReady = false;
+    mRecompile = false;
 
     mStackSize = 0;
     mStackPos = 0;
@@ -150,56 +160,102 @@ void Compiler::reset() {
 
     mAssignments.clear();
 
-    VariableList shared;
+    qDeleteAll(mSymbols);
+    mSymbols.clear();
 
-    foreach(Variable* v, mVariables) {
-        mSymbols.remove(v->name());
-        if (!v->shared()) {
-            delete v;
-        } else {
-            if (!mSharedCounts.contains(v->name())) {
-                // qDebug() << "check: deleting unused" << v->name();
-                delete v;
-            } else if (mSharedCounts[v->name()] < 1) {
-                // qDebug() << "check: count of" << v->name() << "is" << mSharedCounts[v->name()] << ":deleting";
-                mSharedCounts.remove(v->name());
-                delete v;
-            } else {
-                // qDebug() << "check: count of" << v->name() << "is" << mSharedCounts[v->name()];
-                shared.append(v);
-            }
+    mVariables.clear();
+    mExports.clear();
+
+    mSubscripts.clear();
+
+    foreach (QString name, mImportScripts) {
+        Compiler* c = mGlobalScope->compiler(name);
+        if (c) {
+            disconnect(c, SIGNAL(resetting()), this, SLOT(compileLater()));
         }
     }
 
-    mVariables.clear();
+    mImportScripts.clear();
 
-    foreach(Variable* v, shared) {
-        addSymbol(v, false);
-    }
-    addSymbol(new Var::Local::Natural("gl_result"));
-
+    addVariable(new Var::Local::Natural("gl_result"));
 }
 
 
-const Demo::SymbolMap& Compiler::symbols() const {
-    return mSymbols;
-}
-
-void Compiler::addSymbol(Symbol* sym, bool used) {
-    mSymbols[sym->name()] = sym;
-    Variable* var = dynamic_cast<Variable*>(sym);
-    if (var) {
-        var->setUsed(used);
-        var->setIndex(mVariables.size() + FirstVariable);
-        mVariables.append(var);
-    }
-    Function* fun = dynamic_cast<Function*>(sym);
-    if (fun) {
-        fun->setIndex(mFunctions.size() + FirstFunction);
-        mFunctions.append(fun);
+void Compiler::addVariable(Variable* v) {
+    // qDebug() << "adding" << objectName() << v->name();
+    v->setIndex(mVariables.size() + Scope::VariableOffset);
+    mVariables.append(v);
+    mSymbols[v->name()] = v;
+    if (v->shared()) {
+        // qDebug() << "exporting" << objectName() << v->name();
+        mExports[v->name()] = v;
     }
 }
 
+bool Compiler::hasSymbol(const QString& sym) const {
+    if (mGlobalScope->symbols().contains(sym)) return true;
+    return mSymbols.contains(sym);
+}
+
+Demo::Symbol* Compiler::symbol(const QString& sym) const {
+    if (mGlobalScope->symbols().contains(sym)) return mGlobalScope->symbols()[sym];
+    if (mSymbols.contains(sym)) return mSymbols[sym];
+    return 0;
+}
+
+bool Compiler::isImported(const Variable* var) const {
+    if (!mSymbols.contains(var->name())) return false;
+    // local, imported or exported variable
+    if (mExports.contains(var->name())) return false;
+    // local (not shared) or imported (shared)
+    return var->shared();
+}
+
+
+const QStringList& Compiler::subscripts() const {
+    return mSubscripts;
+}
+
+
+bool Compiler::isExported(const QString& name, const QString& script) const {
+    if (script == "") { // global scope
+        return mGlobalScope->exports().contains(name);
+    }
+    Compiler* c = mGlobalScope->compiler(script);
+    if (!c) return false;
+    return c->exports().contains(name);
+}
+
+void Compiler::addImported(const QString& name, const QString& script) {
+    Variable* v;
+    if (script == "") { // global scope
+        v = mGlobalScope->exports().value(name)->clone();
+    } else {
+        v = mGlobalScope->compiler(script)->exports().value(name)->clone();
+        if (!mImportScripts.contains(script)) {
+            mImportScripts.append(script);
+            Compiler* c = mGlobalScope->compiler(script);
+            connect(c, SIGNAL(resetting()), this, SLOT(compileLater()));
+        }
+    }
+
+    v->setIndex(mVariables.size() + Scope::VariableOffset);
+    mVariables.append(v);
+    mSymbols[v->name()] = v;
+
+}
+
+const Demo::VariableMap& Compiler::exports() const {
+    return mExports;
+}
+
+bool Compiler::isScript(const QString& name) const {
+    return mGlobalScope->compiler(name) != 0;
+}
+
+void Compiler::addSubscript(const QString& name) {
+    mSubscripts.append(name);
+}
 
 void Compiler::setCode(const QString& name) {
     LocationType* loc = gl_lang_get_lloc(mScanner);
@@ -242,20 +298,6 @@ void Compiler::pushBackImmed(Math3D::Real constVal) {
 
 void Compiler::pushBackImmed(const QVariant& constVal) {
     mCurrImmed.append(constVal);
-}
-
-Compiler::Dispatcher::Dispatcher(Project* p):
-    Function("dispatch", Symbol::Integer),
-    mParent(p) {
-    int argt = Symbol::Text;
-    mArgTypes.append(argt);
-}
-
-const QVariant& Compiler::Dispatcher::execute(const QVector<QVariant>& vals, int start) {
-    QString other = vals[start].value<QString>();
-    mParent->dispatch(other);
-    mValue.setValue(0);
-    return mValue;
 }
 
 

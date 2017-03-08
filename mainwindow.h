@@ -35,6 +35,7 @@ namespace Demo {
 class GLWidget;
 class Project;
 class ScriptSelector;
+class Scope;
 
 
 class MainWindow: public QMainWindow {
@@ -135,7 +136,7 @@ private:
     ScriptSelector* mScripts;
     bool mProjectModified;
     int mNumEdits;
-    SymbolMap mGlobalSymbols;
+    Scope* mGlobals;
 };
 
 }
