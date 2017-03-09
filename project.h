@@ -12,6 +12,8 @@ namespace Demo {
 class GLWidget;
 class Scope;
 
+class TextFileStore;
+
 namespace GL {
 
 class ImageStore;
@@ -45,6 +47,14 @@ public:
         FileNameRole
     };
 
+    enum ItemType {
+        ScriptItems = 0,
+        ModelItems,
+        TextureItems,
+        ShaderItems,
+        NumItemTypes
+    };
+
 
 public:
     // create new project
@@ -63,14 +73,14 @@ public:
     QString initScript() const;
     QString drawScript() const;
 
-    QModelIndex scriptParent() const;
-    QModelIndex modelParent() const;
-    QModelIndex textureParent() const;
+    QModelIndex itemParent(ItemType key) const;
 
     //! Reimplemented from QAbstractItemModel
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
 
     QModelIndex index(int row, const QModelIndex &parent) const;
+
+    QModelIndex index(int row, ItemType parent) const;
 
     //! Reimplemented from QAbstractItemModel
     QModelIndex parent(const QModelIndex &index) const;
@@ -123,12 +133,6 @@ private:
     typedef QMapIterator<QString, QString> NameIterator;
     typedef QList<CodeEditor*> EditorList;
 
-    enum RowNames {
-        ScriptRow = 0,
-        ModelRow,
-        TextureRow,
-        NumRows
-    };
 
 
 private:
@@ -136,6 +140,7 @@ private:
     QString uniqueScriptName(const QString& orig) const;
     QString uniqueModelName(const QString& orig) const;
     QString uniqueImageName(const QString& orig) const;
+    QString uniqueShaderName(const QString& orig) const;
 
 
 private:
@@ -145,6 +150,7 @@ private:
     Scope* mGlobals;
     GL::ImageStore* mImages;
     GL::ModelStore* mModels;
+    TextFileStore* mShaders;
     CodeEditor* mInit;
     CodeEditor* mDraw;
     GLWidget* mTarget;

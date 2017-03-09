@@ -85,6 +85,9 @@ private slots:
     void on_actionEdit_triggered();
 
     //! As it says.
+    void on_actionReload_triggered();
+
+    //! As it says.
     void on_actionQuit_triggered();
 
     //! About $APP
@@ -125,6 +128,9 @@ private:
     void writeSettings();
 
     void openProject(const QString& data);
+
+    void setupScriptActions();
+    void setupResourceActions();
 
 private:
 

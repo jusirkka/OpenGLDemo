@@ -80,11 +80,9 @@
     <addaction name="actionStatusbar"/>
     <addaction name="actionToolbar"/>
     <addaction name="actionDemoBar"/>
-    <addaction name="actionScriptsDock"/>
+    <addaction name="actionProjectDock"/>
     <addaction name="actionEditorsDock"/>
     <addaction name="actionGraphicsDock"/>
-    <addaction name="actionTexturesDock"/>
-    <addaction name="actionModelsDock"/>
    </widget>
    <addaction name="menuProject"/>
    <addaction name="menuItems"/>
@@ -92,7 +90,7 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="scriptsDock">
+  <widget class="QDockWidget" name="projectDock">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
      <horstretch>0</horstretch>
@@ -112,12 +110,12 @@
     <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
-    <string>Sc&amp;ripts</string>
+    <string>Project</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="scriptsDockContents">
+   <widget class="QWidget" name="projectDockContents">
     <property name="sizePolicy">
      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
       <horstretch>1</horstretch>
@@ -132,7 +130,7 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QListView" name="scripts">
+      <widget class="QTreeView" name="projectItems">
        <property name="contextMenuPolicy">
         <enum>Qt::ActionsContextMenu</enum>
        </property>
@@ -140,8 +138,11 @@
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
        <property name="alternatingRowColors">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
+       <attribute name="headerVisible">
+        <bool>false</bool>
+       </attribute>
       </widget>
      </item>
     </layout>
@@ -204,56 +205,6 @@
    </attribute>
    <widget class="QWidget" name="graphicsDockContents">
     <layout class="QVBoxLayout" name="graphicsDockLayout"/>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="texturesDock">
-   <property name="windowTitle">
-    <string>Te&amp;xtures</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="texturesDockContents">
-    <layout class="QVBoxLayout" name="textureDockLayout">
-     <item>
-      <widget class="QListView" name="textures">
-       <property name="contextMenuPolicy">
-        <enum>Qt::ActionsContextMenu</enum>
-       </property>
-       <property name="editTriggers">
-        <set>QAbstractItemView::NoEditTriggers</set>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="modelsDock">
-   <property name="windowTitle">
-    <string>&amp;Models</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="modelsDockContents">
-    <layout class="QVBoxLayout" name="modelDocklayout">
-     <item>
-      <widget class="QListView" name="models">
-       <property name="contextMenuPolicy">
-        <enum>Qt::ActionsContextMenu</enum>
-       </property>
-       <property name="editTriggers">
-        <set>QAbstractItemView::NoEditTriggers</set>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </widget>
   </widget>
   <widget class="QToolBar" name="demoBar">
@@ -389,18 +340,21 @@
     <string>About &amp;Qt</string>
    </property>
   </action>
-  <action name="actionScriptsDock">
+  <action name="actionProjectDock">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="checked">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset theme="folder-project"/>
+   </property>
    <property name="text">
-    <string>&amp;Show ScriptsDock</string>
+    <string>&amp;Show ProjectDock</string>
    </property>
    <property name="toolTip">
-    <string>Toggle ScriptsDock visibility</string>
+    <string>Toggle ProjectDock visibility</string>
    </property>
   </action>
   <action name="actionEditorsDock">
@@ -542,34 +496,6 @@
     <string>Ctrl+Shift+S</string>
    </property>
   </action>
-  <action name="actionTexturesDock">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show Te&amp;xturesDock</string>
-   </property>
-   <property name="toolTip">
-    <string>Toggle TexturesDock visibility</string>
-   </property>
-  </action>
-  <action name="actionModelsDock">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show &amp;ModelsDock</string>
-   </property>
-   <property name="toolTip">
-    <string>Toggle ModelsDock visibility</string>
-   </property>
-  </action>
   <action name="actionReload">
    <property name="enabled">
     <bool>false</bool>
@@ -688,9 +614,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionScriptsDock</sender>
+   <sender>actionProjectDock</sender>
    <signal>toggled(bool)</signal>
-   <receiver>scriptsDock</receiver>
+   <receiver>projectDock</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -736,38 +662,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionTexturesDock</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>texturesDock</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>132</x>
-     <y>510</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionModelsDock</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>modelsDock</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>132</x>
-     <y>439</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>actionDemoBar</sender>
    <signal>toggled(bool)</signal>
    <receiver>demoBar</receiver>
@@ -780,6 +674,86 @@
     <hint type="destinationlabel">
      <x>467</x>
      <y>44</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolBar</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionToolbar</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>54</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>projectDock</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionProjectDock</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>142</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>graphicsDock</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionGraphicsDock</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>774</x>
+     <y>422</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>editorsDock</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionEditorsDock</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>774</x>
+     <y>186</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>demoBar</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionDemoBar</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
     </hint>
    </hints>
   </connection>

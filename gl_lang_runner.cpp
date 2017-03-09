@@ -38,6 +38,8 @@ void Runner::run() {
             v->setValue(evalCode(ass.code, ass.immed, ass.pos));
         } catch (RunError& e) {
             throw RunError(e.msg(), ass.pos);
+        }  catch (GL::GLError& e) {
+            throw RunError(e.msg(), ass.pos);
         }
     }
 }

@@ -91,7 +91,6 @@ import_from:
     FROM BEGINSTRING text ENDSTRING IMPORT variables
         {
             foreach (QString name, $6) {
-                qDebug() << $3 << name;
                 if (compiler->isExported(name, $3)) {
                     compiler->addImported(name, $3);
                 } else {

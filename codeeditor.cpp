@@ -138,6 +138,7 @@ void CodeEditor::run() {
         mRunError = e.msg();
         mRunErrorPos = e.pos();
     }
+
     if (prevPos != mRunErrorPos) {
         highlightCurrentLine();
         emit statusChanged();

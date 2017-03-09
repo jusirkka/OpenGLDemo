@@ -41,6 +41,7 @@ public:
     GL::Compiler* compiler(const QString& name) const;
     void rename(CodeEditor* ed, const QString& name);
     const VariableMap& exports() const;
+    void addFunction(Function* f);
 
     ~Scope();
 

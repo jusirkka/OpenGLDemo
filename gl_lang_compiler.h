@@ -177,7 +177,7 @@ public:
 
     // GL interface
     void compile(const QString& script);
-    bool ready() const {return mReady;}
+    bool ready() const;
     void run();
 
     // grammar interface

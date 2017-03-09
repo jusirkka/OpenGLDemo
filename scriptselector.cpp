@@ -26,8 +26,8 @@ void ScriptSelector::setup(const Project* target) {
     mUI->drawCombo->clear();
     int initIndex = -1;
     int drawIndex = -1;
-    for (int i = 0; i < target->rowCount(target->scriptParent()); ++i) {
-        QModelIndex script = target->index(i, target->scriptParent());
+    for (int i = 0; i < target->rowCount(target->itemParent(Project::ScriptItems)); ++i) {
+        QModelIndex script = target->index(i, target->itemParent(Project::ScriptItems));
         QString name = target->data(script).toString();
         if (target->initScript() == name) initIndex = i;
         if (target->drawScript() == name) drawIndex = i;

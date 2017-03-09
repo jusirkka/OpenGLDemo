@@ -110,16 +110,20 @@ void Compiler::compile(const QString& script) {
     mReady = true;
 }
 
+bool Compiler::ready() const {
+    return mReady || mRecompile;
+}
+
 void Compiler::run() {
-    if (!mReady) {
-        throw RunError("Not compiled ", 0);
-    }
     if (mRecompile) {
         try {
             compile(mSource);
         } catch (CompileError& e){
             throw RunError(QString("Compilation failed: %1").arg(e.msg()), e.pos());
         }
+    }
+    if (!mReady) {
+        throw RunError("Not compiled ", 0);
     }
     // qDebug() << "running" << objectName();
     mRunner->run();

@@ -190,3 +190,18 @@ const VariableMap& Scope::exports() const {
     return mExports;
 }
 
+void Scope::addFunction(Function* f) {
+    if (mSymbols.contains(f->name())) {
+        Function* old = dynamic_cast<Function*>(mSymbols[f->name()]);
+        int idx = mFunctions.indexOf(old);
+        if (idx > 0) {
+            mFunctions[idx] = f;
+        }
+        f->setIndex(idx + FunctionOffset);
+        delete mSymbols[f->name()];
+    } else {
+        f->setIndex(mFunctions.size() + FunctionOffset);
+        mFunctions.append(f);
+    }
+    mSymbols[f->name()] = f;
+}

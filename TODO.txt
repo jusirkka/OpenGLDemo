@@ -1,8 +1,4 @@
-- shadersource command
+- example projects (with objects, textures, shaders)
 - code completion
-- rest of the opengl es2 statements
-- bug: segfault in draw teapot if buffer missing
-- obj:group support
-- plugin help
-- plugin config
+- plugin description/config
 - Implement TEXT addition in script parser

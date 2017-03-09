@@ -21,17 +21,22 @@ Demo::NewDialog::~NewDialog() {
 }
 
 void Demo::NewDialog::on_scriptButton_pressed() {
-    mParentRow = mProject->scriptParent().row();
+    mParentRow = mProject->itemParent(Project::ScriptItems).row();
     accept();
 }
 
 void Demo::NewDialog::on_modelButton_pressed() {
-    mParentRow = mProject->modelParent().row();
+    mParentRow = mProject->itemParent(Project::ModelItems).row();
     accept();
 }
 
 void Demo::NewDialog::on_textureButton_pressed() {
-    mParentRow = mProject->textureParent().row();
+    mParentRow = mProject->itemParent(Project::TextureItems).row();
+    accept();
+}
+
+void Demo::NewDialog::on_shaderButton_pressed() {
+    mParentRow = mProject->itemParent(Project::ShaderItems).row();
     accept();
 }
 
