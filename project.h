@@ -120,6 +120,9 @@ public slots:
     void setInitScript(const QString&);
     void setDrawScript(const QString&);
 
+    void recompileProject();
+
+
 signals:
 
     void initChanged();
@@ -133,14 +136,6 @@ private:
     typedef QMapIterator<QString, QString> NameIterator;
     typedef QList<CodeEditor*> EditorList;
 
-
-
-private:
-
-    QString uniqueScriptName(const QString& orig) const;
-    QString uniqueModelName(const QString& orig) const;
-    QString uniqueImageName(const QString& orig) const;
-    QString uniqueShaderName(const QString& orig) const;
 
 
 private:

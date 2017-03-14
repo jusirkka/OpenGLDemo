@@ -10,7 +10,7 @@ namespace Math3D {
 
 #define OSTREAM_MATH3D
 
-typedef float Real;
+typedef GLfloat Real;
 typedef int Integer;
 
 // --------------------------------------------------------------
@@ -318,7 +318,15 @@ inline Matrix4 Matrix4::linear() const {
 inline Matrix4 Matrix4::comatrix() const {
     Matrix4 m;
     m.setIdentity();
-    for (int x = 0; x < 3; ++x) for (int y = 0; y < 3; ++y) m(x)[y] = (*this)[x][y];
+    for (int x = 0; x < 3; ++x) {
+        int u_p = (x + 1) % 3;
+        int u_m = (x - 1 + 3) % 3;
+        for (int y = 0; y < 3; ++y) {
+            int v_p = (y + 1) % 3;
+            int v_m = (y - 1 + 3) % 3;
+            m(x)[y] = (*this)[u_p][v_p] * (*this)[u_m][v_m] - (*this)[u_p][v_m] * (*this)[u_m][v_p];
+        }
+    }
     return m;
 }
 

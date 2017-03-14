@@ -29,6 +29,7 @@ public:
     const QString& fileName(int);
     const QString& itemName(int);
     QString text(const QString& key) const;
+    QStringList itemSample(const QString& except = QString()) const;
 
 private:
 

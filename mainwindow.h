@@ -62,9 +62,11 @@ private slots:
     //! save the project.
     void on_actionSaveAll_triggered();
 
-
-    //! New script.
+    //! New item.
     void on_actionNew_triggered();
+
+    //! Show a file dialog to insert contents of a file.
+    void on_actionInsert_triggered();
 
     //! Show a file dialog to open a script.
     void on_actionOpen_triggered();
@@ -97,6 +99,7 @@ private slots:
     void on_actionAboutQt_triggered();
 
     void on_editorsTabs_tabCloseRequested(int index);
+    void on_editorsTabs_currentChanged(int index);
 
     void on_actionPlay_triggered();
     void on_actionPause_triggered();
@@ -110,6 +113,7 @@ private slots:
 
     void on_actionAutocompile_toggled(bool on);
     void on_actionCompile_triggered();
+    void on_actionCompileProject_triggered();
 
     void scriptModification_changed(bool edited);
 

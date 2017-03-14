@@ -42,6 +42,8 @@ public:
     void rename(CodeEditor* ed, const QString& name);
     const VariableMap& exports() const;
     void addFunction(Function* f);
+    void recompileAll();
+    QStringList itemSample(const QString& except = QString()) const;
 
     ~Scope();
 

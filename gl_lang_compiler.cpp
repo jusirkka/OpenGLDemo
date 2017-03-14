@@ -99,8 +99,8 @@ void Compiler::compile(const QString& script) {
     reset();
     gl_lang_lex_init(&mScanner);
     mSource = script;
-    // ensure that the source ends with a newline
-    YY_BUFFER_STATE buf = gl_lang__scan_string(mSource.append('\n').toUtf8().data(), mScanner);
+    // ensure that the source ends with newlines
+    YY_BUFFER_STATE buf = gl_lang__scan_string(mSource.append("\n\n").toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
     gl_lang__delete_buffer(buf, mScanner);
 

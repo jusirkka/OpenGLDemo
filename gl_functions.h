@@ -796,7 +796,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         GLuint target =  vals[start].value<int>();
-        const Blob& blob =  mParent->blob(vals[start+1].value<int>());
+        const Blob& blob = mParent->blob(vals[start+1].value<int>());
         GLuint usage =  vals[start+2].value<int>();
         // qDebug() << "glBufferData" << target << blob.name() << usage;
         mParent->glBufferData(target, blob.bytelen(target), blob.bytes(target), usage);

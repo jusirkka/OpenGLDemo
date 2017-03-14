@@ -95,4 +95,13 @@ const QString& TextFileStore::itemName(int index) {
     return mNames[index];
 }
 
+QStringList TextFileStore::itemSample(const QString& except) const {
+    QStringList r;
+    foreach (QString n, mNames) {
+        if (!except.isEmpty() && n == except) continue;
+        r.append(n);
+    }
+    return r;
+}
+
 TextFileStore::~TextFileStore() {}

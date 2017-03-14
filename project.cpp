@@ -83,6 +83,8 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals,
 
     setInitScript("Init");
     setDrawScript("Draw");
+
+    recompileProject();
 }
 
 Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globals, bool autoCompileOn):
@@ -116,8 +118,9 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
-        if (!info.exists() || !info.isFile() || !info.isReadable()) {
-            value = "";
+
+        if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
+            throw BadProject(QString("Model file \"%1\" is not readable").arg(value));
         }
 
         models[uniqueName(key, models.keys())] = value;
@@ -134,8 +137,8 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
-        if (!info.exists() || !info.isFile() || !info.isReadable()) {
-            value = "";
+        if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
+            throw BadProject(QString("Image file \"%1\" is not readable").arg(value));
         }
 
         textures[uniqueName(key, textures.keys())] = value;
@@ -151,11 +154,11 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
-        if (!info.exists() || !info.isFile() || !info.isReadable()) {
-            value = "";
+        if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
+            throw BadProject(QString("Shader source file \"%1\" is not readable").arg(value));
         }
 
-        mShaders->setText(uniqueShaderName(key), value);
+        mShaders->setText(uniqueName(key, mShaders->itemSample()), value);
 
     }
     project.endGroup();
@@ -169,16 +172,22 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
-        if (!info.exists()) throw BadProject(QString("Script file \"%1\" does not exist").arg(value));
-        if (!info.isFile() || !info.isReadable()) throw BadProject(QString("Script file \"%1\" is not readable").arg(value));
 
-        QFile file(fname);
-        file.open(QFile::ReadOnly);
-        CodeEditor* ed = new CodeEditor(uniqueScriptName(key), mGlobals, this);
-        mGlobals->appendEditor(ed, QString(file.readAll()), value);
+        if (value.isEmpty()) {
+            CodeEditor* ed = new CodeEditor(uniqueName(key, mGlobals->itemSample()), mGlobals, this);
+            mGlobals->appendEditor(ed, QString("// Not bound to a file\n"), value);
 
-        file.close();
+        } else {
+            if (!info.exists()) throw BadProject(QString("Script file \"%1\" does not exist").arg(value));
+            if (!info.isFile() || !info.isReadable()) throw BadProject(QString("Script file \"%1\" is not readable").arg(value));
 
+            QFile file(fname);
+            file.open(QFile::ReadOnly);
+            CodeEditor* ed = new CodeEditor(uniqueName(key, mGlobals->itemSample()), mGlobals, this);
+            mGlobals->appendEditor(ed, QString(file.readAll()), value);
+
+            file.close();
+        }
     }
     project.endGroup();
 
@@ -208,6 +217,15 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     QString drawKey = project.value("Draw", "unknown_draw").toString();
     setDrawScript(drawKey);
     project.endGroup();
+
+    recompileProject();
+}
+
+void Demo::Project::recompileProject() {
+    mGlobals->recompileAll();
+    if (mInit && mInit->compiler()->ready()) {
+        emit initChanged();
+    }
 }
 
 void Demo::Project::saveProject() {
@@ -216,7 +234,7 @@ void Demo::Project::saveProject() {
 
     project.beginGroup("Scripts");
     foreach (CodeEditor* ed, mGlobals->editors()) {
-        project.setValue(ed->objectName(), ed->fileName());
+        project.setValue(ed->objectName(), mProjectDir.relativeFilePath(ed->fileName()));
     }
     project.endGroup();
 
@@ -233,19 +251,19 @@ void Demo::Project::saveProject() {
 
     project.beginGroup("Models");
     for (int i = 0; i < mModels->size(); ++i) {
-        project.setValue(mModels->modelName(i), mModels->fileName(i));
+        project.setValue(mModels->modelName(i), mProjectDir.relativeFilePath(mModels->fileName(i)));
     }
     project.endGroup();
 
     project.beginGroup("Textures");
     for (int i = 0; i < mImages->size(); ++i) {
-        project.setValue(mImages->imageName(i), mImages->fileName(i));
+        project.setValue(mImages->imageName(i), mProjectDir.relativeFilePath(mImages->fileName(i)));
     }
     project.endGroup();
 
     project.beginGroup("Shaders");
     for (int i = 0; i < mShaders->size(); ++i) {
-        project.setValue(mShaders->itemName(i), mShaders->fileName(i));
+        project.setValue(mShaders->itemName(i), mProjectDir.relativeFilePath(mShaders->fileName(i)));
     }
     project.endGroup();
 
@@ -320,44 +338,6 @@ void Demo::Project::toggleAutoCompile(bool on) {
     foreach (CodeEditor* ed, mGlobals->editors()) {
         ed->toggleAutoCompile(on);
     }
-}
-
-QString Demo::Project::uniqueScriptName(const QString& orig) const {
-    QStringList names;
-
-    foreach (CodeEditor* ed, mGlobals->editors()) {
-        names.append(ed->objectName());
-    }
-
-    return uniqueName(orig, names);
-}
-
-QString Demo::Project::uniqueModelName(const QString& orig) const {
-    QStringList names;
-    for (int i = 0; i < mModels->size(); ++i) {
-        names.append(mModels->modelName(i));
-    }
-
-    return uniqueName(orig, names);
-}
-
-
-QString Demo::Project::uniqueImageName(const QString& orig) const {
-    QStringList names;
-    for (int i = 0; i < mImages->size(); ++i) {
-        names.append(mImages->imageName(i));
-    }
-
-    return uniqueName(orig, names);
-}
-
-QString Demo::Project::uniqueShaderName(const QString& orig) const {
-    QStringList names;
-    for (int i = 0; i < mShaders->size(); ++i) {
-        names.append(mShaders->itemName(i));
-    }
-
-    return uniqueName(orig, names);
 }
 
 QModelIndex Demo::Project::itemParent(ItemType kind) const{
@@ -477,7 +457,7 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
             if (!ed->fileName().isEmpty()) {
                 return QIcon::fromTheme("text-x-generic");
             }
-            return QVariant();
+            return QIcon::fromTheme("unknown");
         }
 
         if (role == Qt::ToolTipRole) {
@@ -518,6 +498,7 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
             if (!mModels->fileName(index.row()).isEmpty()) {
                 return QIcon::fromTheme("text-x-generic");
             }
+            return QIcon::fromTheme("unknown");
         }
 
         return QVariant();
@@ -540,6 +521,7 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
             if (!mImages->fileName(index.row()).isEmpty()) {
                 return QIcon::fromTheme("image-x-generic");
             }
+            return QIcon::fromTheme("unknown");
         }
 
 
@@ -563,6 +545,7 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
             if (!mShaders->fileName(index.row()).isEmpty()) {
                 return QIcon::fromTheme("text-x-generic");
             }
+            return QIcon::fromTheme("unknown");
         }
 
 
@@ -581,60 +564,43 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
     if (index.parent() == itemParent(ScriptItems)) {
 
         CodeEditor* ed = mGlobals->editor(index.row());
+
         if (role == Qt::EditRole) {
             QString newname = value.toString();
-            if (ed->objectName() != newname) {
-                mGlobals->rename(ed, uniqueScriptName(newname));
-                emit dataChanged(index, index);
-            }
-            return true;
-        }
-
-        if (role == FileRole) {
+            if (ed->objectName() == newname) return false;
+            mGlobals->rename(ed, uniqueName(newname, mGlobals->itemSample(ed->objectName())));
+        } else if (role == FileRole) {
             QString fname = value.toString();
             QString cfname = ed->fileName();
 
             QFile file(fname);
-            if (file.open(QFile::ReadOnly)) {
+            bool opened = file.open(QFile::ReadOnly);
+            if (opened) {
                 ed->setPlainText(file.readAll());
                 file.close();
             }
 
             if (cfname != fname) {
                 ed->setFileName(fname);
-                emit dataChanged(index, index);
             }
-            return true;
-        }
 
-        if (role == FileNameRole) {
+            if (!opened && cfname == fname) return false;
+        } else if (role == FileNameRole) {
             QString fname = value.toString();
-            if (ed->fileName() != fname) {
-                ed->setFileName(fname);
-                emit dataChanged(index, index);
-            }
-            return true;
-        }
-
-        if (role == ScriptRole) {
+            if (ed->fileName() == fname) return false;
+            ed->setFileName(fname);
+        } else if (role == ScriptRole) {
             ed->setPlainText(value.toString());
-            return true;
+        } else {
+            return false;
         }
-        return false;
-    }
-
-    if (index.parent() == itemParent(ModelItems)) {
+    } else if (index.parent() == itemParent(ModelItems)) {
         if (role == Qt::EditRole) {
             QString newname = value.toString();
             QString curr = mModels->modelName(index.row());
-            if (curr != newname) {
-                mModels->rename(curr, uniqueModelName(newname));
-                emit dataChanged(index, index);
-            }
-            return true;
-        }
-
-        if (role == FileRole) {
+            if (curr == newname) return false;
+            mModels->rename(curr, uniqueName(newname, mModels->itemSample(curr)));
+        } else if (role == FileRole) {
             QString fname = value.toString();
             QString name = mModels->modelName(index.row());
 
@@ -644,29 +610,19 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
                 info = QFileInfo(fname);
             }
 
-            if (info.exists() && info.isFile() && info.isReadable()) {
-                // TODO: throw error otherwise
-                mModels->setModel(name, fname);
-                emit dataChanged(index, index);
-            }
-            return true;
+            if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
+
+            mModels->setModel(name, fname);
+        } else {
+            return false;
         }
-
-        return false;
-    }
-
-    if (index.parent() == itemParent(TextureItems)) {
+    } else if (index.parent() == itemParent(TextureItems)) {
         if (role == Qt::EditRole) {
             QString newname = value.toString();
             QString curr = mImages->imageName(index.row());
-            if (curr != newname) {
-                mImages->rename(curr, uniqueImageName(newname));
-                emit dataChanged(index, index);
-            }
-            return true;
-        }
-
-        if (role == FileRole) {
+            if (curr == newname) return false;
+            mImages->rename(curr, uniqueName(newname, mImages->itemSample(curr)));
+        } else if (role == FileRole) {
             QString fname = value.toString();
             QString name = mImages->imageName(index.row());
 
@@ -676,28 +632,18 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
                 info = QFileInfo(fname);
             }
 
-            if (info.exists() && info.isFile() && info.isReadable()) {
-                // TODO: throw error otherwise
-                mImages->setImage(name, fname);
-                emit dataChanged(index, index);
-            }
+            if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
+            mImages->setImage(name, fname);
+        } else {
+            return false;
         }
-
-        return false;
-    }
-
-    if (index.parent() == itemParent(ShaderItems)) {
+    } else if (index.parent() == itemParent(ShaderItems)) {
         if (role == Qt::EditRole) {
             QString newname = value.toString();
             QString curr = mShaders->itemName(index.row());
-            if (curr != newname) {
-                mShaders->rename(curr, uniqueShaderName(newname));
-                emit dataChanged(index, index);
-            }
-            return true;
-        }
-
-        if (role == FileRole) {
+            if (curr == newname) return false;
+            mShaders->rename(curr, uniqueName(newname, mShaders->itemSample(curr)));
+        } else if (role == FileRole) {
             QString fname = value.toString();
             QString name = mShaders->itemName(index.row());
 
@@ -707,17 +653,18 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
                 info = QFileInfo(fname);
             }
 
-            if (info.exists() && info.isFile() && info.isReadable()) {
-                // TODO: throw error otherwise
-                mShaders->setText(name, fname);
-                emit dataChanged(index, index);
-            }
+            if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
+            mShaders->setText(name, fname);
+        } else {
+            return false;
         }
-
+    } else {
         return false;
     }
 
-    return false;
+    recompileProject();
+    emit dataChanged(index, index);
+    return true;
 }
 
 
@@ -730,17 +677,14 @@ Qt::ItemFlags Demo::Project::flags(const QModelIndex &index) const {
 
 bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
 {
-    if (!parent.isValid())
-        return false;
+    if (!parent.isValid()) return false;
 
-    if (count != 1 || row < 0)
-        return false;
+    if (count != 1 || row < 0) return false;
 
 
     if (parent == itemParent(ScriptItems)) {
 
-        if (row >= mGlobals->editors().size())
-            return false;
+        if (row >= mGlobals->editors().size()) return false;
 
         beginRemoveRows(parent, row, row);
         mGlobals->removeEditor(row);
@@ -748,8 +692,7 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
 
     } else if (parent == itemParent(ModelItems)) {
 
-        if (row >= mModels->size())
-            return false;
+        if (row >= mModels->size()) return false;
 
         beginRemoveRows(parent, row, row);
         mModels->remove(row);
@@ -757,22 +700,24 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
 
     } else if (parent == itemParent(TextureItems)) {
 
-        if (row >= mImages->size())
-            return false;
+        if (row >= mImages->size()) return false;
 
         beginRemoveRows(parent, row, row);
         mImages->remove(row);
         endRemoveRows();
     } else if (parent == itemParent(ShaderItems)) {
 
-        if (row >= mShaders->size())
-            return false;
+        if (row >= mShaders->size()) return false;
 
         beginRemoveRows(parent, row, row);
         mShaders->remove(row);
         endRemoveRows();
+
+    } else {
+        return false;
     }
 
+    recompileProject();
     emit dataChanged(index(row, 0, parent), index(row, 0, parent));
     return true;
 }
@@ -780,8 +725,7 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
 
 bool Demo::Project::appendRow(const QString& name, const QString& file, const QModelIndex &parent) {
 
-    if (!parent.isValid())
-        return false;
+    if (!parent.isValid()) return false;
 
     int row = rowCount(parent);
     QModelIndex new_idx = index(row, parent);
@@ -789,7 +733,7 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
     if (parent == itemParent(ScriptItems)) {
 
         beginInsertRows(parent, row, row);
-        CodeEditor* ed = new CodeEditor(uniqueScriptName(name), mGlobals, this);
+        CodeEditor* ed = new CodeEditor(uniqueName(name, mGlobals->itemSample()), mGlobals, this);
         mGlobals->appendEditor(ed, "// new commands here\n", file);
         endInsertRows();
 
@@ -802,10 +746,11 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
             info = QFileInfo(fname);
         }
 
+        QString uniq = uniqueName(name, mModels->itemSample());
         if (info.exists() && info.isFile() && info.isReadable()) {
-            mModels->setModel(uniqueModelName(name), fname);
+            mModels->setModel(uniq, fname);
         } else {
-            mModels->setModel(uniqueModelName(name));
+            mModels->setModel(uniq);
         }
         endInsertRows();
 
@@ -818,10 +763,11 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
             info = QFileInfo(fname);
         }
 
+        QString uniq = uniqueName(name, mImages->itemSample());
         if (info.exists() && info.isFile() && info.isReadable()) {
-            mImages->setImage(uniqueImageName(name), fname);
+            mImages->setImage(uniq, fname);
         } else {
-            mImages->setImage(uniqueImageName(name));
+            mImages->setImage(uniq);
         }
         endInsertRows();
 
@@ -834,10 +780,11 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
             info = QFileInfo(fname);
         }
 
+        QString uniq = uniqueName(name, mShaders->itemSample());
         if (info.exists() && info.isFile() && info.isReadable()) {
-            mShaders->setText(uniqueShaderName(name), fname);
+            mShaders->setText(uniq, fname);
         } else {
-            mShaders->setText(uniqueShaderName(name));
+            mShaders->setText(uniq);
         }
         endInsertRows();
 
@@ -845,8 +792,8 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
         return false;
     }
 
+    recompileProject();
     emit dataChanged(new_idx, new_idx);
-
     return true;
 }
 

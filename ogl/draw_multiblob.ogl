@@ -1,0 +1,47 @@
+clear color_buffer_bit | depth_buffer_bit
+
+disable cull_face
+
+From "get locations" import  a_vertex, a_normal, a_tex
+
+enablevertexattribarray a_vertex
+enablevertexattribarray a_normal
+enablevertexattribarray a_tex
+
+vertexattribpointer a_vertex, modelstore, "teddy:vertex"
+vertexattribpointer a_normal, modelstore, "teddy:normal"
+vertexattribpointer a_tex, modelstore, "teddy:tex"
+
+From "init textures" import tex_plaid
+
+bindtexture texture_2d, tex_plaid
+
+From "get locations" import  u_v_light, u_m_light_colors, u_s_specular
+
+uniform4f u_v_light, vec(0, 0, -1, 0)
+uniformmatrix4f u_m_light_colors, mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 0))
+
+uniform1f u_s_specular, 3
+
+Matrix model
+
+From "get locations" import  u_m_material_colors
+
+uniformmatrix4f u_m_material_colors, mat(vec(.3, .1, .1, 0), vec(.5, .5, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+
+From "" import camera, projection
+From "get locations" import u_m_vm, u_m_pvm, u_m_n
+
+model = rotation(-80, vec(0, 0, 1, 1))
+
+model = model * scaling(0.1, 0.1, 0.1)
+uniformmatrix4f u_m_vm, camera*model
+uniformmatrix4f u_m_pvm, projection*camera*model
+uniformmatrix4f u_m_n, normal_transform(camera*model)
+
+draw modelstore, "teddy", triangles
+
+
+// disablevertexattribarray loc_vertex;
+// enablevertexattribarray loc_normal;
+// enablevertexattribarray loc_tex;

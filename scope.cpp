@@ -140,10 +140,6 @@ void Scope::appendEditor(CodeEditor* editor, const QString& script, const QStrin
     editor->setFileName(file);
     mEditorIndices[editor->objectName()] = mEditors.size();
     mEditors.append(editor);
-    editor->compile();
-    foreach (CodeEditor* ed, mEditors) {
-        if (ed != editor) ed->compile();
-    }
 }
 
 void Scope::removeEditor(int index) {
@@ -153,7 +149,6 @@ void Scope::removeEditor(int index) {
     for (int idx = 0; idx < mEditors.size(); ++idx) {
         CodeEditor* ed = mEditors[idx];
         mEditorIndices[ed->objectName()] = idx;
-        ed->compile();
     }
 }
 
@@ -181,9 +176,15 @@ void Scope::rename(CodeEditor* ed, const QString& name) {
     int index = mEditorIndices.take(ed->objectName());
     mEditorIndices[name] = index;
     ed->setObjectName(name);
-    foreach (CodeEditor* editor, mEditors) {
-        if (editor != ed) editor->compile();
+}
+
+QStringList Scope::itemSample(const QString& except) const {
+    QStringList r;
+    foreach (CodeEditor* ed, mEditors) {
+        if (!except.isEmpty() && ed->objectName() == except) continue;
+        r.append(ed->objectName());
     }
+    return r;
 }
 
 const VariableMap& Scope::exports() const {
@@ -204,4 +205,30 @@ void Scope::addFunction(Function* f) {
         mFunctions.append(f);
     }
     mSymbols[f->name()] = f;
+}
+
+void Scope::recompileAll() {
+    EditorList currFailed;
+    foreach (CodeEditor* ed, mEditors) {
+        ed->compile();
+        if (!ed->compiler()->ready()) {
+            qDebug() << ed->objectName() << ": compile failed";
+            currFailed.append(ed);
+        }
+    }
+    EditorList prevFailed;
+    while (!currFailed.isEmpty() && prevFailed != currFailed) {
+        qDebug() << "num failed = " << currFailed.size();
+        prevFailed = currFailed;
+        currFailed.clear();
+        foreach (CodeEditor* ed, prevFailed) {
+            ed->compile();
+            if (!ed->compiler()->ready()) {
+                qDebug() << ed->objectName() << ": compile failed";
+                currFailed.append(ed);
+            }
+        }
+    }
+
+    qDebug() << "final num failed = " << currFailed.size();
 }

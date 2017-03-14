@@ -34,6 +34,7 @@ public:
     int size();
     const QString& fileName(int);
     const QString& imageName(int);
+    QStringList itemSample(const QString& except = QString()) const;
 
 
 private:

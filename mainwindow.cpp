@@ -72,6 +72,7 @@ MainWindow::MainWindow(const QString& project):
 
     mUI->centralwidget->hide();
 
+    mUI->projectItems->addAction(mUI->actionInsert);
     mUI->projectItems->addAction(mUI->actionOpen);
     mUI->projectItems->addAction(mUI->actionSave);
     mUI->projectItems->addAction(mUI->actionSaveAs);
@@ -166,7 +167,39 @@ void Demo::MainWindow::on_actionNew_triggered() {
     if (dlg.exec() == QDialog::Accepted) {
         mProject->appendRow(dlg.name(), "", dlg.listParent());
         mScripts->setup(mProject);
+        mProjectModified = true;
+        setProjectModified();
     }
+}
+
+void Demo::MainWindow::on_actionInsert_triggered() {
+    // Just be sure, insert shouldn't be active in other cases
+    if (mSelectedIndex.parent() != mProject->itemParent(Project::ScriptItems)) return;
+    QString title("Insert constents of a script");
+    QString filter("OpenGL script files ( *.ogl)");
+
+    QString fileName = QFileDialog::getOpenFileName(
+                this,
+                title,
+                mProject->directory().absolutePath(),
+                filter
+                );
+    if (fileName.isEmpty()) return;
+
+    QFileInfo info(fileName);
+    // TODO: inform user that op failed
+    if (!info.exists() || !info.isFile() || !info.isReadable()) return;
+    mLastDir = info.absoluteDir();
+
+    QFile file(fileName);
+    file.open(QFile::ReadOnly);
+    QString contents = mProject->data(mSelectedIndex, Project::ScriptRole).value<QString>();
+    contents += file.readAll();
+    file.close();
+
+    mProject->setData(mSelectedIndex, QVariant::fromValue(contents), Project::ScriptRole);
+    mProjectModified = true;
+    setProjectModified();
 }
 
 void Demo::MainWindow::on_actionOpen_triggered() {
@@ -209,7 +242,6 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     setProjectModified();
 }
 
-
 void Demo::MainWindow::on_actionSave_triggered() {
 
     QString fname = mProject->data(mSelectedIndex, Project::FileNameRole).toString();
@@ -246,7 +278,11 @@ void Demo::MainWindow::on_actionSaveAs_triggered() {
 void Demo::MainWindow::on_actionDelete_triggered() {
     // suggest to save the current script before deleting
     if(!maybeSave()) return;
-
+    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+    int idx = mUI->editorsTabs->indexOf(widget);
+    if (idx != -1) {
+        mUI->editorsTabs->removeTab(idx);
+    }
     mProject->removeRows(mSelectedIndex.row(), 1, mSelectedIndex.parent());
     mScripts->setup(mProject);
     mProjectModified = true;
@@ -310,6 +346,28 @@ void Demo::MainWindow::on_editorsTabs_tabCloseRequested(int index) {
     mUI->editorsTabs->removeTab(index);
 }
 
+void Demo::MainWindow::on_editorsTabs_currentChanged(int index) {
+    if (index < 0) return;
+    QItemSelectionModel* s = mUI->projectItems->selectionModel();
+    // check if selection already points to the correct tab
+    if (s->hasSelection()) {
+        QModelIndex sel = s->selectedIndexes()[0];
+        QWidget* widget = mProject->data(sel, Project::EditorRole).value<QWidget*>();
+        if (mUI->editorsTabs->indexOf(widget) == index) return;
+    }
+
+    // find the editor's modelindex
+    for (int i = 0; i < mProject->rowCount(mProject->itemParent(Project::ScriptItems)); ++i) {
+        QModelIndex edIndex = mProject->index(i, Project::ScriptItems);
+        QWidget* widget = mProject->data(edIndex, Project::EditorRole).value<QWidget*>();
+        if (mUI->editorsTabs->indexOf(widget) == index) {
+            // set selection
+            s->select(edIndex, QItemSelectionModel::ClearAndSelect);
+            return;
+        }
+    }
+}
+
 void Demo::MainWindow::on_actionPlay_triggered() {
     mUI->actionPause->setEnabled(true);
     mUI->actionPlay->setEnabled(false);
@@ -340,8 +398,10 @@ void Demo::MainWindow::drawScript_changed(const QString& name) {
 
 void Demo::MainWindow::selectionChanged() {
     const QItemSelectionModel* s = mUI->projectItems->selectionModel();
+
     if (!s->hasSelection()) {
         mSelectedIndex = QModelIndex();
+        mUI->actionInsert->setEnabled(false);
         mUI->actionOpen->setEnabled(false);
         mUI->actionSave->setEnabled(false);
         mUI->actionSaveAs->setEnabled(false);
@@ -350,6 +410,9 @@ void Demo::MainWindow::selectionChanged() {
         mUI->actionCompile->setEnabled(false);
         mUI->actionDelete->setEnabled(false);
         mUI->actionReload->setEnabled(false);
+
+        QWidget* curr = mUI->editorsTabs->currentWidget();
+        if (curr) curr->setDisabled(true);
         return;
     }
 
@@ -361,6 +424,7 @@ void Demo::MainWindow::selectionChanged() {
         foreach (QAction* a, as) {
             mUI->projectItems->removeAction(a);
         }
+        mUI->actionInsert->setEnabled(false);
         mUI->actionOpen->setEnabled(false);
         mUI->actionSave->setEnabled(false);
         mUI->actionSaveAs->setEnabled(false);
@@ -369,6 +433,9 @@ void Demo::MainWindow::selectionChanged() {
         mUI->actionCompile->setEnabled(false);
         mUI->actionDelete->setEnabled(false);
         mUI->actionReload->setEnabled(false);
+
+        QWidget* curr = mUI->editorsTabs->currentWidget();
+        if (curr) curr->setDisabled(true);
         return;
     }
 
@@ -379,6 +446,8 @@ void Demo::MainWindow::selectionChanged() {
 
     // models/textures/shaders
     setupResourceActions();
+    QWidget* curr = mUI->editorsTabs->currentWidget();
+    if (curr) curr->setDisabled(true);
 
 }
 
@@ -392,6 +461,7 @@ void Demo::MainWindow::selectionChanged() {
 void Demo::MainWindow::setupScriptActions() {
 
 
+    ADDACTION(Insert);
     ADDACTION(Open);
     ADDACTION(Save);
     ADDACTION(SaveAs);
@@ -401,6 +471,7 @@ void Demo::MainWindow::setupScriptActions() {
     ADDACTION(Delete);
     REMACTION(Reload);
 
+    mUI->actionInsert->setEnabled(true);
     mUI->actionOpen->setEnabled(true);
 
     QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
@@ -409,6 +480,11 @@ void Demo::MainWindow::setupScriptActions() {
     }
     CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
     mUI->actionSave->setEnabled(editor->document()->isModified());
+
+    QWidget* curr = mUI->editorsTabs->currentWidget();
+    if (curr) {
+        curr->setEnabled(curr == widget);
+    }
 
     mUI->actionSaveAs->setEnabled(true);
     mUI->actionRename->setEnabled(true);
@@ -423,6 +499,7 @@ void Demo::MainWindow::setupScriptActions() {
 
 void Demo::MainWindow::setupResourceActions() {
 
+    REMACTION(Insert);
     ADDACTION(Open);
     REMACTION(Save);
     REMACTION(SaveAs);
@@ -432,6 +509,7 @@ void Demo::MainWindow::setupResourceActions() {
     ADDACTION(Delete);
     ADDACTION(Reload);
 
+    mUI->actionInsert->setEnabled(false);
     mUI->actionOpen->setEnabled(true);
     mUI->actionSave->setEnabled(false);
     mUI->actionSaveAs->setEnabled(false);
@@ -485,6 +563,9 @@ void Demo::MainWindow::on_actionCompile_triggered() {
     }
 }
 
+void Demo::MainWindow::on_actionCompileProject_triggered() {
+    if (mProject) mProject->recompileProject();
+}
 
 
 void Demo::MainWindow::readSettings() {
@@ -538,7 +619,7 @@ bool Demo::MainWindow::maybeSave() {
     CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
     if (editor->document()->isModified()) {
         QMessageBox msgBox;
-        msgBox.setText("The scripts has been modified.");
+        msgBox.setText("The script has been modified.");
         msgBox.setInformativeText("Do you want to save your changes?");
         msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Save);
@@ -593,6 +674,7 @@ void Demo::MainWindow::openProject(const QString &path) {
         mUI->projectItems->setModel(newp);
 
         mUI->actionNew->setEnabled(true);
+        mUI->actionCompileProject->setEnabled(true);
 
         delete mProject;
         mProject = newp;
@@ -615,6 +697,7 @@ void Demo::MainWindow::openProject(const QString &path) {
         if (!mProject) {
             title = QString("%1 [*]").arg(QApplication::applicationName());
             mUI->actionNew->setEnabled(false);
+            mUI->actionCompileProject->setEnabled(false);
         }
         qDebug() << e.msg();
     }

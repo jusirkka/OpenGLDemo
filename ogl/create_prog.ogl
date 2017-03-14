@@ -3,10 +3,10 @@ Shared Natural prog
 Natural f_shader, v_shader
 
 f_shader = createshader(fragment_shader)
-compileshader f_shader, source("lightmodel fragment")
+compileshader f_shader, source("lightmodel frag")
 
 v_shader = createshader(vertex_shader)
-compileshader v_shader, source("lightmodel vertex")
+compileshader v_shader, source("lightmodel vert")
 
 prog = createprogram()
 attachshader prog, v_shader

@@ -102,12 +102,13 @@ public:
 
     // project interface
     void rename(const QString& from, const QString& to);
-    void remove(int index, bool keepNames = false);
+    void remove(int index);
     void setModel(const QString& key, const QString& path = QString());
     void clean();
     int size();
     const QString& fileName(int);
     const QString& modelName(int);
+    QStringList itemSample(const QString& except = QString()) const;
 
     // grammar interface
     void appendVertex(float, float, float);
@@ -126,17 +127,6 @@ public:
 
 private:
 
-    class Model {
-    public:
-        Model() {}
-        unsigned int elemOffset;
-        unsigned int elemLength;
-        unsigned int vertexOffset;
-        unsigned int vertexLength;
-    };
-
-    typedef QMap<QString, Model> ModelMap;
-
     class VertexData {
     public:
         VertexData(float x, float y, float z)
@@ -149,14 +139,30 @@ private:
 
     typedef QList<VertexData> VertexList;
     typedef QList<Vector4> Vector4List;
-    typedef QList<unsigned int> IndexList;
+    typedef QList<GLuint> IndexList;
+
+
+    class Model {
+    public:
+        Model() {}
+        QString name;
+        QString fileName;
+        VertexList vertices;
+        IndexList indices;
+        unsigned int elemOffset;
+    };
+
+    typedef QList<Model> ModelList;
+    typedef QMap<QString, int> IndexMap;
+
+    Vector4 makeNormal(int start) const;
+    void makeModelBuffer();
 
 
 private:
 
-    ModelMap mModels;
-    QStringList mNames;
-    QStringList mFileNames;
+    ModelList mModels;
+    IndexMap mIndexMap;
 
     VertexList mVertices;
     Vector4List mNormals;
