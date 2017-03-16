@@ -84,6 +84,7 @@ inline Vector4 operator+ (const Vector4&, const Vector4&); // (14)
 inline Vector4 operator- (const Vector4&, const Vector4&); // (15)
 
 inline bool operator== (const Vector4&, const Vector4&); // (16)
+inline bool operator!= (const Vector4&, const Vector4&); // (16b)
 
 
 // --------------------------------------------------------------
@@ -240,6 +241,11 @@ inline Vector4 operator- (const Vector4& v1, const Vector4& v2) {
 inline bool operator== (const Vector4& v1, const Vector4& v2) {
     Vector4 v = v1 - v2;
     return v.isZero();
+}
+
+// ---------------- (16b) ----------------------------------------
+inline bool operator!= (const Vector4& v1, const Vector4& v2) {
+    return !(v1 == v2);
 }
 
 // --------------------------------------------------------------

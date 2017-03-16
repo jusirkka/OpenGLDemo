@@ -5,7 +5,7 @@ From "get locations" import u_t_img, u_s_scale
 activetexture texture0
 uniform1i u_t_img, 0
 
-uniform1f u_s_scale, 4
+uniform1f u_s_scale, 2
 
 
 tex_plaid = gentexture()

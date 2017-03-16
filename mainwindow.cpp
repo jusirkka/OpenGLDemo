@@ -28,6 +28,7 @@
 #include "scriptselector.h"
 #include "constant.h"
 #include "scope.h"
+#include "depthzoom.h"
 
 #include <QtDebug>
 #include <QMessageBox>
@@ -63,10 +64,17 @@ MainWindow::MainWindow(const QString& project):
     connect(mScripts, SIGNAL(drawScriptChanged(const QString&)), this, SLOT(drawScript_changed(const QString&)));
     mUI->demoBar->addWidget(mScripts);
 
+    DepthZoom* zoom = new DepthZoom();
+    connect(zoom, SIGNAL(valuesChanged(float, float)), this, SLOT(depthChanged(float, float)));
+    mUI->demoBar->addWidget(zoom);
+
     mGLWidget = new GLWidget(mUI->graphicsDockContents);
 
     // Initialize globals
     mGlobals = new Scope(mGLWidget, this);
+
+     // init the projection near/far values: has to be after Scope Ctor
+    depthChanged(zoom->near(), zoom->far());
 
     mUI->graphicsDockLayout->addWidget(mGLWidget);
 
@@ -88,6 +96,9 @@ MainWindow::MainWindow(const QString& project):
     openProject(project);
 }
 
+void Demo::MainWindow::depthChanged(float near, float far) {
+    mGLWidget->setProjection(near, far);
+}
 
 void Demo::MainWindow::on_actionNewProject_triggered() {
     QString dirName = QFileDialog::getExistingDirectory(

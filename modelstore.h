@@ -129,10 +129,9 @@ private:
 
     class VertexData {
     public:
-        VertexData(float x, float y, float z)
-            : v(x, y, z), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
-        VertexData()
-            : v(0, 0, 0, 0), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
+        VertexData(float x, float y, float z): v(x, y, z), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
+        VertexData(): v(0, 0, 0, 0), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
+        VertexData(Vector4 v0): v(v0.readArray()), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
 
         Vector4 v, n, t;
     };
@@ -157,6 +156,8 @@ private:
 
     Vector4 makeNormal(int start) const;
     void makeModelBuffer();
+
+    bool copyNeeded(unsigned int orig, const WF::Triplet& t) const;
 
 
 private:

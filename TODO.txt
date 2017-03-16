@@ -1,4 +1,4 @@
-- example projects (with objects, textures, shaders)
+- implement TEXT addition in script parser
+- examples: multiple models
 - code completion
 - plugin description/config
-- Implement TEXT addition in script parser

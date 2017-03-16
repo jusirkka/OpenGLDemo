@@ -48,6 +48,8 @@ public:
     void animStop();
     void animReset(int);
 
+    void setProjection(float near, float far);
+
     virtual ~GLWidget();
 
 
@@ -156,6 +158,8 @@ private:
     QTimer* mTimer;
     QTimer* mAnimTimer;
     Mover* mMover;
+    float mNear;
+    float mFar;
 
 };
 

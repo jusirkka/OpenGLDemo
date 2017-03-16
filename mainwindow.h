@@ -117,6 +117,8 @@ private slots:
 
     void scriptModification_changed(bool edited);
 
+    void depthChanged(float near, float far);
+
 private:
 
 

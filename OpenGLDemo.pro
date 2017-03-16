@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     scope.cpp \
     symbol.cpp \
     variable.cpp \
-    textfilestore.cpp
+    textfilestore.cpp \
+    depthzoom.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -56,12 +57,14 @@ HEADERS  += mainwindow.h \
     fpscontrol.h \
     scriptselector.h \
     scope.h \
-    textfilestore.h
+    textfilestore.h \
+    depthzoom.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \
     fpscontrol.ui \
-    scriptselector.ui
+    scriptselector.ui \
+    depthzoom.ui
 
 OTHER_FILES += \
     TODO.txt \

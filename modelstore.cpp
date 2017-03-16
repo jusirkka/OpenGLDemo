@@ -82,30 +82,50 @@ void ModelStore::appendFace(const WF::TripletList& ts) {
     unsigned int ln = mNormals.size();
     unsigned int lt = mTexCoords.size();
 
+    IndexList face;
     // copy normals & texcoords
-    if (!mNormals.isEmpty()) {
-        for (int i = 0; i < ts.size(); ++i) {
-            unsigned int v_idx = my_index(ts[i].v_index, lv);
-            if (mVertices[v_idx].n[3] == 0 && ts[i].n_index) {
-                mVertices[v_idx].n = mNormals[my_index(ts[i].n_index, ln)];
-            }
+    for (int i = 0; i < ts.size(); ++i) {
+        unsigned int v_idx = my_index(ts[i].v_index, lv);
+        if (copyNeeded(v_idx, ts[i])) {
+            // qDebug() << "copying" << v_idx;
+            VertexData c(mVertices[v_idx].v);
+            v_idx = mVertices.size();
+            mVertices.append(c);
         }
-    }
-    if (!mTexCoords.isEmpty()) {
-        for (int i = 0; i < ts.size(); ++i) {
-            unsigned int v_idx = my_index(ts[i].v_index, lv);
-            if (mVertices[v_idx].t[3] == 0 && ts[i].t_index) {
-                mVertices[v_idx].t = mTexCoords[my_index(ts[i].t_index, lt)];
-            }
+        face.append(v_idx);
+
+        if (ts[i].n_index) {
+            mVertices[v_idx].n = mNormals[my_index(ts[i].n_index, ln)];
+        }
+
+        if (ts[i].t_index) {
+            mVertices[v_idx].t = mTexCoords[my_index(ts[i].t_index, lt)];
         }
     }
 
     // append triangle indices
-    for (int i = 2; i < ts.size(); ++i) {
-        mIndices.append(my_index(ts[0].v_index, lv));
-        mIndices.append(my_index(ts[i-1].v_index, lv));
-        mIndices.append(my_index(ts[i].v_index, lv));
+    for (int i = 2; i < face.size(); ++i) {
+        mIndices.append(face[0]);
+        mIndices.append(face[i-1]);
+        mIndices.append(face[i]);
     }
+}
+
+bool ModelStore::copyNeeded(unsigned int orig, const WF::Triplet& t) const {
+
+    const VertexData& v = mVertices[orig];
+
+    if (t.n_index && v.n[3] != 1) {
+        unsigned int n_idx = my_index(t.n_index, mNormals.size());
+        if (v.n != mNormals[n_idx]) return true;
+    }
+
+    if (t.t_index && v.t[3] != 1) {
+        unsigned int t_idx = my_index(t.t_index, mTexCoords.size());
+        if (v.t != mTexCoords[t_idx]) return true;
+    }
+
+    return false;
 }
 
 
@@ -211,8 +231,8 @@ void ModelStore::parseModelData(const QString& path) {
     if (err) throw WF::ModelError(mError);
 
     // gen missing tex coords
-    // assume that first is unset => all of them are
-    if (mVertices.first().t[3] == 0) {
+    if (mTexCoords.isEmpty()) {
+        qDebug() << "gen tex" << path;
         for (int i = 0; i < mVertices.size(); ++i) {
             // (x,y,z) -> (x,y)
             mVertices[i].t = mVertices[i].v;
@@ -221,8 +241,8 @@ void ModelStore::parseModelData(const QString& path) {
     }
 
     // gen missing normals
-    // assume that first is unset => all of them are
-    if (mVertices.first().n[3] == 0) {
+    if (mNormals.isEmpty()) {
+        qDebug() << "gen normals" << path;
         QVector<Vector4> normalSum(mVertices.size(), Vector4());
         QVector<int> faceCount(mVertices.size(), 0);
         int numFaces = mIndices.size() / 3; // they are triangles

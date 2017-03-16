@@ -23,7 +23,9 @@ GLWidget::GLWidget(QWidget *parent):
     QGLFunctions(),
     mInitialized(false),
     mDim(500),
-    mMover(new Mover(this))
+    mMover(new Mover(this)),
+    mNear(1),
+    mFar(80)
 {
 
     mTime = 0;
@@ -154,20 +156,31 @@ void Demo::GLWidget::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
     Real a = Real(w) / Real(h);
     Real ct = 1 / tan(Math3D::PI / 180 * 45 / 2);
-    Real n = 1;
-    Real f = 80;
     mProj.setIdentity();
     // column first
     mProj(0)[0] = ct / a;
     mProj(1)[1] = ct;
-    mProj(2)[2] = (n + f) / (n - f);
+    mProj(2)[2] = (mNear + mFar) / (mNear - mFar);
     mProj(3)[3] = 0;
-    mProj(3)[2] = 2*n*f / (n - f);
+    mProj(3)[2] = 2*mNear*mFar / (mNear - mFar);
     mProj(2)[3] = -1;
     mProjectionVar->setValue(QVariant::fromValue(mProj));
     paintGL();
 }
 
+void Demo::GLWidget::setProjection(float near, float far) {
+    mNear = near;
+    mFar = far;
+    // check sanity
+    if (mNear < 0.001) {
+        mNear = 0.001;
+    }
+    if (mFar - mNear < 0.001) {
+        mFar = mNear + 0.001;
+    }
+    resizeGL(width(), height());
+    updateGL();
+}
 
 
 void Demo::GLWidget::mousePressEvent(QMouseEvent* event) {
