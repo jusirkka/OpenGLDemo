@@ -87,7 +87,7 @@ static void add_f(QVariant& left, const QVariant& right, int lrtype) {
         Add<Real, int>, Add<Real, Real>, 0, 0, 0,
         0, 0, Add<Vector4, Vector4>, 0, 0,
         0, 0, 0, Add<Matrix4, Matrix4>, 0,
-        0, 0, 0, 0, 0
+        0, 0, 0, 0, Add<QString, QString>
     };
 
     funcs[lrtype](left, right);

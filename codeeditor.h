@@ -50,6 +50,7 @@ class QResizeEvent;
 class QSize;
 class QWidget;
 class QTimer;
+class QCompleter;
 
 class LineNumberArea;
 
@@ -79,12 +80,13 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
 
-    bool event(QEvent *e);
+    bool event(QEvent *e) Q_DECL_OVERRIDE;
 
     bool hasRunError() const {return mRunErrorPos != -1;}
     bool hasCompileError() const {return mCompileErrorPos != -1;}
 
     void toggleAutoCompile(bool on);
+    void complete();
     void rename(const QString& name);
 
     const QString& fileName();
@@ -100,13 +102,16 @@ public slots:
     void run();
 
 protected:
-    void resizeEvent(QResizeEvent *event);
+
+    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
+    void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
 
 private slots:
 
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &, int);
+    void insertCompletion(QString item);
 
 signals:
 
@@ -116,7 +121,7 @@ signals:
 
 private:
 
-    QWidget *lineNumberArea;
+    QWidget* mLineNumberArea;
     QTimer* mCompileDelay;
     QString mRunError;
     QString mCompileError;
@@ -125,6 +130,7 @@ private:
     Highlight* mHighlight;
     GL::Compiler* mCompiler;
     QString mPath;
+    QCompleter* mCompleter;
 };
 
 

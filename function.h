@@ -266,11 +266,9 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) {
         Matrix4 m = vals[start].value<Matrix4>();
-        m = m.linear();
-        m = m.transpose3();
-        m = m.comatrix();
+        // qDebug() << "normal transform: check" << m.comatrix() * m.transpose3();
         // qDebug() << "NormalT";
-        mValue.setValue(m);
+        mValue.setValue(m.comatrix());
         return mValue;
     }
 

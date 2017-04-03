@@ -1,4 +1,4 @@
-- implement TEXT addition in script parser
-- examples: multiple models
-- code completion
+- create shadowmap demo
+- check & implement demos from web
+- knot drawing utility
 - plugin description/config

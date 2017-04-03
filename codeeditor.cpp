@@ -41,6 +41,9 @@
 #include <QtGui>
 #include <QTimer>
 #include <QToolTip>
+#include <QCompleter>
+#include <QAbstractItemView>
+#include <QScrollBar>
 
 #include "codeeditor.h"
 #include "gl_lang_compiler.h"
@@ -55,7 +58,8 @@ CodeEditor::CodeEditor(const QString& name, Scope* globals, Project* owner):
     mCompileDelay(new QTimer(this)),
     mCompileErrorPos(-1),
     mRunErrorPos(-1),
-    mCompiler(new GL::Compiler(name, globals, this))
+    mCompiler(new GL::Compiler(name, globals, this)),
+    mCompleter(new QCompleter(this))
 {
     setObjectName(name);
 
@@ -63,7 +67,7 @@ CodeEditor::CodeEditor(const QString& name, Scope* globals, Project* owner):
     connect(this->document(), SIGNAL(modificationChanged(bool)), owner, SLOT(scriptModification_changed(bool)));
     connect(this, SIGNAL(statusChanged()), owner, SLOT(scriptStatus_changed()));
 
-    lineNumberArea = new LineNumberArea(this);
+    mLineNumberArea = new LineNumberArea(this);
 
     connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
     connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateLineNumberArea(QRect,int)));
@@ -72,13 +76,18 @@ CodeEditor::CodeEditor(const QString& name, Scope* globals, Project* owner):
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
 
-    mCompileDelay->setInterval(1000);
+    mCompileDelay->setInterval(700);
     toggleAutoCompile(owner->autoCompileEnabled());
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setLineWrapMode(QPlainTextEdit::NoWrap);
 
     mHighlight = new Highlight(mCompiler, document());
+
+    mCompleter->setWidget(this);
+    connect(mCompleter, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
+
+    setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 }
 
 CodeEditor::~CodeEditor() {}
@@ -246,31 +255,73 @@ void CodeEditor::updateLineNumberAreaWidth(int /* newBlockCount */)
 
 
 
-void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
-{
-    if (dy)
-        lineNumberArea->scroll(0, dy);
-    else
-        lineNumberArea->update(0, rect.y(), lineNumberArea->width(), rect.height());
+void CodeEditor::updateLineNumberArea(const QRect& rect, int dy) {
+    if (dy) {
+        mLineNumberArea->scroll(0, dy);
+    } else {
+        mLineNumberArea->update(0, rect.y(), mLineNumberArea->width(), rect.height());
+    }
 
-    if (rect.contains(viewport()->rect()))
-        updateLineNumberAreaWidth(0);
+    if (rect.contains(viewport()->rect())) updateLineNumberAreaWidth(0);
 }
 
 
 
-void CodeEditor::resizeEvent(QResizeEvent *e)
-{
+void CodeEditor::resizeEvent(QResizeEvent* e) {
     QPlainTextEdit::resizeEvent(e);
-
     QRect cr = contentsRect();
-    lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+    mLineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
 }
 
+void CodeEditor::keyPressEvent(QKeyEvent* e) {
+    if (mCompleter->popup()->isVisible()) {
+        e->ignore();
+        return;
+    }
+    QPlainTextEdit::keyPressEvent(e);
+}
 
-void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
-{
-    QPainter painter(lineNumberArea);
+void CodeEditor::complete() {
+    if (mCompleter->popup()->isVisible()) return;
+    QStringList completions;
+    try {
+        mCompiler->compile(toPlainText(), textCursor().position());
+    } catch (GL::CompileError& e) {
+        completions = e.completions();
+    }
+
+    if (completions.isEmpty()) return;
+
+    if (completions.length() == 1) {
+        insertCompletion(completions.first());
+        return;
+    }
+
+    mCompleter->setModel(new QStringListModel(completions, mCompleter));
+
+    QRect cr = cursorRect();
+    cr.setWidth(mCompleter->popup()->sizeHintForColumn(0) + mCompleter->popup()->verticalScrollBar()->sizeHint().width());
+    mCompleter->complete(cr);
+}
+
+void CodeEditor::insertCompletion(QString item) {
+    QTextCursor tc = textCursor();
+    int pos = tc.position();
+    tc.select(QTextCursor::WordUnderCursor);
+    qDebug() << "insertCompletion #1" << tc.selectedText();
+    if (!item.startsWith(tc.selectedText())) {
+        tc.setPosition(pos - 1);
+        tc.select(QTextCursor::WordUnderCursor);
+        qDebug() << "insertCompletion #2" << tc.selectedText();
+        if (!item.startsWith(tc.selectedText())) {
+            qDebug() << "insertCompletion: no can do";
+        }
+    }
+    tc.insertText(item);
+}
+
+void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event) {
+    QPainter painter(mLineNumberArea);
     painter.fillRect(event->rect(), Qt::lightGray);
 
 
@@ -283,10 +334,8 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString::number(blockNumber + 1);
             painter.setPen(Qt::black);
-            painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(),
-                             Qt::AlignRight, number);
+            painter.drawText(0, top, mLineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
         }
-
 
         block = block.next();
         top = bottom;
@@ -306,5 +355,5 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     if (top > event->rect().bottom()) return;
 
     QIcon err = QIcon::fromTheme("error");
-    err.paint(&painter, 0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignLeft, QIcon::Normal, QIcon::On);
+    err.paint(&painter, 0, top, mLineNumberArea->width(), fontMetrics().height(), Qt::AlignLeft, QIcon::Normal, QIcon::On);
 }

@@ -32,8 +32,25 @@ class normal(object):
         self.y = y / norm
         self.z = z / norm
 
-def dot(v1, v2, n):
+def dotn(v1, v2, n):
     return (v2.x-v1.x)*n.x + (v2.y-v1.y)*n.y + (v2.z-v1.z)*n.z
+
+def dot(v1, v2):
+    return v2.x*v1.x + v2.y*v1.y + v2.z*v1.z
+
+def sub(v2, v1):
+    return vertex(v2.x-v1.x, v2.y-v1.y, v2.z-v1.z)
+
+def cross(v1, v2):
+    return vertex(v1.y * v2.z - v1.z * v2.y,
+                  v1.z * v2.x - v1.x * v2.z,
+                  v1.x * v2.y - v1.y * v2.x)
+
+
+def vol(v0, v1, v2, n):
+    return dot(cross(sub(v1, v0), sub(v2, v0)), n)
+
+
 
 def n_bueno(v, n):
     return v.x*n.x + v.y*n.y + v.z*n.z > 0
@@ -105,21 +122,24 @@ def main(testing):
     keys = sorted(faces.keys())
     for key in keys:
         f1, f2, f3, f4, f5 = faces[key]
+        if vol(vertices[f1], vertices[f2], vertices[f5], normals[key]) < 0:
+            f5, f4, f3, f2, f1 = faces[key]
         print 'f {1}/1/{0} {2}/2/{0} {3}/3/{0} {4}/4/{0} {5}/5/{0}'.format(key, f1, f2, f3, f4, f5)
 
     if testing:
         for key in keys:
-            print key
-            f1, f2, f3, f4, f5 = faces[key]
-            print dot(vertices[f1], vertices[f2], normals[key])
-            print dot(vertices[f1], vertices[f3], normals[key])
-            print dot(vertices[f1], vertices[f4], normals[key])
-            print dot(vertices[f1], vertices[f5], normals[key])
-            print n_bueno(vertices[f1], normals[key])
-            print n_bueno(vertices[f2], normals[key])
-            print n_bueno(vertices[f3], normals[key])
-            print n_bueno(vertices[f4], normals[key])
-            print n_bueno(vertices[f5], normals[key])
+           print key
+           f1, f2, f3, f4, f5 = faces[key]
+           print dotn(vertices[f1], vertices[f2], normals[key])
+           print dotn(vertices[f1], vertices[f3], normals[key])
+           print dotn(vertices[f1], vertices[f4], normals[key])
+           print dotn(vertices[f1], vertices[f5], normals[key])
+           print n_bueno(vertices[f1], normals[key])
+           print n_bueno(vertices[f2], normals[key])
+           print n_bueno(vertices[f3], normals[key])
+           print n_bueno(vertices[f4], normals[key])
+           print n_bueno(vertices[f5], normals[key])
+           print "{} volume = {}".format(key, vol(vertices[f1], vertices[f2], vertices[f5], normals[key]))
 
 
 if __name__ == '__main__':

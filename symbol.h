@@ -57,6 +57,7 @@ class Symbol {
 };
 
 typedef QMap<QString, Symbol*> SymbolMap;
+typedef QMapIterator<QString, Symbol*> SymbolIterator;
 
 
 } // namespace Demo

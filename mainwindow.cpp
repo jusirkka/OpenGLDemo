@@ -90,7 +90,6 @@ MainWindow::MainWindow(const QString& project):
     mUI->projectItems->addAction(mUI->actionDelete);
     mUI->projectItems->addAction(mUI->actionReload);
 
-
     readSettings();
 
     openProject(project);
@@ -330,6 +329,7 @@ void Demo::MainWindow::on_actionEdit_triggered() {
         mUI->editorsTabs->addTab(widget, label);
     }
     mUI->editorsTabs->setCurrentWidget(widget);
+    selectionChanged(); // check which actions should be active
 }
 
 void Demo::MainWindow::on_actionReload_triggered() {
@@ -421,6 +421,7 @@ void Demo::MainWindow::selectionChanged() {
         mUI->actionCompile->setEnabled(false);
         mUI->actionDelete->setEnabled(false);
         mUI->actionReload->setEnabled(false);
+        mUI->actionComplete->setEnabled(false);
 
         QWidget* curr = mUI->editorsTabs->currentWidget();
         if (curr) curr->setDisabled(true);
@@ -442,8 +443,10 @@ void Demo::MainWindow::selectionChanged() {
         mUI->actionRename->setEnabled(false);
         mUI->actionEdit->setEnabled(false);
         mUI->actionCompile->setEnabled(false);
+        mUI->actionComplete->setEnabled(false);
         mUI->actionDelete->setEnabled(false);
         mUI->actionReload->setEnabled(false);
+        mUI->actionComplete->setEnabled(false);
 
         QWidget* curr = mUI->editorsTabs->currentWidget();
         if (curr) curr->setDisabled(true);
@@ -506,6 +509,8 @@ void Demo::MainWindow::setupScriptActions() {
 
     mUI->actionReload->setEnabled(false);
 
+    mUI->actionComplete->setEnabled(curr && curr == widget);
+
 }
 
 void Demo::MainWindow::setupResourceActions() {
@@ -532,6 +537,7 @@ void Demo::MainWindow::setupResourceActions() {
     bool unbound = mProject->data(mSelectedIndex, Project::FileNameRole).value<QString>().isEmpty();
     mUI->actionReload->setDisabled(unbound);
 
+    mUI->actionComplete->setEnabled(false);
 }
 
 #undef REMACTION
@@ -552,6 +558,7 @@ void Demo::MainWindow::scriptModification_changed(bool edited) {
 
 void Demo::MainWindow::on_actionAutocompile_toggled(bool on) {
     mUI->actionCompile->setDisabled(true);
+    if (!mProject) return;
     const QItemSelectionModel* s = mUI->projectItems->selectionModel();
     if (s && s->hasSelection()) {
         QModelIndex index = s->selectedIndexes()[0];
@@ -559,10 +566,11 @@ void Demo::MainWindow::on_actionAutocompile_toggled(bool on) {
             mUI->actionCompile->setDisabled(on);
         }
     }
-    if (mProject) mProject->toggleAutoCompile(on);
+    mProject->toggleAutoCompile(on);
 }
 
 void Demo::MainWindow::on_actionCompile_triggered() {
+    if (!mProject) return;
     const QItemSelectionModel* s = mUI->projectItems->selectionModel();
     if (s->hasSelection()) {
         QModelIndex index = s->selectedIndexes()[0];
@@ -578,6 +586,19 @@ void Demo::MainWindow::on_actionCompileProject_triggered() {
     if (mProject) mProject->recompileProject();
 }
 
+
+void Demo::MainWindow::on_actionComplete_triggered() {
+    if (!mProject) return;
+    const QItemSelectionModel* s = mUI->projectItems->selectionModel();
+    if (s->hasSelection()) {
+        QModelIndex index = s->selectedIndexes()[0];
+        if (index.parent() == mProject->itemParent(Project::ScriptItems)) {
+            QWidget* widget = mProject->data(index, Project::EditorRole).value<QWidget*>();
+            CodeEditor* ed = qobject_cast<CodeEditor*>(widget);
+            ed->complete();
+        }
+    }
+}
 
 void Demo::MainWindow::readSettings() {
     QSettings settings;

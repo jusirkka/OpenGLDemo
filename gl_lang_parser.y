@@ -14,6 +14,7 @@ using namespace Demo;
 using Demo::GL::Compiler;
 
 #define HANDLE_ERROR(item, errnum) {compiler->createError(item, errnum); YYERROR;}
+#define HANDLE_COMPLETION(var, mask) {if (compiler->createCompletion(var, mask)) YYERROR;}
 
 %}
 
@@ -48,7 +49,7 @@ using Demo::GL::Compiler;
 %token <v_real> FLOAT
 %token <v_char> CHAR
 
-%token <v_string> ID
+%token <v_identifier> ID
 
 %token VECTOR MATRIX TEXT NATURAL SHARED REAL EXECUTE FROM IMPORT
 
@@ -82,6 +83,8 @@ element:
     declaration SEP
     |
     assignment SEP
+    |
+    declaration_and_assignment SEP
     |
     statement SEP
     ;
@@ -138,22 +141,22 @@ typename:
 variables:
     ID
         {
-            if (compiler->hasSymbol($1)) {
-                HANDLE_ERROR($1, Compiler::declared);
+            if (compiler->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Compiler::declared);
             }
             $$.clear();
-            $$.append($1);
+            $$.append($1.name);
         }
     |
     variables ',' ID
         {
-            if (compiler->hasSymbol($3)) {
-                HANDLE_ERROR($3, Compiler::declared);
+            if (compiler->hasSymbol($3.name)) {
+                HANDLE_ERROR($3.name, Compiler::declared);
             }
-            if ($$.contains($3)) {
-                HANDLE_ERROR($3, Compiler::duplicate);
+            if ($$.contains($3.name)) {
+                HANDLE_ERROR($3.name, Compiler::duplicate);
             }
-            $$.append($3);
+            $$.append($3.name);
         }
     ;
 
@@ -162,45 +165,62 @@ variables:
 assignment:
     ID rhs
         {
-            if (!compiler->hasSymbol($1)) {
-                HANDLE_ERROR($1, Compiler::notdeclared);
+            HANDLE_COMPLETION($1, Compiler::CompleteVariables);
+            if (!compiler->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Compiler::notdeclared);
             }
-            Variable* var = dynamic_cast<Variable*>(compiler->symbol($1));
+            Variable* var = dynamic_cast<Variable*>(compiler->symbol($1.name));
             if (!var) {
-                HANDLE_ERROR($1, Compiler::notvariable);
+                HANDLE_ERROR($1.name, Compiler::notvariable);
             }
             if (compiler->isImported(var)) {
-                HANDLE_ERROR($1, Compiler::assimported);
+                HANDLE_ERROR($1.name, Compiler::assimported);
             }
             if (var->type() == $2 || (var->type() == Symbol::Real && $2 == Symbol::Integer)) {
                 compiler->setCode(var->name());
             } else {
-                HANDLE_ERROR($1, Compiler::assincompatible);
+                HANDLE_ERROR($1.name, Compiler::assincompatible);
             }
         }
     ;
 
+declaration_and_assignment:
+    shared typename ID rhs
+        {
+            if (compiler->hasSymbol($3.name)) {
+                HANDLE_ERROR($3.name, Compiler::declared);
+            }
+            Variable* var = Var::Create($2, $3.name, $1);
+            if (var->type() == $4 || (var->type() == Symbol::Real && $4 == Symbol::Integer)) {
+                compiler->addVariable(var);
+                compiler->setCode(var->name());
+            } else {
+                HANDLE_ERROR($3.name, Compiler::assincompatible);
+            }
+        }
+    ;
 
 statement:
-    ID  parameters
+    ID parameters
         {
-            if (!compiler->hasSymbol($1)) {
-                HANDLE_ERROR($1, Compiler::notdeclared);
+            HANDLE_COMPLETION($1, Compiler::CompleteFunctions);
+            if (!compiler->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Compiler::notdeclared);
             }
-            Function* fun = dynamic_cast<Function*>(compiler->symbol($1));
+            Function* fun = dynamic_cast<Function*>(compiler->symbol($1.name));
             if (!fun) {
-                HANDLE_ERROR($1, Compiler::notfunction);
+                HANDLE_ERROR($1.name, Compiler::notfunction);
             }
             $$ = fun->type();
             if (fun->argTypes().size() != $2.size()) {
-                HANDLE_ERROR($1, Compiler::wrongargs);
+                HANDLE_ERROR($1.name, Compiler::wrongargs);
             }
             // check the argument types
             for (int i = 0; i < fun->argTypes().size(); ++i) {
                 int te = $2[i]; int ta = fun->argTypes()[i];
                 if (ta == te) continue;
                 if (ta == Symbol::Real && te == Symbol::Integer) continue;
-                HANDLE_ERROR($1, Compiler::incompatibleargs);
+                HANDLE_ERROR($1.name, Compiler::incompatibleargs);
             }
             // qDebug() << "Code:" << opname(Compiler::cFun) << fun->name() << fun->index();
             compiler->pushBack(Compiler::cFun, 0, 1 - $2.size());
@@ -347,7 +367,11 @@ terms:
     |
     terms add_op factors
         {
-            if (($1 == Symbol::Text || $3 == Symbol::Text)) {
+            if ($1 == Symbol::Text && $3 == Symbol::Text) {
+                if ($2 != '+') {
+                    HANDLE_ERROR(opname($2), Compiler::expectedtextadd);
+                }
+            } else if ($1 == Symbol::Text || $3 == Symbol::Text) {
                 HANDLE_ERROR(opname($2), Compiler::expectedarithmetictype);
             }
             if (($1 != $3) &&
@@ -355,8 +379,8 @@ terms:
                 ($1 != Symbol::Real || $3 != Symbol::Integer)) {
                 HANDLE_ERROR(opname($2), Compiler::incompatibletypes);
             }
-            if ($3 == Symbol::Real) {
-                $$ = $3;
+            if ($1 == Symbol::Real || $3 == Symbol::Real) {
+                $$ = Symbol::Real;
             } else {
                 $$ = $1;
             }
@@ -541,10 +565,11 @@ paren_or_variable:
     |
     ID
         {
-            if (!compiler->hasSymbol($1)) {
-                HANDLE_ERROR($1, Compiler::notdeclared);
+            HANDLE_COMPLETION($1, Compiler::CompleteAll);
+            if (!compiler->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Compiler::notdeclared);
             }
-            Symbol* sym = compiler->symbol($1);
+            Symbol* sym = compiler->symbol($1.name);
             Variable* var = dynamic_cast<Variable*>(sym);
             if (var) {
                 // qDebug() << "Code:" << opname(Compiler::cVar) << sym->name();
@@ -557,7 +582,7 @@ paren_or_variable:
                     compiler->pushBack(Compiler::cImmed, 0, 1);
                     compiler->pushBackImmed(con->value());
                 } else {
-                    HANDLE_ERROR($1, Compiler::notvarorconst);
+                    HANDLE_ERROR($1.name, Compiler::notvarorconst);
                 }
             }
             $$ = sym->type();
@@ -567,23 +592,24 @@ paren_or_variable:
 function_call:
     ID '(' parameters ')'
         {
-            if (!compiler->hasSymbol($1)) {
-                HANDLE_ERROR($1, Compiler::notdeclared);
+            HANDLE_COMPLETION($1, Compiler::CompleteFunctions);
+            if (!compiler->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Compiler::notdeclared);
             }
-            Function* fun = dynamic_cast<Function*>(compiler->symbol($1));
+            Function* fun = dynamic_cast<Function*>(compiler->symbol($1.name));
             if (!fun) {
-                HANDLE_ERROR($1, Compiler::notfunction);
+                HANDLE_ERROR($1.name, Compiler::notfunction);
             }
             $$ = fun->type();
             if (fun->argTypes().size() != $3.size()) {
-                HANDLE_ERROR($1, Compiler::wrongargs);
+                HANDLE_ERROR($1.name, Compiler::wrongargs);
             }
             // check the argument types
             for (int i = 0; i < fun->argTypes().size(); ++i) {
                 int te = $3[i]; int ta = fun->argTypes()[i];
                 if (ta == te) continue;
                 if (ta == Symbol::Real && te == Symbol::Integer) continue;
-                HANDLE_ERROR($1, Compiler::incompatibleargs);
+                HANDLE_ERROR($1.name, Compiler::incompatibleargs);
             }
             // qDebug() << "Code:" << opname(Compiler::cFun) << fun->name();
             compiler->pushBack(Compiler::cFun, 0, 1 - $3.size());

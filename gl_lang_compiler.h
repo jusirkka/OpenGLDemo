@@ -60,6 +60,12 @@ public:
     int prev_pos;
 };
 
+class IdentifierType {
+public:
+    QString name;
+    int pos; // for autocompletion
+};
+
 class ValueType {
 public:
     bool v_bool;
@@ -67,31 +73,42 @@ public:
     Math3D::Real v_real;
     QChar v_char;
     QString v_string;
+    IdentifierType v_identifier;
     QStringList v_string_list;
     Symbol::TypeList v_int_list;
 };
 
+
 class CompileError {
 
 public:
-    CompileError(const QString& msg, int row, int col, int pos)
-        :emsg(msg),
-          erow(row),
-          ecol(col),
-          epos(pos)
+    CompileError(const QString& msg, int row, int col, int pos):
+        emsg(msg),
+        erow(row),
+        ecol(col),
+        epos(pos)
     {}
 
-    CompileError()
-        :emsg(""),
-          erow(0),
-          ecol(0),
-          epos(0)
+    CompileError(const QStringList& completions):
+        emsg(""),
+        erow(0),
+        ecol(0),
+        epos(0),
+        mCompletions(completions)
+    {}
+
+    CompileError():
+        emsg(""),
+        erow(0),
+        ecol(0),
+        epos(0)
     {}
 
     const QString msg() const {return emsg;}
     int row() const {return erow;}
     int col() const {return ecol;}
     int pos() const {return epos;}
+    const QStringList& completions() const {return mCompletions;}
 
 private:
 
@@ -99,8 +116,11 @@ private:
     int erow;
     int ecol;
     int epos;
+    QStringList mCompletions;
 
 };
+
+
 
 class Compiler: public QObject {
 
@@ -168,15 +188,22 @@ public:
         assimported,
         notimported,
         scriptnotfound,
+        expectedtextadd,
         numerrors
     };
+
+    static const unsigned CompleteFunctions = 0x01;
+    static const unsigned CompleteVariables = 0x02;
+    static const unsigned CompleteConstants = 0x04;
+    static const unsigned CompleteAll =       0x07;
+
 
 
 
     Compiler(const QString& name, Scope* globalScope, QObject* parent = 0);
 
     // GL interface
-    void compile(const QString& script);
+    void compile(const QString& script, int completionPos = -1);
     bool ready() const;
     void run();
 
@@ -189,7 +216,7 @@ public:
     void pushBackImmed(Math3D::Real constVal);
     void pushBackImmed(const QVariant& constVal);
     void createError(const QString& item, Error err);
-
+    bool createCompletion(const IdentifierType& id, unsigned completionMask);
     void addVariable(Variable* v);
     bool hasSymbol(const QString& sym) const;
     Symbol* symbol(const QString& sym) const;
@@ -262,6 +289,7 @@ private:
     Scope* mGlobalScope;
     QStringList mImportScripts;
     QStringList mSubscripts;
+    int mCompletionPos;
 };
 
 

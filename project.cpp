@@ -114,7 +114,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
         QString value = project.value(key).toString();
         QString fname = value;
         QFileInfo info(fname);
-        if (info.isRelative()) {
+        if (!info.isAbsolute()) {
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
@@ -123,7 +123,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             throw BadProject(QString("Model file \"%1\" is not readable").arg(value));
         }
 
-        models[uniqueName(key, models.keys())] = value;
+        models[uniqueName(key, models.keys())] = !value.isEmpty() ? fname : value;
     }
     project.endGroup();
 
@@ -133,7 +133,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
         QString value = project.value(key).toString();
         QString fname = value;
         QFileInfo info(fname);
-        if (info.isRelative()) {
+        if (!info.isAbsolute()) {
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
@@ -141,7 +141,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             throw BadProject(QString("Image file \"%1\" is not readable").arg(value));
         }
 
-        textures[uniqueName(key, textures.keys())] = value;
+        textures[uniqueName(key, textures.keys())] = !value.isEmpty() ? fname : value;
     }
     project.endGroup();
 
@@ -150,7 +150,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
         QString value = project.value(key).toString();
         QString fname = value;
         QFileInfo info(fname);
-        if (info.isRelative()) {
+        if (!info.isAbsolute()) {
             fname = mProjectDir.absoluteFilePath(fname);
             info = QFileInfo(fname);
         }
@@ -158,8 +158,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             throw BadProject(QString("Shader source file \"%1\" is not readable").arg(value));
         }
 
-        mShaders->setText(uniqueName(key, mShaders->itemSample()), value);
-
+        mShaders->setText(uniqueName(key, mShaders->itemSample()), !value.isEmpty() ? fname : value);
     }
     project.endGroup();
 

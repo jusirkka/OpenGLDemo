@@ -1,50 +1,75 @@
 clear color_buffer_bit | depth_buffer_bit
 
-disable cull_face
+enable cull_face
 
-From "get locations" import  a_vertex, a_normal, a_tex
 
-enablevertexattribarray a_vertex
-enablevertexattribarray a_normal
-enablevertexattribarray a_tex
+Execute "draw lights"
 
-vertexattribpointer a_vertex, modelstore, "dode:vertex"
-vertexattribpointer a_normal, modelstore, "dode:normal"
-vertexattribpointer a_tex, modelstore, "dode:tex"
+Shared Text model_name
+Shared Matrix model_matrix, model_colors
+Shared Natural model_tex
+Shared Real model_tex_scale, model_spec_exp
 
-From "init textures" import tex_plaid
+From "init models" import model_array, model_elements
+bindbuffer array_buffer, model_array
+bindbuffer element_array_buffer, model_elements
 
-bindtexture texture_2d, tex_plaid
+From "init textures" import tex_plaid, tex_french, tex_checker
 
-From "get locations" import  u_v_light, u_m_light_colors, u_s_specular
 
-uniform4f u_v_light, vec(1, 1, 1, 0)
-uniformmatrix4f u_m_light_colors, mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 0))
-
-uniform1f u_s_specular, 3
-
-Matrix model
-
-From "get locations" import  u_m_material_colors
-
+model_name = "dodeca"
+model_matrix = scaling(2, 2, 2) * translation(vec(0, 0, 0, 1))
 // ambient, diffuse, specular, unused
-uniformmatrix4f u_m_material_colors, mat(vec(.3, .1, .1, 0), vec(.5, .5, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_colors = mat(vec(.3, .1, .1, 0), vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_tex = tex_french
+model_tex_scale = 4
+model_spec_exp = 5
+Execute "draw model"
 
-From "" import camera, projection
-From "get locations" import u_m_vm, u_m_pvm, u_m_n
+model_name = "teddy"
+model_matrix = translation(vec(0, 0, -10, 1)) * scaling(.3, .3, .3) 
+model_colors = mat(vec(.3, .1, .1, 0), vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_tex = 0
+model_tex_scale = 0.2
+model_spec_exp = 1
+Execute "draw model"
 
-From "" import time
-// model = scaling(0.1, 0.1, 0.1) * translation(vec(0, 0, -25, 1))
-Real s
-s = 1
-model = scaling(s, s, s) * translation(vec(0, 0, 0, 1))
-uniformmatrix4f u_m_vm, camera*model
-uniformmatrix4f u_m_pvm, projection*camera*model
-uniformmatrix4f u_m_n, normal_transform(camera*model)
+disable cull_face
+// enable blend
 
-draw modelstore, "dode", triangles
+// blendfunc dst_alpha, one_minus_dst_alpha
 
+Real sc = 30
+model_name = "square"
 
-// disablevertexattribarray loc_vertex;
-// enablevertexattribarray loc_normal;
-// enablevertexattribarray loc_tex;
+Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
+
+model_matrix =  c * translation(vec(1, 1, -1, 1))
+model_colors = mat(vec(.1, .1, .1, 0), vec(.0, .0, .7, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
+model_tex =  tex_checker
+model_tex_scale = sc / 10
+model_spec_exp = 30
+Execute "draw model"
+
+Matrix flip = rotation(180, vec(1, 1, 0, 0))
+model_matrix = c * rotation(90, vec(1, 0, 0, 0))*flip*translation(vec(1, 1, -1, 1))
+model_colors = mat(vec(.1, .1, .1, 0), vec(.7, .0, .0, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
+Execute "draw model"
+
+model_matrix = c * rotation(-90, vec(0, 1, 0, 0))*flip*translation(vec(1, 1, -1, 1))
+model_colors = mat(vec(.1, .1, .1, 0), vec(.0, .7, .0, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
+Execute "draw model"
+
+enable cull_face
+// disable blend
+
+model_matrix = translation(vec(10, 0, 0, 1)) * scaling(1, 1, 1) 
+model_colors = mat(vec(.3, .1, .1, 0), vec(.5, .6, .0, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_tex = tex_plaid
+model_tex_scale = 2
+model_spec_exp = 3
+From "init models" import pot_array, pot_elements
+bindbuffer array_buffer, pot_array
+bindbuffer element_array_buffer, pot_elements
+Execute "draw pot"
+

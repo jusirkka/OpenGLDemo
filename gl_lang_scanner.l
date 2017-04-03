@@ -78,7 +78,8 @@ import          import
 {import}        return IMPORT;
 
 {id}            {
-                    yylval->v_string = yytext;
+                    yylval->v_identifier.name = yytext;
+                    yylval->v_identifier.pos = yylloc->pos;
                     return ID;
                 }
 

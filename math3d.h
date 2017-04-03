@@ -600,6 +600,13 @@ inline QDataStream& operator<< (QDataStream& os, const Math3D::Matrix4& m) {
     return os;
 }
 
+inline QDebug operator<< (QDebug dbg, const Math3D::Matrix4& m) {
+    for (int y=0; y<4; ++y) {
+        for (int x=0;x<4;++x)
+            dbg << m[x][y];
+    }
+    return dbg;
+}
 
 #endif  // OSTREAM_MATH3D
 

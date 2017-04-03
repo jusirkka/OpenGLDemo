@@ -212,13 +212,13 @@ void Scope::recompileAll() {
     foreach (CodeEditor* ed, mEditors) {
         ed->compile();
         if (!ed->compiler()->ready()) {
-            qDebug() << ed->objectName() << ": compile failed";
+            // qDebug() << ed->objectName() << ": compile failed";
             currFailed.append(ed);
         }
     }
     EditorList prevFailed;
     while (!currFailed.isEmpty() && prevFailed != currFailed) {
-        qDebug() << "num failed = " << currFailed.size();
+        // qDebug() << "num failed = " << currFailed.size();
         prevFailed = currFailed;
         currFailed.clear();
         foreach (CodeEditor* ed, prevFailed) {
@@ -230,5 +230,5 @@ void Scope::recompileAll() {
         }
     }
 
-    qDebug() << "final num failed = " << currFailed.size();
+    // qDebug() << "final num failed = " << currFailed.size();
 }

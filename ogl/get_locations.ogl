@@ -1,7 +1,7 @@
 Shared Natural a_vertex, a_normal, a_tex
 Shared Natural u_t_img, u_m_n, u_m_vm, u_m_pvm, u_v_light
 Shared Natural u_m_material_colors, u_m_light_colors
-Shared Natural u_s_specular, u_s_scale
+Shared Natural u_s_shininess, u_s_scale
 
 From "create prog" import prog
 
@@ -13,7 +13,7 @@ u_m_pvm = getuniformlocation(prog, "pvm_matrix")
 u_v_light = getuniformlocation(prog, "light")
 u_m_material_colors = getuniformlocation(prog, "material_colors")
 u_m_light_colors = getuniformlocation(prog, "light_colors")
-u_s_specular = getuniformlocation(prog, "specular")
+u_s_shininess = getuniformlocation(prog, "shininess")
 u_t_img = getuniformlocation(prog, "img")
 u_s_scale = getuniformlocation(prog, "scale")
 

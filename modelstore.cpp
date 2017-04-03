@@ -232,7 +232,7 @@ void ModelStore::parseModelData(const QString& path) {
 
     // gen missing tex coords
     if (mTexCoords.isEmpty()) {
-        qDebug() << "gen tex" << path;
+        // qDebug() << "gen tex" << path;
         for (int i = 0; i < mVertices.size(); ++i) {
             // (x,y,z) -> (x,y)
             mVertices[i].t = mVertices[i].v;
@@ -242,7 +242,7 @@ void ModelStore::parseModelData(const QString& path) {
 
     // gen missing normals
     if (mNormals.isEmpty()) {
-        qDebug() << "gen normals" << path;
+        // qDebug() << "gen normals" << path;
         QVector<Vector4> normalSum(mVertices.size(), Vector4());
         QVector<int> faceCount(mVertices.size(), 0);
         int numFaces = mIndices.size() / 3; // they are triangles

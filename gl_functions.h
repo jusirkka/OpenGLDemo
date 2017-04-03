@@ -1091,7 +1091,50 @@ public:
 };
 
 
+class BlendFunc: public GLProc {
 
+public:
+
+    BlendFunc(Demo::GLWidget* p): GLProc("blendfunc", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint src =  vals[start].value<int>();
+        GLuint dst =  vals[start + 1].value<int>();
+        glBlendFunc(src, dst);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(BlendFunc)
+
+    ~BlendFunc() {}
+};
+
+
+class BlendEquation: public GLProc {
+
+public:
+
+    BlendEquation(Demo::GLWidget* p): GLProc("blendequation", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint mode =  vals[start].value<int>();
+        mParent->glBlendEquation(mode);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(BlendEquation)
+
+    ~BlendEquation() {}
+};
 
 
 class Functions {
@@ -1142,6 +1185,8 @@ public:
         contents.append(new DeleteTexture(p));
         contents.append(new TexParameter(p));
         contents.append(new TexImage2D(p));
+        contents.append(new BlendFunc(p));
+        contents.append(new BlendEquation(p));
     }
 };
 
@@ -1225,6 +1270,28 @@ public:
         CONST(UNSIGNED_SHORT_5_6_5);
         CONST(UNSIGNED_SHORT_4_4_4_4);
         CONST(UNSIGNED_SHORT_5_5_5_1);
+        // blend func
+        CONST(CONSTANT_COLOR);
+        CONST(DST_COLOR);
+        CONST(SRC_COLOR);
+        CONST(CONSTANT_ALPHA);
+        CONST(DST_ALPHA);
+        CONST(SRC_ALPHA);
+        CONST(ONE);
+        CONST(ONE_MINUS_SRC_ALPHA);
+        CONST(ONE_MINUS_SRC_COLOR);
+        CONST(ONE_MINUS_CONSTANT_ALPHA);
+        CONST(ONE_MINUS_CONSTANT_COLOR);
+        CONST(ONE_MINUS_DST_ALPHA);
+        CONST(ONE_MINUS_DST_COLOR);
+        CONST(SRC_ALPHA_SATURATE);
+        CONST(ZERO);
+        // blend equation
+        CONST(MAX);
+        CONST(MIN);
+        CONST(FUNC_ADD);
+        CONST(FUNC_SUBTRACT);
+        CONST(FUNC_REVERSE_SUBTRACT);
     }
 
 

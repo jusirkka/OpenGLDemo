@@ -114,6 +114,7 @@ private slots:
     void on_actionAutocompile_toggled(bool on);
     void on_actionCompile_triggered();
     void on_actionCompileProject_triggered();
+    void on_actionComplete_triggered();
 
     void scriptModification_changed(bool edited);
 
