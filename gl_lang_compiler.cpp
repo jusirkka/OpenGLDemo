@@ -19,7 +19,6 @@
 // -----------------------------------------------------------------------
 
 #include <QtGlobal>
-#include "constant.h"
 
 #include "gl_lang_compiler.h"
 #include "gl_lang_runner.h"
@@ -34,6 +33,7 @@
 #include "gl_lang_scanner.h"
 
 #include "scope.h"
+#include "constant.h"
 
 
 const char* Demo::GL::Compiler::explanations[] = {
@@ -85,8 +85,7 @@ Compiler::Compiler(const QString &name, Scope* globalScope, QObject *parent):
     mRunner(new Runner(this)),
     mReady(false),
     mRecompile(false),
-    mGlobalScope(globalScope),
-    mCompletionPos(-1) {
+    mGlobalScope(globalScope) {
 
     setObjectName(name);
 }
@@ -96,11 +95,10 @@ Compiler::Compiler(const QString &name, Scope* globalScope, QObject *parent):
 
 
 
-void Compiler::compile(const QString& script, int completionPos) {
+void Compiler::compile(const QString& script) {
     reset();
     gl_lang_lex_init(&mScanner);
     mSource = script;
-    mCompletionPos = completionPos;
     // ensure that the source ends with newlines
     YY_BUFFER_STATE buf = gl_lang__scan_string(mSource.append("\n\n").toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
@@ -140,44 +138,12 @@ void Compiler::createError(const QString &item, Error err) {
     mError = CompileError(detail, loc->row, loc->col, loc->pos);
 }
 
-static void addCompletion(QStringList& c, const QString& symbol, const QString& candidate) {
-    if (symbol.startsWith(candidate)) c.append(symbol);
-}
-
-bool Compiler::createCompletion(const IdentifierType &id, unsigned mask) {
-
-
-    if (mCompletionPos < id.pos) return false;
-    if (mCompletionPos > id.pos + id.name.length()) return false;
-
-    qDebug() << "Completion:" << id.name << id.pos << mCompletionPos;
-
-    QStringList completions;
-
-    QList<SymbolIterator> its;
-    its << SymbolIterator(mGlobalScope->symbols()) << SymbolIterator(mSymbols);
-    foreach (SymbolIterator it, its) {
-        while (it.hasNext()) {
-            it.next();
-            if (dynamic_cast<Variable*>(it.value()) && (mask & CompleteVariables)) {
-                addCompletion(completions, it.value()->name(), id.name);
-            } else if (dynamic_cast<Function*>(it.value()) && (mask & CompleteFunctions)) {
-                addCompletion(completions, it.value()->name(), id.name);
-            } else if (dynamic_cast<Constant*>(it.value()) && (mask & CompleteConstants)) {
-                addCompletion(completions, it.value()->name(), id.name);
-            }
-        }
-    }
-
-    if (completions.isEmpty()) return false;
-
-    mError = CompileError(completions);
-    return true;
+bool Compiler::createCompletion(const IdentifierType&, unsigned) {
+    return false; // noop
 }
 
 Compiler::~Compiler() {
     qDeleteAll(mSymbols);
-    gl_lang_lex_destroy(mScanner);
 }
 
 void Compiler::compileLater() {
@@ -339,9 +305,4 @@ void Compiler::pushBackImmed(Math3D::Real constVal) {
 
 void Compiler::pushBackImmed(const QVariant& constVal) {
     mCurrImmed.append(constVal);
-}
-
-
-void gl_lang_error(LocationType*, Compiler* c, yyscan_t, const char*msg) {
-    c->createError(msg, Compiler::numerrors);
 }

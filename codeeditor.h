@@ -61,6 +61,7 @@ namespace Demo {
 
 namespace GL {
 class Compiler;
+class Completer;
 }
 
 class Project;
@@ -129,8 +130,8 @@ private:
     int mRunErrorPos;
     Highlight* mHighlight;
     GL::Compiler* mCompiler;
+    GL::Completer* mCompleter;
     QString mPath;
-    QCompleter* mCompleter;
 };
 
 

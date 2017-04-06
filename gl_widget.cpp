@@ -25,7 +25,7 @@ GLWidget::GLWidget(QWidget *parent):
     mDim(500),
     mMover(new Mover(this)),
     mNear(1),
-    mFar(80)
+    mFar(500)
 {
 
     mTime = 0;

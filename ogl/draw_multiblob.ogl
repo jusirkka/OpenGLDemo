@@ -20,7 +20,7 @@ From "init textures" import tex_plaid, tex_french, tex_checker
 model_name = "dodeca"
 model_matrix = scaling(2, 2, 2) * translation(vec(0, 0, 0, 1))
 // ambient, diffuse, specular, unused
-model_colors = mat(vec(.3, .1, .1, 0), vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_colors = mat(vec(.3, .1, .1, 0),vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = tex_french
 model_tex_scale = 4
 model_spec_exp = 5
@@ -39,7 +39,7 @@ disable cull_face
 
 // blendfunc dst_alpha, one_minus_dst_alpha
 
-Real sc = 30
+Real sc = 50
 model_name = "square"
 
 Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))

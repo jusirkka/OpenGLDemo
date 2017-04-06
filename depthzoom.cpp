@@ -6,7 +6,7 @@ Demo::DepthZoom::DepthZoom(QWidget* p):
     QWidget(p),
     mUI(new Ui::DepthZoom),
     mN(1),
-    mF(80)
+    mF(500)
 {
     mUI->setupUi(this);
     mUI->farValue->setText(QString("%1").arg((double) mF, 0, 'f', 1, QChar('0')));

@@ -31,7 +31,9 @@ SOURCES += main.cpp\
     symbol.cpp \
     variable.cpp \
     textfilestore.cpp \
-    depthzoom.cpp
+    depthzoom.cpp \
+    gl_lang_completer.cpp \
+    gl_lang_parser_interface.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -58,7 +60,9 @@ HEADERS  += mainwindow.h \
     scriptselector.h \
     scope.h \
     textfilestore.h \
-    depthzoom.h
+    depthzoom.h \
+    gl_lang_completer.h \
+    gl_lang_parser_interface.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

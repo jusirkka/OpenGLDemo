@@ -22,25 +22,12 @@
 #ifndef GL_LANG_COMPILER_H
 #define GL_LANG_COMPILER_H
 
-#include "symbol.h"
-#include "variable.h"
-#include "function.h"
+#include "gl_lang_parser_interface.h"
 
-#include "math3d.h"
-
-#include <QString>
 #include <QVector>
 #include <QMap>
-#include <QVariant>
 #include <QtDebug>
 
-#define GL_LANG_LTYPE Demo::GL::LocationType
-#define GL_LANG_STYPE Demo::GL::ValueType
-
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
-#endif
 
 namespace Demo {
 
@@ -51,33 +38,6 @@ namespace GL {
 class Widget;
 class Runner;
 
-class LocationType {
-public:
-    int row;
-    int col;
-    int pos;
-    int prev_col;
-    int prev_pos;
-};
-
-class IdentifierType {
-public:
-    QString name;
-    int pos; // for autocompletion
-};
-
-class ValueType {
-public:
-    bool v_bool;
-    Math3D::Integer v_int;
-    Math3D::Real v_real;
-    QChar v_char;
-    QString v_string;
-    IdentifierType v_identifier;
-    QStringList v_string_list;
-    Symbol::TypeList v_int_list;
-};
-
 
 class CompileError {
 
@@ -87,14 +47,6 @@ public:
         erow(row),
         ecol(col),
         epos(pos)
-    {}
-
-    CompileError(const QStringList& completions):
-        emsg(""),
-        erow(0),
-        ecol(0),
-        epos(0),
-        mCompletions(completions)
     {}
 
     CompileError():
@@ -108,7 +60,6 @@ public:
     int row() const {return erow;}
     int col() const {return ecol;}
     int pos() const {return epos;}
-    const QStringList& completions() const {return mCompletions;}
 
 private:
 
@@ -116,13 +67,12 @@ private:
     int erow;
     int ecol;
     int epos;
-    QStringList mCompletions;
 
 };
 
 
 
-class Compiler: public QObject {
+class Compiler: public QObject, public Parser {
 
     Q_OBJECT
 
@@ -160,50 +110,10 @@ public:
 
 public:
 
-    enum Error {
-        declared,
-        notdeclared,
-        notvariable,
-        assincompatible,
-        incompatibletypes,
-        expectedinteger,
-        expectedintegerorreal,
-        notfunction,
-        wrongargs,
-        incompatibleargs,
-        notvarorconst,
-        expectedmatrix,
-        expectedvectorormatrix,
-        wrongcomps,
-        duplicate,
-        notavariable,
-        notasharedvariable,
-        notarealvariable,
-        notavectorvariable,
-        notamatrixvariable,
-        notatextvariable,
-        notaintegervariable,
-        expectedarithmetictype,
-        nottext,
-        assimported,
-        notimported,
-        scriptnotfound,
-        expectedtextadd,
-        numerrors
-    };
-
-    static const unsigned CompleteFunctions = 0x01;
-    static const unsigned CompleteVariables = 0x02;
-    static const unsigned CompleteConstants = 0x04;
-    static const unsigned CompleteAll =       0x07;
-
-
-
-
     Compiler(const QString& name, Scope* globalScope, QObject* parent = 0);
 
     // GL interface
-    void compile(const QString& script, int completionPos = -1);
+    void compile(const QString& script);
     bool ready() const;
     void run();
 
@@ -221,31 +131,15 @@ public:
     bool hasSymbol(const QString& sym) const;
     Symbol* symbol(const QString& sym) const;
     bool isImported(const Variable* var) const;
-    const QStringList& subscripts() const;
     bool isExported(const QString& v, const QString& script) const;
     void addImported(const QString& v, const QString& script);
-    const VariableMap& exports() const;
     bool isScript(const QString& name) const;
     void addSubscript(const QString& name);
 
+    const QStringList& subscripts() const;
+    const VariableMap& exports() const;
+
     ~Compiler();
-
-
-    // codes
-    enum Codes {
-        cImmed, cAdd, cSub, cMul, cDiv, cEqual, cNEqual, cLess, cLessOrEq,
-        cGreater, cGreaterOrEq, cAnd, cOr, cNot, cFun, cVar, cTake, cNeg,
-        cGuard, cBOr, cBAnd
-    };
-
-    // LR types
-    enum LRTypes {
-        cII, cIS, cIV, cIM, cIT,
-        cSI, cSS, cSV, cSM, cST,
-        cVI, cVS, cVV, cVM, cVT,
-        cMI, cMS, cMV, cMM, cMT,
-        cTI, cTS, cTV, cTM, cTT
-    };
 
 
 public slots:
@@ -289,29 +183,10 @@ private:
     Scope* mGlobalScope;
     QStringList mImportScripts;
     QStringList mSubscripts;
-    int mCompletionPos;
 };
 
 
 }} // namespace Demo::GL
 
 
-#define YYLLOC_DEFAULT(Current, Rhs, N) do if (N) {\
-    (Current).row = YYRHSLOC (Rhs, 1).row;\
-    (Current).col = YYRHSLOC (Rhs, 1).col;\
-    (Current).prev_col = YYRHSLOC (Rhs, 1).prev_col;\
-    (Current).pos = YYRHSLOC (Rhs, 1).pos;\
-    (Current).prev_pos = YYRHSLOC (Rhs, 1).prev_pos;\
-    } else {\
-    (Current).row = YYRHSLOC (Rhs, 0).row;\
-    (Current).col = YYRHSLOC (Rhs, 0).col;\
-    (Current).prev_col = YYRHSLOC (Rhs, 0).prev_col;\
-    (Current).pos = YYRHSLOC (Rhs, 0).pos;\
-    (Current).prev_pos = YYRHSLOC (Rhs, 0).prev_pos;\
-    } while (0)
-
-void gl_lang_error(Demo::GL::LocationType*, Demo::GL::Compiler*, yyscan_t, const char*);
-
-
-
-#endif // DEMO_PARSER_H
+#endif

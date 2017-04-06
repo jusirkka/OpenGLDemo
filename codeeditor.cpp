@@ -41,12 +41,11 @@
 #include <QtGui>
 #include <QTimer>
 #include <QToolTip>
-#include <QCompleter>
-#include <QAbstractItemView>
 #include <QScrollBar>
 
 #include "codeeditor.h"
 #include "gl_lang_compiler.h"
+#include "gl_lang_completer.h"
 #include "gl_lang_runner.h"
 #include "project.h"
 #include "highlight.h"
@@ -59,7 +58,7 @@ CodeEditor::CodeEditor(const QString& name, Scope* globals, Project* owner):
     mCompileErrorPos(-1),
     mRunErrorPos(-1),
     mCompiler(new GL::Compiler(name, globals, this)),
-    mCompleter(new QCompleter(this))
+    mCompleter(new GL::Completer(globals, this))
 {
     setObjectName(name);
 
@@ -83,9 +82,6 @@ CodeEditor::CodeEditor(const QString& name, Scope* globals, Project* owner):
     setLineWrapMode(QPlainTextEdit::NoWrap);
 
     mHighlight = new Highlight(mCompiler, document());
-
-    mCompleter->setWidget(this);
-    connect(mCompleter, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
 
     setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 }
@@ -274,19 +270,46 @@ void CodeEditor::resizeEvent(QResizeEvent* e) {
 }
 
 void CodeEditor::keyPressEvent(QKeyEvent* e) {
-    if (mCompleter->popup()->isVisible()) {
-        e->ignore();
+    if (!mCompleter->popupVisible()) {
+        QPlainTextEdit::keyPressEvent(e);
         return;
     }
+
+    switch (e->key()) {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+    case Qt::Key_Escape:
+    case Qt::Key_Tab:
+    case Qt::Key_Backtab:
+        e->ignore();
+        return; // let the completer do default behavior
+    default:
+        break;
+    }
+
+    const bool supportedMod = e->modifiers() & Qt::ShiftModifier;
+    if (supportedMod && e->text().isEmpty()) return;
+
+    bool unsupportedMod = (e->modifiers() != Qt::NoModifier) && !supportedMod;
+
+    if (unsupportedMod || e->text().isEmpty()) {
+        mCompleter->hidePopup();
+        return;
+    }
+
     QPlainTextEdit::keyPressEvent(e);
+
+    QTextCursor tc = textCursor();
+    tc.select(QTextCursor::WordUnderCursor);
+    mCompleter->updatePopup(tc.selectedText());
 }
 
 void CodeEditor::complete() {
-    if (mCompleter->popup()->isVisible()) return;
+    if (mCompleter->popupVisible()) return;
     QStringList completions;
     try {
-        mCompiler->compile(toPlainText(), textCursor().position());
-    } catch (GL::CompileError& e) {
+        mCompleter->complete(toPlainText(), textCursor().position());
+    } catch (GL::CompleterException& e) {
         completions = e.completions();
     }
 
@@ -297,11 +320,7 @@ void CodeEditor::complete() {
         return;
     }
 
-    mCompleter->setModel(new QStringListModel(completions, mCompleter));
-
-    QRect cr = cursorRect();
-    cr.setWidth(mCompleter->popup()->sizeHintForColumn(0) + mCompleter->popup()->verticalScrollBar()->sizeHint().width());
-    mCompleter->complete(cr);
+    mCompleter->popupCompletions(completions);
 }
 
 void CodeEditor::insertCompletion(QString item) {
@@ -315,6 +334,7 @@ void CodeEditor::insertCompletion(QString item) {
         qDebug() << "insertCompletion #2" << tc.selectedText();
         if (!item.startsWith(tc.selectedText())) {
             qDebug() << "insertCompletion: no can do";
+            return;
         }
     }
     tc.insertText(item);

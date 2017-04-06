@@ -1,7 +1,7 @@
 %{
 
 
-#include "gl_lang_compiler.h"
+#include "gl_lang_parser_interface.h"
 #include "constant.h"
 
 int gl_lang_lex(Demo::GL::ValueType*, Demo::GL::LocationType*, yyscan_t);
@@ -11,10 +11,10 @@ unsigned int operation(int);
 unsigned int lrtype(int, int);
 
 using namespace Demo;
-using Demo::GL::Compiler;
+using Demo::GL::Parser;
 
-#define HANDLE_ERROR(item, errnum) {compiler->createError(item, errnum); YYERROR;}
-#define HANDLE_COMPLETION(var, mask) {if (compiler->createCompletion(var, mask)) YYERROR;}
+#define HANDLE_ERROR(item, errnum) {parser->createError(item, errnum); YYERROR;}
+#define HANDLE_COMPLETION(var, mask) {if (parser->createCompletion(var, mask)) YYERROR;}
 
 %}
 
@@ -25,7 +25,7 @@ using Demo::GL::Compiler;
 %define api.pure full
 %define api.value.type {Demo::GL::ValueType}
 
-%parse-param {Demo::GL::Compiler* compiler}
+%parse-param {Demo::GL::Parser* parser}
 %parse-param {yyscan_t scanner}
 %lex-param {yyscan_t scanner}
 
@@ -94,10 +94,10 @@ import_from:
     FROM BEGINSTRING text ENDSTRING IMPORT variables
         {
             foreach (QString name, $6) {
-                if (compiler->isExported(name, $3)) {
-                    compiler->addImported(name, $3);
+                if (parser->isExported(name, $3)) {
+                    parser->addImported(name, $3);
                 } else {
-                    HANDLE_ERROR(name, Compiler::notimported);
+                    HANDLE_ERROR(name, Parser::notimported);
                 }
             }
         }
@@ -108,7 +108,7 @@ declaration:
     shared typename variables
         {
             foreach (QString name, $3) {
-                compiler->addVariable(Var::Create($2, name, $1));
+                parser->addVariable(Var::Create($2, name, $1));
             }
         }
     ;
@@ -141,8 +141,8 @@ typename:
 variables:
     ID
         {
-            if (compiler->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Compiler::declared);
+            if (parser->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Parser::declared);
             }
             $$.clear();
             $$.append($1.name);
@@ -150,11 +150,11 @@ variables:
     |
     variables ',' ID
         {
-            if (compiler->hasSymbol($3.name)) {
-                HANDLE_ERROR($3.name, Compiler::declared);
+            if (parser->hasSymbol($3.name)) {
+                HANDLE_ERROR($3.name, Parser::declared);
             }
             if ($$.contains($3.name)) {
-                HANDLE_ERROR($3.name, Compiler::duplicate);
+                HANDLE_ERROR($3.name, Parser::duplicate);
             }
             $$.append($3.name);
         }
@@ -165,21 +165,21 @@ variables:
 assignment:
     ID rhs
         {
-            HANDLE_COMPLETION($1, Compiler::CompleteVariables);
-            if (!compiler->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Compiler::notdeclared);
+            HANDLE_COMPLETION($1, Parser::CompleteVariables);
+            if (!parser->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Parser::notdeclared);
             }
-            Variable* var = dynamic_cast<Variable*>(compiler->symbol($1.name));
+            Variable* var = dynamic_cast<Variable*>(parser->symbol($1.name));
             if (!var) {
-                HANDLE_ERROR($1.name, Compiler::notvariable);
+                HANDLE_ERROR($1.name, Parser::notvariable);
             }
-            if (compiler->isImported(var)) {
-                HANDLE_ERROR($1.name, Compiler::assimported);
+            if (parser->isImported(var)) {
+                HANDLE_ERROR($1.name, Parser::assimported);
             }
             if (var->type() == $2 || (var->type() == Symbol::Real && $2 == Symbol::Integer)) {
-                compiler->setCode(var->name());
+                parser->setCode(var->name());
             } else {
-                HANDLE_ERROR($1.name, Compiler::assincompatible);
+                HANDLE_ERROR($1.name, Parser::assincompatible);
             }
         }
     ;
@@ -187,15 +187,15 @@ assignment:
 declaration_and_assignment:
     shared typename ID rhs
         {
-            if (compiler->hasSymbol($3.name)) {
-                HANDLE_ERROR($3.name, Compiler::declared);
+            if (parser->hasSymbol($3.name)) {
+                HANDLE_ERROR($3.name, Parser::declared);
             }
             Variable* var = Var::Create($2, $3.name, $1);
             if (var->type() == $4 || (var->type() == Symbol::Real && $4 == Symbol::Integer)) {
-                compiler->addVariable(var);
-                compiler->setCode(var->name());
+                parser->addVariable(var);
+                parser->setCode(var->name());
             } else {
-                HANDLE_ERROR($3.name, Compiler::assincompatible);
+                HANDLE_ERROR($3.name, Parser::assincompatible);
             }
         }
     ;
@@ -203,49 +203,53 @@ declaration_and_assignment:
 statement:
     ID parameters
         {
-            HANDLE_COMPLETION($1, Compiler::CompleteFunctions);
-            if (!compiler->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Compiler::notdeclared);
+            if ($2.isEmpty()) {
+                HANDLE_COMPLETION($1, Parser::CompleteFunctions|Parser::CompleteVariables);
+            } else {
+                HANDLE_COMPLETION($1, Parser::CompleteFunctions);
             }
-            Function* fun = dynamic_cast<Function*>(compiler->symbol($1.name));
+            if (!parser->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Parser::notdeclared);
+            }
+            Function* fun = dynamic_cast<Function*>(parser->symbol($1.name));
             if (!fun) {
-                HANDLE_ERROR($1.name, Compiler::notfunction);
+                HANDLE_ERROR($1.name, Parser::notfunction);
             }
             $$ = fun->type();
             if (fun->argTypes().size() != $2.size()) {
-                HANDLE_ERROR($1.name, Compiler::wrongargs);
+                HANDLE_ERROR($1.name, Parser::wrongargs);
             }
             // check the argument types
             for (int i = 0; i < fun->argTypes().size(); ++i) {
                 int te = $2[i]; int ta = fun->argTypes()[i];
                 if (ta == te) continue;
                 if (ta == Symbol::Real && te == Symbol::Integer) continue;
-                HANDLE_ERROR($1.name, Compiler::incompatibleargs);
+                HANDLE_ERROR($1.name, Parser::incompatibleargs);
             }
-            // qDebug() << "Code:" << opname(Compiler::cFun) << fun->name() << fun->index();
-            compiler->pushBack(Compiler::cFun, 0, 1 - $2.size());
-            compiler->pushBack(fun->index(), 0, 0);
+            // qDebug() << "Code:" << opname(Parser::cFun) << fun->name() << fun->index();
+            parser->pushBack(Parser::cFun, 0, 1 - $2.size());
+            parser->pushBack(fun->index(), 0, 0);
 
-            compiler->setJump();
-            compiler->setCode("gl_result");
+            parser->setJump();
+            parser->setCode("gl_result");
         }
     |
     EXECUTE BEGINSTRING text ENDSTRING
         {
-            if (compiler->isScript($3)) {
-                compiler->addSubscript($3);
+            if (parser->isScript($3)) {
+                parser->addSubscript($3);
             } else {
-                HANDLE_ERROR($3, Compiler::scriptnotfound);
+                HANDLE_ERROR($3, Parser::scriptnotfound);
             }
-            compiler->pushBack(Compiler::cImmed, 0, 1);
-            compiler->pushBackImmed($3);
+            parser->pushBack(Parser::cImmed, 0, 1);
+            parser->pushBackImmed($3);
 
-            Function* dispatcher = dynamic_cast<Function*>(compiler->symbol("dispatch"));
-            compiler->pushBack(Compiler::cFun, 0, 0);
-            compiler->pushBack(dispatcher->index(), 0, 0);
+            Function* dispatcher = dynamic_cast<Function*>(parser->symbol("dispatch"));
+            parser->pushBack(Parser::cFun, 0, 0);
+            parser->pushBack(dispatcher->index(), 0, 0);
 
-            compiler->setJump();
-            compiler->setCode("gl_result");
+            parser->setJump();
+            parser->setCode("gl_result");
         }
     ;
 
@@ -266,7 +270,7 @@ cond_rhs_seq:
             if (($1 != $2) &&
                 ($1 != Symbol::Integer || $2 != Symbol::Real) &&
                 ($1 != Symbol::Real || $2 != Symbol::Integer)) {
-                HANDLE_ERROR("assignment", Compiler::incompatibletypes);
+                HANDLE_ERROR("assignment", Parser::incompatibletypes);
             }
             if ($2 == Symbol::Real) {
                 $$ = $2;
@@ -285,7 +289,7 @@ simple_rhs:
     '=' expression
         {
             $$ = $2;
-            compiler->setJump();
+            parser->setJump();
         }
     ;
 
@@ -293,15 +297,15 @@ guard:
     '|' expression
         {
             if ($2 != Symbol::Integer) {
-                HANDLE_ERROR("guard", Compiler::expectedinteger);
+                HANDLE_ERROR("guard", Parser::expectedinteger);
             }
             $$ = $2;
             // qDebug() << "Code: GUARD";
-            compiler->pushBack(Compiler::cGuard, 0, 0);
+            parser->pushBack(Parser::cGuard, 0, 0);
             // reserve space for code and immed jumps
-            compiler->pushBack(0, 0, 0);
-            compiler->pushBack(0, 0, 0);
-            compiler->initJump();
+            parser->pushBack(0, 0, 0);
+            parser->pushBack(0, 0, 0);
+            parser->initJump();
         }
     ;
 
@@ -317,17 +321,17 @@ expression:
     terms rel_op terms
         {
             if (($1 == Symbol::Text || $3 == Symbol::Text)) {
-                HANDLE_ERROR(opname($2), Compiler::expectedintegerorreal);
+                HANDLE_ERROR(opname($2), Parser::expectedintegerorreal);
             }
             if (($1 != Symbol::Integer || $3 != Symbol::Integer) &&
                 ($1 != Symbol::Real || $3 != Symbol::Integer) &&
                 ($1 != Symbol::Integer || $3 != Symbol::Real) &&
                 ($1 != Symbol::Real || $3 != Symbol::Real)) {
-                HANDLE_ERROR(opname($2), Compiler::expectedintegerorreal);
+                HANDLE_ERROR(opname($2), Parser::expectedintegerorreal);
             }
             $$ = Symbol::Integer;
             // qDebug() << "Code:" << opname($2);
-            compiler->pushBack(operation($2), lrtype($1, $3), -1);
+            parser->pushBack(operation($2), lrtype($1, $3), -1);
         }
     |
     terms eq_op terms
@@ -335,11 +339,11 @@ expression:
             if (($1 != $3) &&
                 ($1 != Symbol::Integer || $3 != Symbol::Real) &&
                 ($1 != Symbol::Real || $3 != Symbol::Integer)) {
-                HANDLE_ERROR(opname($2), Compiler::incompatibletypes);
+                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
             }
             $$ = Symbol::Integer;
             // qDebug() << "Code:" << opname($2);
-            compiler->pushBack(operation($2), lrtype($1, $3), -1);
+            parser->pushBack(operation($2), lrtype($1, $3), -1);
         }
     ;
 
@@ -358,26 +362,26 @@ terms:
     terms or_op factors
         {
             if ($1 != Symbol::Integer || $3 != Symbol::Integer) {
-                HANDLE_ERROR(opname($2), Compiler::expectedinteger);
+                HANDLE_ERROR(opname($2), Parser::expectedinteger);
             }
             $$ = Symbol::Integer;
             // qDebug() << "Code:" << opname($2);
-            compiler->pushBack(operation($2), lrtype($1, $3), -1);
+            parser->pushBack(operation($2), lrtype($1, $3), -1);
         }
     |
     terms add_op factors
         {
             if ($1 == Symbol::Text && $3 == Symbol::Text) {
                 if ($2 != '+') {
-                    HANDLE_ERROR(opname($2), Compiler::expectedtextadd);
+                    HANDLE_ERROR(opname($2), Parser::expectedtextadd);
                 }
             } else if ($1 == Symbol::Text || $3 == Symbol::Text) {
-                HANDLE_ERROR(opname($2), Compiler::expectedarithmetictype);
+                HANDLE_ERROR(opname($2), Parser::expectedarithmetictype);
             }
             if (($1 != $3) &&
                 ($1 != Symbol::Integer || $3 != Symbol::Real) &&
                 ($1 != Symbol::Real || $3 != Symbol::Integer)) {
-                HANDLE_ERROR(opname($2), Compiler::incompatibletypes);
+                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
             }
             if ($1 == Symbol::Real || $3 == Symbol::Real) {
                 $$ = Symbol::Real;
@@ -385,7 +389,7 @@ terms:
                 $$ = $1;
             }
             // qDebug() << "Code:" << opname($2);
-            compiler->pushBack(operation($2), lrtype($1, $3), -1);
+            parser->pushBack(operation($2), lrtype($1, $3), -1);
         }
     ;
 
@@ -404,21 +408,21 @@ factors:
     factors and_op factor
         {
             if ($1 != Symbol::Integer || $3 != Symbol::Integer) {
-                HANDLE_ERROR(opname($2), Compiler::expectedinteger);
+                HANDLE_ERROR(opname($2), Parser::expectedinteger);
             }
             $$ = Symbol::Integer;
             // qDebug() << "Code:" << opname($2);
-            compiler->pushBack(operation($2), lrtype($1, $3), -1);
+            parser->pushBack(operation($2), lrtype($1, $3), -1);
         }
     |
     factors '*' factor
         {
             if (($1 == Symbol::Text || $3 == Symbol::Text)) {
-                HANDLE_ERROR(opname($2), Compiler::expectedarithmetictype);
+                HANDLE_ERROR(opname($2), Parser::expectedarithmetictype);
             }
             if (($1 == Symbol::Vector && $3 == Symbol::Vector) ||
                 ($1 == Symbol::Vector && $3 == Symbol::Matrix)) {
-                HANDLE_ERROR(opname($2), Compiler::incompatibletypes);
+                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
             }
             if ($1 == Symbol::Vector || $3 == Symbol::Vector) {
                 $$ = Symbol::Vector;
@@ -430,17 +434,17 @@ factors:
                 $$ = Symbol::Integer;
             }
             // qDebug() << "Code:" << opname($2);
-            compiler->pushBack(operation($2), lrtype($1, $3), -1);
+            parser->pushBack(operation($2), lrtype($1, $3), -1);
         }
     |
     factors '/' factor
         {
             if (($1 == Symbol::Text || $3 == Symbol::Text)) {
-                HANDLE_ERROR(opname($2), Compiler::expectedarithmetictype);
+                HANDLE_ERROR(opname($2), Parser::expectedarithmetictype);
             }
             if ($1 == Symbol::Vector || $3 == Symbol::Vector ||
                 $1 == Symbol::Matrix || $3 == Symbol::Matrix) {
-                HANDLE_ERROR(opname($2), Compiler::incompatibletypes);
+                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
             }
             if ($1 == Symbol::Real || $3 == Symbol::Real) {
                 $$ = Symbol::Real;
@@ -448,7 +452,7 @@ factors:
                 $$ = Symbol::Integer;
             }
             // qDebug() << "Code:" << opname($2);
-            compiler->pushBack(operation($2), lrtype($1, $3), -1);
+            parser->pushBack(operation($2), lrtype($1, $3), -1);
         }
     ;
 
@@ -460,11 +464,11 @@ factor:
     '!' factor
         {
             if ($2 != Symbol::Integer) {
-                HANDLE_ERROR(opname($1), Compiler::expectedinteger);
+                HANDLE_ERROR(opname($1), Parser::expectedinteger);
             }
             $$ = Symbol::Integer;
             // qDebug() << "Code:" << opname($1);
-            compiler->pushBack(operation($1), 0, 0);
+            parser->pushBack(operation($1), 0, 0);
         }
     |
     sign factor
@@ -472,7 +476,7 @@ factor:
             $$ = $2;
             // qDebug() << "Code: (unary)" << opname($1);
             if ($1 == '-') {
-                compiler->pushBack(Compiler::cNeg, lrtype(Symbol::Integer, $2), 0);
+                parser->pushBack(Parser::cNeg, lrtype(Symbol::Integer, $2), 0);
             }
         }
     ;
@@ -490,13 +494,13 @@ paren_or_variable_comp:
     paren_or_variable_comp  '[' expression ']'
         {
             if ($3 != Symbol::Integer) {
-                HANDLE_ERROR("[]", Compiler::expectedinteger);
+                HANDLE_ERROR("[]", Parser::expectedinteger);
             }
             if ($1 != Symbol::Matrix && $1 != Symbol::Vector) {
-                HANDLE_ERROR("expression", Compiler::expectedvectorormatrix);
+                HANDLE_ERROR("expression", Parser::expectedvectorormatrix);
             }
             // qDebug() << "Code: TAKE";
-            compiler->pushBack(Compiler::cTake, lrtype($1, Symbol::Integer), -1);
+            parser->pushBack(Parser::cTake, lrtype($1, Symbol::Integer), -1);
             if ($1 == Symbol::Matrix) {
                 $$ = Symbol::Vector;
             } else {
@@ -515,24 +519,24 @@ literal:
         {
             $$ = Symbol::Integer;
             // qDebug() << "Code: INT" << $1;
-            compiler->pushBack(Compiler::cImmed, 0, 1);
-            compiler->pushBackImmed($1);
+            parser->pushBack(Parser::cImmed, 0, 1);
+            parser->pushBackImmed($1);
         }
     |
     FLOAT
         {
             $$ = Symbol::Real;
             // qDebug() << "Code: SCA" << $1;
-            compiler->pushBack(Compiler::cImmed, 0, 1);
-            compiler->pushBackImmed($1);
+            parser->pushBack(Parser::cImmed, 0, 1);
+            parser->pushBackImmed($1);
         }
     |
     BEGINSTRING text ENDSTRING
         {
             $$ = Symbol::Text;
             // qDebug() << "Code: TXT" << *$2;
-            compiler->pushBack(Compiler::cImmed, 0, 1);
-            compiler->pushBackImmed($2);
+            parser->pushBack(Parser::cImmed, 0, 1);
+            parser->pushBackImmed($2);
         }
     ;
 
@@ -565,24 +569,24 @@ paren_or_variable:
     |
     ID
         {
-            HANDLE_COMPLETION($1, Compiler::CompleteAll);
-            if (!compiler->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Compiler::notdeclared);
+            HANDLE_COMPLETION($1, Parser::CompleteAll);
+            if (!parser->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Parser::notdeclared);
             }
-            Symbol* sym = compiler->symbol($1.name);
+            Symbol* sym = parser->symbol($1.name);
             Variable* var = dynamic_cast<Variable*>(sym);
             if (var) {
-                // qDebug() << "Code:" << opname(Compiler::cVar) << sym->name();
-                compiler->pushBack(Compiler::cVar, 0, 1);
-                compiler->pushBack(var->index(), 0, 0);
+                // qDebug() << "Code:" << opname(Parser::cVar) << sym->name();
+                parser->pushBack(Parser::cVar, 0, 1);
+                parser->pushBack(var->index(), 0, 0);
             } else { // constant
                 Constant* con = dynamic_cast<Constant*>(sym);
                 if (con) {
-                    // qDebug() << "Code:" << opname(Compiler::cImmed) << sym->name();
-                    compiler->pushBack(Compiler::cImmed, 0, 1);
-                    compiler->pushBackImmed(con->value());
+                    // qDebug() << "Code:" << opname(Parser::cImmed) << sym->name();
+                    parser->pushBack(Parser::cImmed, 0, 1);
+                    parser->pushBackImmed(con->value());
                 } else {
-                    HANDLE_ERROR($1.name, Compiler::notvarorconst);
+                    HANDLE_ERROR($1.name, Parser::notvarorconst);
                 }
             }
             $$ = sym->type();
@@ -592,28 +596,28 @@ paren_or_variable:
 function_call:
     ID '(' parameters ')'
         {
-            HANDLE_COMPLETION($1, Compiler::CompleteFunctions);
-            if (!compiler->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Compiler::notdeclared);
+            HANDLE_COMPLETION($1, Parser::CompleteFunctions);
+            if (!parser->hasSymbol($1.name)) {
+                HANDLE_ERROR($1.name, Parser::notdeclared);
             }
-            Function* fun = dynamic_cast<Function*>(compiler->symbol($1.name));
+            Function* fun = dynamic_cast<Function*>(parser->symbol($1.name));
             if (!fun) {
-                HANDLE_ERROR($1.name, Compiler::notfunction);
+                HANDLE_ERROR($1.name, Parser::notfunction);
             }
             $$ = fun->type();
             if (fun->argTypes().size() != $3.size()) {
-                HANDLE_ERROR($1.name, Compiler::wrongargs);
+                HANDLE_ERROR($1.name, Parser::wrongargs);
             }
             // check the argument types
             for (int i = 0; i < fun->argTypes().size(); ++i) {
                 int te = $3[i]; int ta = fun->argTypes()[i];
                 if (ta == te) continue;
                 if (ta == Symbol::Real && te == Symbol::Integer) continue;
-                HANDLE_ERROR($1.name, Compiler::incompatibleargs);
+                HANDLE_ERROR($1.name, Parser::incompatibleargs);
             }
-            // qDebug() << "Code:" << opname(Compiler::cFun) << fun->name();
-            compiler->pushBack(Compiler::cFun, 0, 1 - $3.size());
-            compiler->pushBack(fun->index(), 0, 0);
+            // qDebug() << "Code:" << opname(Parser::cFun) << fun->name();
+            parser->pushBack(Parser::cFun, 0, 1 - $3.size());
+            parser->pushBack(fun->index(), 0, 0);
         }
     ;
 
@@ -658,9 +662,9 @@ const char* opname(int op) {
         {GE, "\">=\""},
         {OR, "\"||\""},
         {AND, "\"&&\""},
-        {Compiler::cVar, "VAR"},
-        {Compiler::cImmed, "CON"},
-        {Compiler::cFun, "FUN"},
+        {Parser::cVar, "VAR"},
+        {Parser::cImmed, "CON"},
+        {Parser::cFun, "FUN"},
         {-1, ""}
     };
     for (int i = 0; names[i].op != -1; i++) {
@@ -674,21 +678,21 @@ const char* opname(int op) {
 unsigned int operation(int op) {
 
     struct {int op; unsigned int parserOp;} ops[] = {
-        {'<', Compiler::cLess},
-        {'>', Compiler::cGreater},
-        {'+', Compiler::cAdd},
-        {'-', Compiler::cSub},
-        {'*', Compiler::cMul},
-        {'/', Compiler::cDiv},
-        {'!', Compiler::cNot},
-        {BOR, Compiler::cBOr},
-        {BAND, Compiler::cBAnd},
-        {EQ, Compiler::cEqual},
-        {NE, Compiler::cNEqual},
-        {LE, Compiler::cLessOrEq},
-        {GE, Compiler::cGreaterOrEq},
-        {OR, Compiler::cOr},
-        {AND, Compiler::cAnd},
+        {'<', Parser::cLess},
+        {'>', Parser::cGreater},
+        {'+', Parser::cAdd},
+        {'-', Parser::cSub},
+        {'*', Parser::cMul},
+        {'/', Parser::cDiv},
+        {'!', Parser::cNot},
+        {BOR, Parser::cBOr},
+        {BAND, Parser::cBAnd},
+        {EQ, Parser::cEqual},
+        {NE, Parser::cNEqual},
+        {LE, Parser::cLessOrEq},
+        {GE, Parser::cGreaterOrEq},
+        {OR, Parser::cOr},
+        {AND, Parser::cAnd},
         {0, 0}
     };
     for (int i = 0; ops[i].op != 0; i++) {
@@ -702,31 +706,31 @@ unsigned int operation(int op) {
 unsigned int lrtype(int l, int r) {
 
     struct {int l; int r; unsigned int lr;} ops[] = {
-        {Symbol::Integer, Symbol::Integer, Compiler::cII},
-        {Symbol::Integer, Symbol::Real, Compiler::cIS},
-        {Symbol::Integer, Symbol::Vector, Compiler::cIV},
-        {Symbol::Integer, Symbol::Matrix, Compiler::cIM},
-        {Symbol::Integer, Symbol::Text, Compiler::cIT},
-        {Symbol::Real, Symbol::Integer, Compiler::cSI},
-        {Symbol::Real, Symbol::Real, Compiler::cSS},
-        {Symbol::Real, Symbol::Vector, Compiler::cSV},
-        {Symbol::Real, Symbol::Matrix, Compiler::cSM},
-        {Symbol::Real, Symbol::Text, Compiler::cST},
-        {Symbol::Vector, Symbol::Integer, Compiler::cVI},
-        {Symbol::Vector, Symbol::Real, Compiler::cVS},
-        {Symbol::Vector, Symbol::Vector, Compiler::cVV},
-        {Symbol::Vector, Symbol::Matrix, Compiler::cVM},
-        {Symbol::Vector, Symbol::Text, Compiler::cVT},
-        {Symbol::Matrix, Symbol::Integer, Compiler::cMI},
-        {Symbol::Matrix, Symbol::Real, Compiler::cMS},
-        {Symbol::Matrix, Symbol::Vector, Compiler::cMV},
-        {Symbol::Matrix, Symbol::Matrix, Compiler::cMM},
-        {Symbol::Matrix, Symbol::Text, Compiler::cMT},
-        {Symbol::Text, Symbol::Integer, Compiler::cTI},
-        {Symbol::Text, Symbol::Real, Compiler::cTS},
-        {Symbol::Text, Symbol::Vector, Compiler::cTV},
-        {Symbol::Text, Symbol::Matrix, Compiler::cTM},
-        {Symbol::Text, Symbol::Text, Compiler::cTT},
+        {Symbol::Integer, Symbol::Integer, Parser::cII},
+        {Symbol::Integer, Symbol::Real, Parser::cIS},
+        {Symbol::Integer, Symbol::Vector, Parser::cIV},
+        {Symbol::Integer, Symbol::Matrix, Parser::cIM},
+        {Symbol::Integer, Symbol::Text, Parser::cIT},
+        {Symbol::Real, Symbol::Integer, Parser::cSI},
+        {Symbol::Real, Symbol::Real, Parser::cSS},
+        {Symbol::Real, Symbol::Vector, Parser::cSV},
+        {Symbol::Real, Symbol::Matrix, Parser::cSM},
+        {Symbol::Real, Symbol::Text, Parser::cST},
+        {Symbol::Vector, Symbol::Integer, Parser::cVI},
+        {Symbol::Vector, Symbol::Real, Parser::cVS},
+        {Symbol::Vector, Symbol::Vector, Parser::cVV},
+        {Symbol::Vector, Symbol::Matrix, Parser::cVM},
+        {Symbol::Vector, Symbol::Text, Parser::cVT},
+        {Symbol::Matrix, Symbol::Integer, Parser::cMI},
+        {Symbol::Matrix, Symbol::Real, Parser::cMS},
+        {Symbol::Matrix, Symbol::Vector, Parser::cMV},
+        {Symbol::Matrix, Symbol::Matrix, Parser::cMM},
+        {Symbol::Matrix, Symbol::Text, Parser::cMT},
+        {Symbol::Text, Symbol::Integer, Parser::cTI},
+        {Symbol::Text, Symbol::Real, Parser::cTS},
+        {Symbol::Text, Symbol::Vector, Parser::cTV},
+        {Symbol::Text, Symbol::Matrix, Parser::cTM},
+        {Symbol::Text, Symbol::Text, Parser::cTT},
         {-1, -1, 0}
     };
     for (int i = 0; ops[i].l != -1; ++i) {
