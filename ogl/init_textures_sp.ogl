@@ -1,0 +1,26 @@
+From "get locations" import u_t_img
+From "create progs" import prog_phong
+
+useprogram prog_phong
+
+activetexture texture0
+uniform1i u_t_img, 0
+
+
+Shared Natural tex_french, tex_plaid, tex_checker
+
+tex_plaid = gentexture()
+bindtexture texture_2d, tex_plaid
+teximage2d texture_2d, 0, rgba, imagestore, "plaid"
+generatemipmap texture_2d
+
+tex_french = gentexture()
+bindtexture texture_2d, tex_french
+teximage2d texture_2d, 0, rgba, imagestore, "french"
+generatemipmap texture_2d
+
+
+tex_checker = gentexture()
+bindtexture texture_2d, tex_checker
+teximage2d texture_2d, 0, rgba, imagestore, "checker"
+generatemipmap texture_2d

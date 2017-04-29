@@ -1,4 +1,13 @@
-- create shadowmap demo
+- implement shadows.c (stencil shadows + reflection)
+- bug: insert asks to save the script first
+- bug: models/textures: duplicates in tree view
+- bug: save project not working properly: scripts not bound to files
+- bug: wrong file bound to a script
 - check & implement demos from web
 - knot drawing utility
 - plugin description/config
+- support wavefront patch objects
+- autosave scripts
+- '/' for line concat
+- select init & draw scripts by name: "init main", "draw main"
+

@@ -1,0 +1,55 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "create progs" import prog_phong, prog_shadow
+From "init textures" import tex_checker, tex_french
+From "" import time
+
+useprogram prog_phong
+
+Real r_light = 5
+Real phi_light = 0.1 * time
+Shared Vector light_direction = vec(r_light * cos(phi_light), r_light * sin(phi_light), 20, 0)
+
+Execute "draw lights"
+
+disable cull_face
+
+Real sc = 50
+Shared Text model_name = "square" // z=1 plane
+
+Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
+
+Shared Matrix model_matrix =  c * translation(vec(1, 1, -0.25, 1))
+
+Shared Vector plane_normal = normal_transform(model_matrix) * vec(0, 0, 1, 1)
+Shared Vector point_in_plane = model_matrix * vec(0, 0, 1, 1)
+
+Shared Matrix model_colors = mat(vec(.1, .1, .1, 0), vec(.0, .0, .7, 0), vec(.2, .2, .2, 0), vec(0, 0, 0, 0))
+Shared Natural model_tex = tex_checker
+Shared Real model_tex_scale = sc / 10
+Shared Real model_spec_exp = 25
+Execute "draw model"
+
+enable cull_face
+
+model_name = "dodeca"
+model_matrix = scaling(2, 2, 2) * translation(vec(0, 0, 0, 1))
+// ambient, diffuse, specular, unused
+model_colors = mat(vec(.3, .1, .1, 0),vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_tex = tex_french
+model_tex_scale = 4
+model_spec_exp = 5
+Execute "draw model"
+
+useprogram prog_shadow
+
+enable blend
+enable polygon_offset_fill
+
+Execute "draw shadow"
+
+disable blend
+disable polygon_offset_fill
+
+
+

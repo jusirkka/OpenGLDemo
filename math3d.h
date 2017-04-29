@@ -452,10 +452,10 @@ inline Vector4 operator* (const Matrix4& m, const Vector4& v) {
 inline Matrix4 operator* (const Matrix4& m1, const Matrix4& m2) {
     Matrix4 m;
     for (int x = 0; x < 4; ++x) for (int y = 0; y < 4; ++y) {
-            m(x)[y] = 0;
-            for (int i = 0; i < 4; ++i) m(x)[y] += m2[x][i] * m1[i][y];
-     }
-     return m;
+        m(x)[y] = 0;
+        for (int i = 0; i < 4; ++i) m(x)[y] += m2[x][i] * m1[i][y];
+    }
+    return m;
 }
 
 // ---------------- (17) ----------------------------------------
@@ -581,30 +581,27 @@ inline bool operator== (const Matrix4& m1, const Matrix4& m2) {
 #include <QDataStream>
 
 inline QDataStream& operator<< (QDataStream& os, const Math3D::Vector4& v) {
-    for (int i=0; i<4; ++i)
-        os << v[i];
+    for (int i=0; i<4; ++i) os << v[i];
     return os;
 }
 
 inline QDataStream& operator>> (QDataStream& os, Math3D::Vector4& v) {
-    for (int i=0; i<4; ++i)
-        os >> v(i);
+    for (int i=0; i<4; ++i) os >> v(i);
     return os;
 }
 
 inline QDataStream& operator<< (QDataStream& os, const Math3D::Matrix4& m) {
-    for (int y=0; y<4; ++y) {
-        for (int x=0;x<4;++x)
-            os << m[x][y];
-    }
+    for (int y=0; y<4; ++y) for (int x=0;x<4;++x) os << m[x][y];
     return os;
 }
 
 inline QDebug operator<< (QDebug dbg, const Math3D::Matrix4& m) {
-    for (int y=0; y<4; ++y) {
-        for (int x=0;x<4;++x)
-            dbg << m[x][y];
-    }
+    for (int y=0; y<4; ++y) for (int x=0;x<4;++x) dbg << m[x][y];
+    return dbg;
+}
+
+inline QDebug operator<< (QDebug dbg, const Math3D::Vector4& v) {
+    for (int i=0; i<4; ++i) dbg << v[i];
     return dbg;
 }
 

@@ -27,7 +27,7 @@ model_spec_exp = 5
 Execute "draw model"
 
 model_name = "teddy"
-model_matrix = translation(vec(0, 0, -10, 1)) * scaling(.3, .3, .3) 
+model_matrix = translation(vec(0, 0, -10, 1)) * scaling(.3, .3, .3)
 model_colors = mat(vec(.3, .1, .1, 0), vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = 0
 model_tex_scale = 0.2
@@ -46,7 +46,7 @@ Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
 
 model_matrix =  c * translation(vec(1, 1, -1, 1))
 model_colors = mat(vec(.1, .1, .1, 0), vec(.0, .0, .7, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
-model_tex =  tex_checker
+model_tex = tex_checker
 model_tex_scale = sc / 10
 model_spec_exp = 30
 Execute "draw model"
@@ -63,7 +63,7 @@ Execute "draw model"
 enable cull_face
 // disable blend
 
-model_matrix = translation(vec(10, 0, 0, 1)) * scaling(1, 1, 1) 
+model_matrix = translation(vec(10, 0, 0, 1)) * scaling(1, 1, 1)
 model_colors = mat(vec(.3, .1, .1, 0), vec(.5, .6, .0, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = tex_plaid
 model_tex_scale = 2

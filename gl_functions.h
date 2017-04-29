@@ -1136,6 +1136,30 @@ public:
     ~BlendEquation() {}
 };
 
+class PolygonOffset: public GLProc {
+
+public:
+
+    PolygonOffset(Demo::GLWidget* p): GLProc("polygonoffset", Symbol::Integer, p) {
+        int argt = Symbol::Real;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Real factor =  vals[start].value<Math3D::Real>();
+        Math3D::Real units =  vals[start + 1].value<Math3D::Real>();
+        // qDebug() << "glPolygonOffset" << depth;
+        glPolygonOffset(factor, units);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(PolygonOffset)
+
+    virtual ~PolygonOffset() {}
+};
+
 
 class Functions {
 
@@ -1187,6 +1211,7 @@ public:
         contents.append(new TexImage2D(p));
         contents.append(new BlendFunc(p));
         contents.append(new BlendEquation(p));
+        contents.append(new PolygonOffset(p));
     }
 };
 

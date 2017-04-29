@@ -1,0 +1,23 @@
+From "get locations" import a_vertex_s
+
+enablevertexattribarray a_vertex_s
+
+From "draw main" import model_name, model_matrix, light_direction, plane_normal, point_in_plane
+
+vertexattribpointer a_vertex_s, modelstore, model_name + ":vertex"
+
+
+
+From "" import camera, projection
+From "get locations" import u_m_pv_s, u_m_m_s, u_v_light_s, u_v_n_s, u_v_p_s
+
+uniformmatrix4f u_m_pv_s, projection*camera
+uniformmatrix4f u_m_m_s, model_matrix
+uniform4f u_v_light_s, light_direction
+uniform4f u_v_n_s, plane_normal
+uniform4f u_v_p_s, point_in_plane
+
+draw modelstore, model_name, triangles
+
+disablevertexattribarray a_vertex_s
+

@@ -16,7 +16,7 @@ bindtexture texture_2d, model_tex
 uniform1f u_s_scale, model_tex_scale
 
 
-From "get locations" import  u_m_material_colors
+From "get locations" import u_m_material_colors
 uniformmatrix4f u_m_material_colors, model_colors
 
 From "" import camera, projection
@@ -29,5 +29,5 @@ uniformmatrix4f u_m_n, normal_transform(camera*model_matrix)
 draw teapot, "", triangles
 
 disablevertexattribarray a_vertex
-enablevertexattribarray a_normal
-enablevertexattribarray a_tex
+disablevertexattribarray a_normal
+disablevertexattribarray a_tex

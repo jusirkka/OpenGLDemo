@@ -1,0 +1,44 @@
+From "get locations" import  u_v_light, u_m_light_colors
+From "" import projection, camera
+From "draw main" import light_direction
+
+Matrix colors = mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
+Matrix model = translation(light_direction)
+
+uniform4f u_v_light, camera*light_direction
+uniformmatrix4f u_m_light_colors, colors
+
+From "init models" import model_array, model_elements
+bindbuffer array_buffer, model_array
+bindbuffer element_array_buffer, model_elements
+
+From "get locations" import  a_vertex, a_normal, a_tex
+
+enablevertexattribarray a_vertex
+enablevertexattribarray a_normal
+enablevertexattribarray a_tex
+
+vertexattribpointer a_vertex, modelstore, "dodeca:vertex"
+vertexattribpointer a_normal, modelstore, "dodeca:normal"
+vertexattribpointer a_tex, modelstore, "dodeca:tex"
+
+From "get locations" import u_s_scale
+bindtexture texture_2d, 0
+uniform1f u_s_scale, 1
+
+From "get locations" import  u_m_material_colors, u_s_shininess
+uniformmatrix4f u_m_material_colors, colors
+uniform1f u_s_shininess, 30
+
+From "get locations" import u_m_vm, u_m_pvm, u_m_n
+uniformmatrix4f u_m_vm, camera*model
+uniformmatrix4f u_m_pvm, projection*camera*model
+uniformmatrix4f u_m_n, normal_transform(camera*model)
+
+draw modelstore, "dodeca", triangles
+
+disablevertexattribarray a_vertex
+enablevertexattribarray a_normal
+enablevertexattribarray a_tex
+
+
