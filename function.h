@@ -277,6 +277,36 @@ public:
     ~NormalT() {}
 };
 
+class Refl: public Function {
+
+public:
+
+    Refl(): Function("reflection", Symbol::Matrix) {
+        int argt = Symbol::Vector;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        Vector4 normal = vals[start].value<Vector4>();
+        normal.normalize3();
+        Vector4 point = vals[start + 1].value<Vector4>();
+        Matrix4 t;
+        t.setTranslation(2 * Math3D::dot3(point, normal) * normal);
+        Matrix4 r;
+        r.setIdentity();
+        r = r - 2 * Math3D::projection3(normal);
+        // qDebug() << "Refl";
+        mValue.setValue(t * r);
+        return mValue;
+    }
+
+    CLONEMETHOD(Refl)
+
+    ~Refl() {}
+};
+
+
 class Functions {
 
 public:
@@ -293,6 +323,7 @@ public:
         contents.append(new Sc());
         contents.append(new Norm());
         contents.append(new NormalT());
+        contents.append(new Refl());
         FUN(sin);
         FUN(cos);
         FUN(tan);

@@ -2,7 +2,7 @@
 #define demo_glwidget_h
 
 #include <QGLWidget>
-#include <QGLFunctions>
+#include <QOpenGLExtraFunctions>
 #include <QDebug>
 #include "math3d.h"
 #include "gl_lang_compiler.h"
@@ -22,7 +22,7 @@ namespace GL {
 
 class Variable;
 
-class GLWidget : public QGLWidget, public QGLFunctions {
+class GLWidget : public QGLWidget, public QOpenGLExtraFunctions {
 
     Q_OBJECT
 

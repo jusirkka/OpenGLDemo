@@ -150,6 +150,7 @@ inline Matrix4 operator- (const Matrix4&); // (21)
 
 inline bool operator== (const Matrix4&, const Matrix4&); // (25)
 
+inline Matrix4 projection3(const Vector4&); // (26)
 
 // --------------------------------------------------------------
 // Vector4 Implementation
@@ -574,6 +575,15 @@ inline bool operator== (const Matrix4& m1, const Matrix4& m2) {
     return true;
 }
 
+// ---------------- (26) ----------------------------------------
+inline Matrix4 projection3(const Vector4& v) {
+    Vector4 n = v.normalized3();
+    Matrix4 m;
+    m.setIdentity();
+    for (int x = 0; x < 3; ++x) for (int y = 0; y < 3; ++y) m(x)[y] = n[x]*n[y];
+
+    return m;
+}
 
 } // namespace Math3D
 

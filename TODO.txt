@@ -1,4 +1,4 @@
-- implement shadows.c (stencil shadows + reflection)
+- bug: abort when opening a new project (index out of range)
 - bug: insert asks to save the script first
 - bug: models/textures: duplicates in tree view
 - bug: save project not working properly: scripts not bound to files

@@ -20,7 +20,7 @@ using namespace Demo;
 
 GLWidget::GLWidget(QWidget *parent):
     QGLWidget(parent),
-    QGLFunctions(),
+    QOpenGLExtraFunctions(),
     mInitialized(false),
     mDim(500),
     mMover(new Mover(this)),
@@ -37,6 +37,9 @@ GLWidget::GLWidget(QWidget *parent):
     mAnimTimer = new QTimer(this);
     mAnimTimer->setInterval(1000/25);
     connect(mAnimTimer, SIGNAL(timeout()), this, SLOT(anim()));
+
+    makeCurrent();
+    initializeOpenGLFunctions();
 }
 
 void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
@@ -131,7 +134,7 @@ Demo::GLWidget::~GLWidget() {
 
 
 void Demo::GLWidget::initializeGL() {
-    initializeGLFunctions();
+    initializeOpenGLFunctions();
     defaults();
     emit init();
 }

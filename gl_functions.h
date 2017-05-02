@@ -79,18 +79,18 @@ private:
 };
 
 
-class Enable: public Demo::Function {
+class Enable: public GLProc {
 
 public:
 
-    Enable(): Function("enable", Symbol::Integer) {
+    Enable(Demo::GLWidget* p): GLProc("enable", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         // qDebug() << "glEnable" << vals[start].value<Math3D::Integer>();
-        ::glEnable(vals[start].value<Math3D::Integer>());
+        mParent->glEnable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
         return mValue;
     }
@@ -100,18 +100,18 @@ public:
     ~Enable() {}
 };
 
-class Disable: public Demo::Function {
+class Disable: public GLProc {
 
 public:
 
-    Disable(): Function("disable", Symbol::Integer) {
+    Disable(Demo::GLWidget* p): GLProc("disable", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
         // qDebug() << "glDisable" << vals[start].value<Math3D::Integer>();
-        ::glDisable(vals[start].value<Math3D::Integer>());
+        mParent->glDisable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
         return mValue;
     }
@@ -132,8 +132,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Real near =  vals[start].value<Math3D::Real>();
-        Math3D::Real far =  vals[start + 1].value<Math3D::Real>();
+        Math3D::Real near = vals[start].value<Math3D::Real>();
+        Math3D::Real far = vals[start + 1].value<Math3D::Real>();
         // qDebug() << "glDepthRange" << near << far;
         mParent->glDepthRangef(near, far);
         mValue.setValue(0);
@@ -145,19 +145,19 @@ public:
     ~DepthRange() {}
 };
 
-class LineWidth: public Demo::Function {
+class LineWidth: public GLProc {
 
 public:
 
-    LineWidth(): Function("linewidth", Symbol::Integer) {
+    LineWidth(Demo::GLWidget* p): GLProc("linewidth", Symbol::Integer, p) {
         int argt = Symbol::Real;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Real w =  vals[start].value<Math3D::Real>();
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Real w = vals[start].value<Math3D::Real>();
         // qDebug() << "glLineWidth" << w;
-        ::glLineWidth(w);
+        mParent->glLineWidth(w);
         mValue.setValue(0);
         return mValue;
     }
@@ -167,19 +167,19 @@ public:
     ~LineWidth() {}
 };
 
-class FrontFace: public Demo::Function {
+class FrontFace: public GLProc {
 
 public:
 
-    FrontFace(): Function("frontface", Symbol::Integer) {
+    FrontFace(Demo::GLWidget* p): GLProc("frontface", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Integer face =  vals[start].value<Math3D::Integer>();
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Integer face = vals[start].value<Math3D::Integer>();
         // qDebug() << "glFrontFace" << face;
-        ::glFrontFace(face);
+        mParent->glFrontFace(face);
         mValue.setValue(0);
         return mValue;
     }
@@ -189,19 +189,19 @@ public:
     ~FrontFace() {}
 };
 
-class CullFace: public Demo::Function {
+class CullFace: public GLProc {
 
 public:
 
-    CullFace(): Function("cullface", Symbol::Integer) {
+    CullFace(Demo::GLWidget* p): GLProc("cullface", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Integer face =  vals[start].value<Math3D::Integer>();
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Integer face = vals[start].value<Math3D::Integer>();
         // qDebug() << "glCullFace" << face;
-        ::glCullFace(face);
+        mParent->glCullFace(face);
         mValue.setValue(0);
         return mValue;
     }
@@ -211,11 +211,11 @@ public:
     ~CullFace() {}
 };
 
-class ColorMask: public Demo::Function {
+class ColorMask: public GLProc {
 
 public:
 
-    ColorMask(): Function("colormask", Symbol::Integer) {
+    ColorMask(Demo::GLWidget* p): GLProc("colormask", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
         mArgTypes.append(argt);
@@ -223,13 +223,13 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Integer r =  vals[start].value<Math3D::Integer>();
-        Math3D::Integer g =  vals[start+1].value<Math3D::Integer>();
-        Math3D::Integer b =  vals[start+2].value<Math3D::Integer>();
-        Math3D::Integer a =  vals[start+3].value<Math3D::Integer>();
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Integer r = vals[start].value<Math3D::Integer>();
+        Math3D::Integer g = vals[start+1].value<Math3D::Integer>();
+        Math3D::Integer b = vals[start+2].value<Math3D::Integer>();
+        Math3D::Integer a = vals[start+3].value<Math3D::Integer>();
         // qDebug() << "glColorMask" << r << g << b << a;
-        ::glColorMask(r, g, b, a);
+        mParent->glColorMask(r, g, b, a);
         mValue.setValue(0);
         return mValue;
     }
@@ -239,19 +239,19 @@ public:
     ~ColorMask() {}
 };
 
-class DepthMask: public Demo::Function {
+class DepthMask: public GLProc {
 
 public:
 
-    DepthMask(): Function("depthmask", Symbol::Integer) {
+    DepthMask(Demo::GLWidget* p): GLProc("depthmask", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Integer d =  vals[start].value<Math3D::Integer>();
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Integer d = vals[start].value<Math3D::Integer>();
         // qDebug() << "glDepthMask" << d;
-        ::glDepthMask(d);
+        mParent->glDepthMask(d);
         mValue.setValue(0);
         return mValue;
     }
@@ -261,19 +261,19 @@ public:
     ~DepthMask() {}
 };
 
-class Clear: public Demo::Function {
+class Clear: public GLProc {
 
 public:
 
-    Clear(): Function("clear", Symbol::Integer) {
+    Clear(Demo::GLWidget* p): GLProc("clear", Symbol::Integer, p) {
         int argt = Symbol::Integer;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Integer mask =  vals[start].value<Math3D::Integer>();
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Math3D::Integer mask = vals[start].value<Math3D::Integer>();
         // qDebug() << "glClear" << mask;
-        ::glClear(mask);
+        mParent->glClear(mask);
         mValue.setValue(0);
         return mValue;
     }
@@ -283,19 +283,19 @@ public:
     ~Clear() {}
 };
 
-class ClearColor: public Demo::Function {
+class ClearColor: public GLProc {
 
 public:
 
-    ClearColor(): Function("clearcolor", Symbol::Integer) {
+    ClearColor(Demo::GLWidget* p): GLProc("clearcolor", Symbol::Integer, p) {
         int argt = Symbol::Vector;
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
-        Vector4 color =  vals[start].value<Vector4>();
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Vector4 color = vals[start].value<Vector4>();
         // qDebug() << "glClearColor" << color[X] << color[Y] << color[Z] << color[W];
-        ::glClearColor(color[X], color[Y], color[Z], color[W]);
+        mParent->glClearColor(color[X], color[Y], color[Z], color[W]);
         mValue.setValue(0);
         return mValue;
     }
@@ -315,7 +315,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Real depth =  vals[start].value<Math3D::Real>();
+        Math3D::Real depth = vals[start].value<Math3D::Real>();
         // qDebug() << "glClearDepth" << depth;
         mParent->glClearDepthf(depth);
         mValue.setValue(0);
@@ -337,7 +337,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int type =  vals[start].value<int>();
+        int type = vals[start].value<int>();
         // qDebug() << "glCreateShader" << type;
         int ret = mParent->glCreateShader(type);
         mParent->resources().append(ret);
@@ -362,7 +362,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint name =  vals[start].value<int>();
+        GLuint name = vals[start].value<int>();
         QByteArray bytes = vals[start+1].value<QString>().toLatin1();
         const char *data = bytes.constData();
         // qDebug() << "glShaderSource" << name;
@@ -397,7 +397,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int name =  vals[start].value<int>();
+        int name = vals[start].value<int>();
         // qDebug() << "glDeleteShader" << name;
         mParent->glDeleteShader(name);
         mParent->resources().removeOne(name);
@@ -442,8 +442,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int prog =  vals[start].value<int>();
-        int shader =  vals[start+1].value<int>();
+        int prog = vals[start].value<int>();
+        int shader = vals[start+1].value<int>();
         // qDebug() << "glAttachShader" << prog << shader;
         mParent->glAttachShader(prog, shader);
         mValue.setValue(0);
@@ -467,8 +467,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int prog =  vals[start].value<int>();
-        int shader =  vals[start+1].value<int>();
+        int prog = vals[start].value<int>();
+        int shader = vals[start+1].value<int>();
         // qDebug() << "glDetachShader" << prog << shader;
         mParent->glDetachShader(prog, shader);
         mValue.setValue(0);
@@ -491,7 +491,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int name =  vals[start].value<int>();
+        int name = vals[start].value<int>();
         // qDebug() << "glLinkProgram" << name;
         mParent->glLinkProgram(name);
         int status;
@@ -523,7 +523,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int name =  vals[start].value<int>();
+        int name = vals[start].value<int>();
         // qDebug() << "glUseProgram" << name;
         mParent->glUseProgram(name);
         mValue.setValue(0);
@@ -546,7 +546,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int name =  vals[start].value<int>();
+        int name = vals[start].value<int>();
         // qDebug() << "glDeleteProgram" << name;
         mParent->glDeleteProgram(name);
         mParent->resources().removeOne(name);
@@ -571,8 +571,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int prog =  vals[start].value<int>();
-        QString name =  vals[start+1].value<QString>();
+        int prog = vals[start].value<int>();
+        QString name = vals[start+1].value<QString>();
         // qDebug() << "glGetAttribLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
@@ -599,8 +599,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int prog =  vals[start].value<int>();
-        QString name =  vals[start+1].value<QString>();
+        int prog = vals[start].value<int>();
+        QString name = vals[start+1].value<QString>();
         // qDebug() << "glGetUniformLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
@@ -627,8 +627,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int loc =  vals[start].value<int>();
-        Math3D::Real uniform =  vals[start+1].value<Math3D::Real>();
+        int loc = vals[start].value<int>();
+        Math3D::Real uniform = vals[start+1].value<Math3D::Real>();
         // qDebug() << "glUniform1f" << loc << uniform;
         mParent->glUniform1f(loc, uniform);
         mValue.setValue(0);
@@ -651,8 +651,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int loc =  vals[start].value<int>();
-        int uniform =  vals[start+1].value<int>();
+        int loc = vals[start].value<int>();
+        int uniform = vals[start+1].value<int>();
         // qDebug() << "glUniform1i" << loc << uniform;
         mParent->glUniform1i(loc, uniform);
         mValue.setValue(0);
@@ -676,8 +676,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int loc =  vals[start].value<int>();
-        Vector4 uni =  vals[start+1].value<Vector4>();
+        int loc = vals[start].value<int>();
+        Vector4 uni = vals[start+1].value<Vector4>();
         // qDebug() << "glUniform4f" << loc << uni[X] << uni[Y] << uni[Z] << uni[W];
         mParent->glUniform4f(loc, uni[X], uni[Y], uni[Z], uni[W]);
         mValue.setValue(0);
@@ -702,8 +702,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        int loc =  vals[start].value<int>();
-        Matrix4 uni =  vals[start+1].value<Matrix4>();
+        int loc = vals[start].value<int>();
+        Matrix4 uni = vals[start+1].value<Matrix4>();
         // qDebug() << "glUniformMatrix4F" << loc;
         mParent->glUniformMatrix4fv(loc, 1, GL_FALSE, uni.readArray());
         mValue.setValue(0);
@@ -745,7 +745,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint name =  vals[start].value<int>();
+        GLuint name = vals[start].value<int>();
         // qDebug() << "glDeleteBuffers" << name;
         mParent->glDeleteBuffers(1, &name);
         mParent->buffers().removeOne(name);
@@ -770,8 +770,8 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint target =  vals[start].value<int>();
-        GLuint buffer =  vals[start+1].value<int>();
+        GLuint target = vals[start].value<int>();
+        GLuint buffer = vals[start+1].value<int>();
         // qDebug() << "glBindBuffer" << target << buffer;
         mParent->glBindBuffer(target, buffer);
         mValue.setValue(0);
@@ -795,9 +795,9 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint target =  vals[start].value<int>();
+        GLuint target = vals[start].value<int>();
         const Blob& blob = mParent->blob(vals[start+1].value<int>());
-        GLuint usage =  vals[start+2].value<int>();
+        GLuint usage = vals[start+2].value<int>();
         // qDebug() << "glBufferData" << target << blob.name() << usage;
         mParent->glBufferData(target, blob.bytelen(target), blob.bytes(target), usage);
         mValue.setValue(0);
@@ -822,9 +822,9 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint index =  vals[start].value<int>();
-        const Blob& blob =  mParent->blob(vals[start+1].value<int>());
-        QString attr =  vals[start+2].value<QString>();
+        GLuint index = vals[start].value<int>();
+        const Blob& blob = mParent->blob(vals[start+1].value<int>());
+        QString attr = vals[start+2].value<QString>();
         // qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
         const BlobSpec& spec = blob.spec(attr);
         // qDebug() << "VertexAttribPointer" << spec.size << spec.offset;
@@ -857,9 +857,9 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        const Blob& blob =  mParent->blob(vals[start].value<int>());
-        QString attr =  vals[start + 1].value<QString>();
-        GLuint mode =  vals[start + 2].value<int>();
+        const Blob& blob = mParent->blob(vals[start].value<int>());
+        QString attr = vals[start + 1].value<QString>();
+        GLuint mode = vals[start + 2].value<int>();
         // qDebug() << "Draw" << blob.name() << attr << mode;
         blob.draw(mode, attr);
         mValue.setValue(0);
@@ -882,7 +882,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint name =  vals[start].value<int>();
+        GLuint name = vals[start].value<int>();
         // qDebug() << "glEnableVertexAttribArray" << name;
         mParent->glEnableVertexAttribArray(name);
         mValue.setValue(0);
@@ -904,7 +904,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint name =  vals[start].value<int>();
+        GLuint name = vals[start].value<int>();
         // qDebug() << "glDisableVertexAttribArray" << name;
         mParent->glDisableVertexAttribArray(name);
         mValue.setValue(0);
@@ -927,7 +927,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint name =  vals[start].value<int>();
+        GLuint name = vals[start].value<int>();
         // qDebug() << "ActiveTexture" << name;
         mParent->glActiveTexture(name);
         mValue.setValue(0);
@@ -950,7 +950,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint target =  vals[start].value<int>();
+        GLuint target = vals[start].value<int>();
         // qDebug() << "GenerateMipMap" << target;
         mParent->glGenerateMipmap(target);
         mValue.setValue(0);
@@ -973,10 +973,10 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint target =  vals[start].value<int>();
-        GLuint texture =  vals[start + 1].value<int>();
+        GLuint target = vals[start].value<int>();
+        GLuint texture = vals[start + 1].value<int>();
         // qDebug() << "BindTexture" << target << texture;
-        glBindTexture(target, texture);
+        mParent->glBindTexture(target, texture);
         mValue.setValue(0);
         return mValue;
     }
@@ -995,7 +995,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>&, int) {
         GLuint ret;
         // qDebug() << "GenTexture";
-        glGenTextures(1, &ret);
+        mParent->glGenTextures(1, &ret);
         mParent->textures().append(ret);
         mValue.setValue(ret);
         return mValue;
@@ -1016,9 +1016,9 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint name =  vals[start].value<int>();
+        GLuint name = vals[start].value<int>();
         // qDebug() << "DeleteTexture" << name;
-        glDeleteTextures(1, &name);
+        mParent->glDeleteTextures(1, &name);
         mParent->textures().removeOne(name);
         mValue.setValue(0);
         return mValue;
@@ -1042,11 +1042,11 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint target =  vals[start].value<int>();
-        GLuint name =  vals[start + 1].value<int>();
-        GLuint param =  vals[start + 2].value<int>();
+        GLuint target = vals[start].value<int>();
+        GLuint name = vals[start + 1].value<int>();
+        GLuint param = vals[start + 2].value<int>();
         // qDebug() << "TexParameter" << target << name << param;
-        glTexParameteri(target, name, param);
+        mParent->glTexParameteri(target, name, param);
         mValue.setValue(0);
         return mValue;
     }
@@ -1072,15 +1072,15 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint target =  vals[start].value<int>();
-        GLuint level =  vals[start + 1].value<int>();
-        GLuint iformat =  vals[start + 2].value<int>();
-        const TexBlob& blob =  mParent->texBlob(vals[start + 3].value<int>());
-        QString attr =  vals[start + 4].value<QString>();
+        GLuint target = vals[start].value<int>();
+        GLuint level = vals[start + 1].value<int>();
+        GLuint iformat = vals[start + 2].value<int>();
+        const TexBlob& blob = mParent->texBlob(vals[start + 3].value<int>());
+        QString attr = vals[start + 4].value<QString>();
         // qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
         const TexBlobSpec spec = blob.spec(attr);
         // qDebug() << "TexImage2D" << spec.width << spec.height << spec.type;
-        glTexImage2D(target, level, iformat, spec.width, spec.height, 0, spec.format, spec.type, blob.data(attr));
+        mParent->glTexImage2D(target, level, iformat, spec.width, spec.height, 0, spec.format, spec.type, blob.data(attr));
         mValue.setValue(0);
         return mValue;
     }
@@ -1102,9 +1102,9 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint src =  vals[start].value<int>();
-        GLuint dst =  vals[start + 1].value<int>();
-        glBlendFunc(src, dst);
+        GLuint src = vals[start].value<int>();
+        GLuint dst = vals[start + 1].value<int>();
+        mParent->glBlendFunc(src, dst);
         mValue.setValue(0);
         return mValue;
     }
@@ -1125,7 +1125,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        GLuint mode =  vals[start].value<int>();
+        GLuint mode = vals[start].value<int>();
         mParent->glBlendEquation(mode);
         mValue.setValue(0);
         return mValue;
@@ -1134,6 +1134,27 @@ public:
     CLONEMETHOD(BlendEquation)
 
     ~BlendEquation() {}
+};
+
+class BlendColor: public GLProc {
+
+public:
+
+    BlendColor(Demo::GLWidget* p): GLProc("blendcolor", Symbol::Integer, p) {
+        int argt = Symbol::Vector;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        Vector4 c = vals[start].value<Vector4>();
+        mParent->glBlendColor(c[X], c[Y], c[Z], c[W]);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(BlendColor)
+
+    ~BlendColor() {}
 };
 
 class PolygonOffset: public GLProc {
@@ -1147,10 +1168,10 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
-        Math3D::Real factor =  vals[start].value<Math3D::Real>();
-        Math3D::Real units =  vals[start + 1].value<Math3D::Real>();
+        Math3D::Real factor = vals[start].value<Math3D::Real>();
+        Math3D::Real units = vals[start + 1].value<Math3D::Real>();
         // qDebug() << "glPolygonOffset" << depth;
-        glPolygonOffset(factor, units);
+        mParent->glPolygonOffset(factor, units);
         mValue.setValue(0);
         return mValue;
     }
@@ -1158,6 +1179,78 @@ public:
     CLONEMETHOD(PolygonOffset)
 
     virtual ~PolygonOffset() {}
+};
+
+class DepthFunc: public GLProc {
+
+public:
+
+    DepthFunc(Demo::GLWidget* p): GLProc("depthfunc", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint func = vals[start].value<int>();
+        mParent->glDepthFunc(func);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(DepthFunc)
+
+    ~DepthFunc() {}
+};
+
+
+class StencilFunc: public GLProc {
+
+public:
+
+    StencilFunc(Demo::GLWidget* p): GLProc("stencilfunc", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint func = vals[start].value<int>();
+        GLint ref = vals[start+1].value<int>();
+        GLuint mask = vals[start+2].value<int>();
+        mParent->glStencilFunc(func, ref, mask);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(StencilFunc)
+
+    ~StencilFunc() {}
+};
+
+class StencilOp: public GLProc {
+
+public:
+
+    StencilOp(Demo::GLWidget* p): GLProc("stencilop", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+        GLuint sfail = vals[start].value<int>();
+        GLuint dpfail = vals[start+1].value<int>();
+        GLuint dppass = vals[start+2].value<int>();
+        mParent->glStencilOp(sfail, dpfail, dppass);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(StencilOp)
+
+    ~StencilOp() {}
 };
 
 
@@ -1168,16 +1261,16 @@ public:
     QList<Demo::Symbol*> contents;
 
     Functions(Demo::GLWidget* p) {
-        contents.append(new Enable());
-        contents.append(new Disable());
+        contents.append(new Enable(p));
+        contents.append(new Disable(p));
         contents.append(new DepthRange(p));
-        contents.append(new LineWidth());
-        contents.append(new FrontFace());
-        contents.append(new CullFace());
-        contents.append(new ColorMask());
-        contents.append(new DepthMask());
-        contents.append(new Clear());
-        contents.append(new ClearColor());
+        contents.append(new LineWidth(p));
+        contents.append(new FrontFace(p));
+        contents.append(new CullFace(p));
+        contents.append(new ColorMask(p));
+        contents.append(new DepthMask(p));
+        contents.append(new Clear(p));
+        contents.append(new ClearColor(p));
         contents.append(new ClearDepth(p));
         contents.append(new CreateShader(p));
         contents.append(new CompileShader(p));
@@ -1211,7 +1304,11 @@ public:
         contents.append(new TexImage2D(p));
         contents.append(new BlendFunc(p));
         contents.append(new BlendEquation(p));
+        contents.append(new BlendColor(p));
         contents.append(new PolygonOffset(p));
+        contents.append(new DepthFunc(p));
+        contents.append(new StencilFunc(p));
+        contents.append(new StencilOp(p));
     }
 };
 
@@ -1317,6 +1414,24 @@ public:
         CONST(FUNC_ADD);
         CONST(FUNC_SUBTRACT);
         CONST(FUNC_REVERSE_SUBTRACT);
+        // stencil & depth funcs
+        CONST(ALWAYS);
+        CONST(EQUAL);
+        CONST(GEQUAL);
+        CONST(GREATER);
+        CONST(LEQUAL);
+        CONST(LESS);
+        CONST(NEVER);
+        CONST(NOTEQUAL);
+        // stencil op
+        CONST(DECR);
+        CONST(DECR_WRAP);
+        CONST(INCR);
+        CONST(INCR_WRAP);
+        CONST(INVERT);
+        CONST(KEEP);
+        CONST(REPLACE);
+        // ZERO already defined (blend func);
     }
 
 

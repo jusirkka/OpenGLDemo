@@ -224,7 +224,7 @@ void Scope::recompileAll() {
         foreach (CodeEditor* ed, prevFailed) {
             ed->compile();
             if (!ed->compiler()->ready()) {
-                qDebug() << ed->objectName() << ": compile failed";
+                // qDebug() << ed->objectName() << ": compile failed";
                 currFailed.append(ed);
             }
         }

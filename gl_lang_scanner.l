@@ -35,6 +35,9 @@ float_2         \.{unum}([Ee]{num})?
 float_3         {unum}[Ee]{num}
 float           {float_1}|{float_2}|{float_3}
 
+hex             [0-9a-fA-F]
+numh            0x{hex}+
+
 singlechar      [\*\/+\-\^=<>\!,\(\)\[\]]
 
 id              [A-Za-z_][A-Za-z0-9_]*
@@ -54,8 +57,9 @@ import          import
 %%
 
 
-{float}                 yylval->v_real = strtod(yytext, NULL); return FLOAT;
-{unum}                  yylval->v_int = (int) strtol(yytext, NULL, 0); return INT;
+{numh}         yylval->v_int = (Math3D::Integer) strtol(yytext, NULL, 16); return INT;
+{float}        yylval->v_real = strtod(yytext, NULL); return FLOAT;
+{unum}         yylval->v_int = (Math3D::Integer) strtol(yytext, NULL, 0); return INT;
 
 "=="            yylval->v_int = EQ; return EQ;
 "!="            yylval->v_int = NE; return NE;

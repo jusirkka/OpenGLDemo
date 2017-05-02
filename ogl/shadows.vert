@@ -7,8 +7,8 @@ uniform vec4 plane_normal;
 uniform vec4 point_in_plane;
 
 void main(void) {
-    // 1 - alpha / alpha blending
-    gl_FrontColor = vec4(0, 0, 0, 0.3);
+    gl_FrontColor = vec4(0, 0, 0, 0);
+    gl_BackColor = vec4(0, 0, 0, 0);
 
     vec3 L = normalize(light_direction.xyz);
     vec3 N = normalize(plane_normal.xyz);
