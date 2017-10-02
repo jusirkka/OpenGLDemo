@@ -47,7 +47,7 @@ MainWindow::MainWindow(const QString& project):
     QMainWindow(),
     mLastDir(QDir::home()),
     mUI(new Ui::MainWindow),
-    mProject(0),
+    mProject(nullptr),
     mProjectModified(false),
     mNumEdits(0)
 {
@@ -55,7 +55,7 @@ MainWindow::MainWindow(const QString& project):
 
     mUI->setupUi(this);
 
-    FPSControl* fps = new FPSControl();
+    auto fps = new FPSControl();
     connect(fps, SIGNAL(valueChanged(int)), this, SLOT(fps_changed(int)));
     mUI->demoBar->addWidget(fps);
 
@@ -64,7 +64,7 @@ MainWindow::MainWindow(const QString& project):
     connect(mScripts, SIGNAL(drawScriptChanged(const QString&)), this, SLOT(drawScript_changed(const QString&)));
     mUI->demoBar->addWidget(mScripts);
 
-    DepthZoom* zoom = new DepthZoom();
+    auto zoom = new DepthZoom();
     connect(zoom, SIGNAL(valuesChanged(float, float)), this, SLOT(depthChanged(float, float)));
     mUI->demoBar->addWidget(zoom);
 
@@ -185,7 +185,7 @@ void Demo::MainWindow::on_actionNew_triggered() {
 void Demo::MainWindow::on_actionInsert_triggered() {
     // Just be sure, insert shouldn't be active in other cases
     if (mSelectedIndex.parent() != mProject->itemParent(Project::ScriptItems)) return;
-    QString title("Insert constents of a script");
+    QString title("Insert contents of a script");
     QString filter("OpenGL script files ( *.ogl)");
 
     QString fileName = QFileDialog::getOpenFileName(
@@ -203,12 +203,8 @@ void Demo::MainWindow::on_actionInsert_triggered() {
 
     QFile file(fileName);
     file.open(QFile::ReadOnly);
-    QString contents = mProject->data(mSelectedIndex, Project::ScriptRole).value<QString>();
-    contents += file.readAll();
+    mProject->setData(mSelectedIndex, QVariant::fromValue(file.readAll()), Project::ScriptRole);
     file.close();
-
-    mProject->setData(mSelectedIndex, QVariant::fromValue(contents), Project::ScriptRole);
-    mProjectModified = true;
     setProjectModified();
 }
 
@@ -224,7 +220,8 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     } else if (mSelectedIndex.parent() == mProject->itemParent(Project::TextureItems)) {
         title = "Open an image to create texture data";
         filter = "Image files (";
-        foreach(QByteArray b, QImageReader::supportedImageFormats()) {
+        const auto formats = QImageReader::supportedImageFormats();
+        for (auto& b: formats) {
             filter += QString(" *.%1").arg(QString(b));
         }
         filter += ")";
@@ -274,7 +271,7 @@ void Demo::MainWindow::on_actionSaveAs_triggered() {
 
     QString fname = QFileDialog::getSaveFileName(
         this,
-        QString("Select file to save the script \"%1\" to").arg(name),
+        QString(R"(Select file to save the script "%1" to)").arg(name),
         mProject->directory().absolutePath(),
         "OpenGL command files (*.ogl)"
     );
@@ -333,7 +330,7 @@ void Demo::MainWindow::on_actionEdit_triggered() {
 }
 
 void Demo::MainWindow::on_actionReload_triggered() {
-    QString fileName = mProject->data(mSelectedIndex, Project::FileNameRole).value<QString>();
+    QString fileName = mProject->data(mSelectedIndex, Project::FileNameRole).toString();
     if (fileName.isEmpty()) return;
     mProject->setData(mSelectedIndex, QVariant::fromValue(fileName), Project::FileRole);
 }
@@ -432,8 +429,8 @@ void Demo::MainWindow::selectionChanged() {
 
     // item headers
     if (mSelectedIndex.parent() == QModelIndex()) {
-        QList<QAction*> as = mUI->projectItems->actions();
-        foreach (QAction* a, as) {
+        const auto as = mUI->projectItems->actions();
+        for (auto a: as) {
             mUI->projectItems->removeAction(a);
         }
         mUI->actionInsert->setEnabled(false);
@@ -534,7 +531,7 @@ void Demo::MainWindow::setupResourceActions() {
     mUI->actionCompile->setEnabled(false);
     mUI->actionDelete->setEnabled(true);
 
-    bool unbound = mProject->data(mSelectedIndex, Project::FileNameRole).value<QString>().isEmpty();
+    bool unbound = mProject->data(mSelectedIndex, Project::FileNameRole).toString().isEmpty();
     mUI->actionReload->setDisabled(unbound);
 
     mUI->actionComplete->setEnabled(false);
@@ -688,7 +685,7 @@ void Demo::MainWindow::saveScript(const QString &fname) {
 
 void Demo::MainWindow::openProject(const QString &path) {
     QString title = windowTitle();
-    Project* newp(0);
+    Project* newp(nullptr);
     try {
         if (path.isEmpty()) {
             newp = new Project(mLastDir, mGLWidget, mGlobals, mUI->actionAutocompile->isChecked());

@@ -93,7 +93,7 @@ element:
 import_from:
     FROM BEGINSTRING text ENDSTRING IMPORT variables
         {
-            foreach (QString name, $6) {
+            for (auto& name: $6) {
                 if (parser->isExported(name, $3)) {
                     parser->addImported(name, $3);
                 } else {
@@ -107,7 +107,7 @@ import_from:
 declaration:
     shared typename variables
         {
-            foreach (QString name, $3) {
+            for (auto& name: $3) {
                 parser->addVariable(Var::Create($2, name, $1));
             }
         }

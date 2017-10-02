@@ -2,8 +2,8 @@
 
 using Math3D::Vector4;
 
-Patch::Patch(const VectorList& cps)
-    :mControls(cps)
+Patch::Patch(VectorList cps)
+    : mControls(std::move(cps))
 {
     mDeg = true;
     for (int i = 0; i < 3; ++i)

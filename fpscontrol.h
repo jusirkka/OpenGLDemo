@@ -15,10 +15,10 @@ class FPSControl : public QWidget
 
 public:
 
-    FPSControl(QWidget* p = 0);
+    FPSControl(QWidget* p = nullptr);
 
     int getValue() const {return mVal;}
-    ~FPSControl();
+    ~FPSControl() override;
 
 
 private slots:

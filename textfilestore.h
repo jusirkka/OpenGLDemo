@@ -17,10 +17,8 @@ class TextFileStore : public QObject {
 public:
 
 
-    TextFileStore(const QString& name, Scope* globals, QObject* parent = 0);
+    TextFileStore(const QString& name, Scope* globals, QObject* parent = nullptr);
 
-
-    ~TextFileStore();
 
     void rename(const QString& from, const QString& to);
     void remove(int index);

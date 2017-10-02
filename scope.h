@@ -20,15 +20,15 @@ class Scope: public QObject
 
 public:
 
-    typedef QList<CodeEditor*> EditorList;
+    using EditorList = QList<Demo::CodeEditor *>;
     typedef QMap<QString, int> IndexMap;
 
     // code offsets: smaller than 0xfff = 4095 (see Compiler::pushBack)
     static const int FunctionOffset = 1000;
     static const int VariableOffset = 2000;
 
-    Scope(GLWidget* glContext, QObject *parent = 0);
-    Scope* clone(QObject* parent = 0) const;
+    Scope(GLWidget* glContext, QObject *parent = nullptr);
+    Scope* clone(QObject* parent = nullptr) const;
     const SymbolMap& symbols() const;
     const FunctionList& functions() const;
     bool subscriptRelation(const QString& top, const QString& sub);
@@ -45,7 +45,7 @@ public:
     void recompileAll();
     QStringList itemSample(const QString& except = QString()) const;
 
-    ~Scope();
+    ~Scope() override;
 
 
 signals:

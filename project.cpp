@@ -15,7 +15,7 @@
 
 
 static QString uniqueName(const QString& key, const QStringList& names) {
-    QRegExp ex("(.*)_(\\d+)$");
+    QRegExp ex(R"((.*)_(\d+)$)");
     QString pkey = key;
     int pindex = 0;
     if (ex.indexIn(key) != -1) {
@@ -23,7 +23,7 @@ static QString uniqueName(const QString& key, const QStringList& names) {
         pindex = ex.cap(2).toInt();
     }
     QSet<int> hits;
-    foreach(QString name, names) {
+    for (auto& name: names) {
         QString pname = name;
         int hitindex = 0;
         if (ex.indexIn(name) != -1) {
@@ -60,8 +60,8 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals,
     mProjectIni(""),
     mGlobals(globals->clone(this)),
     mShaders(new TextFileStore("shaders", mGlobals, this)),
-    mInit(0),
-    mDraw(0),
+    mInit(nullptr),
+    mDraw(nullptr),
     mTarget(target),
     mAutoCompileOn(autoCompileOn) {
     if (!mProjectDir.exists() || !mProjectDir.isReadable())
@@ -91,8 +91,8 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     QAbstractItemModel(target),
     mGlobals(globals->clone(this)),
     mShaders(new TextFileStore("shaders", mGlobals, this)),
-    mInit(0),
-    mDraw(0),
+    mInit(nullptr),
+    mDraw(nullptr),
     mTarget(target),
     mAutoCompileOn(autoCompileOn) {
 
@@ -110,7 +110,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
 
     project.beginGroup("Models");
     NameMap models;
-    foreach (const QString &key, project.childKeys()) {
+    for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
         QString fname = value;
         QFileInfo info(fname);
@@ -120,7 +120,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
         }
 
         if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
-            throw BadProject(QString("Model file \"%1\" is not readable").arg(value));
+            throw BadProject(QString(R"(Model file "%1" is not readable)").arg(value));
         }
 
         models[uniqueName(key, models.keys())] = !value.isEmpty() ? fname : value;
@@ -129,7 +129,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
 
     project.beginGroup("Textures");
     NameMap textures;
-    foreach (const QString &key, project.childKeys()) {
+    for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
         QString fname = value;
         QFileInfo info(fname);
@@ -138,7 +138,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             info = QFileInfo(fname);
         }
         if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
-            throw BadProject(QString("Image file \"%1\" is not readable").arg(value));
+            throw BadProject(QString(R"(Image file "%1" is not readable)").arg(value));
         }
 
         textures[uniqueName(key, textures.keys())] = !value.isEmpty() ? fname : value;
@@ -146,7 +146,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     project.endGroup();
 
     project.beginGroup("Shaders");
-    foreach (const QString &key, project.childKeys()) {
+    for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
         QString fname = value;
         QFileInfo info(fname);
@@ -155,7 +155,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             info = QFileInfo(fname);
         }
         if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
-            throw BadProject(QString("Shader source file \"%1\" is not readable").arg(value));
+            throw BadProject(QString(R"(Shader source file "%1" is not readable)").arg(value));
         }
 
         mShaders->setText(uniqueName(key, mShaders->itemSample()), !value.isEmpty() ? fname : value);
@@ -163,7 +163,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     project.endGroup();
 
     project.beginGroup("Scripts");
-    foreach (const QString &key, project.childKeys()) {
+    for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
         QString fname = value;
         QFileInfo info(fname);
@@ -177,8 +177,8 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
             mGlobals->appendEditor(ed, QString("// Not bound to a file\n"), value);
 
         } else {
-            if (!info.exists()) throw BadProject(QString("Script file \"%1\" does not exist").arg(value));
-            if (!info.isFile() || !info.isReadable()) throw BadProject(QString("Script file \"%1\" is not readable").arg(value));
+            if (!info.exists()) throw BadProject(QString(R"(Script file "%1" does not exist)").arg(value));
+            if (!info.isFile() || !info.isReadable()) throw BadProject(QString(R"(Script file "%1" is not readable)").arg(value));
 
             QFile file(fname);
             file.open(QFile::ReadOnly);
@@ -190,7 +190,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     }
     project.endGroup();
 
-    if (project.status() != QSettings::NoError) throw BadProject(QString("%1 is not a valid project file").arg(path));
+    if (project.status() != QSettings::NoError) throw BadProject(QString(R"(%1 is not a valid project file)").arg(path));
 
     // safe to update globals
     mModels = dynamic_cast<ModelStore*>(mTarget->blob(globals->symbols(), "modelstore"));
@@ -232,7 +232,7 @@ void Demo::Project::saveProject() {
     project.clear();
 
     project.beginGroup("Scripts");
-    foreach (CodeEditor* ed, mGlobals->editors()) {
+    for (auto ed: mGlobals->editors()) {
         project.setValue(ed->objectName(), mProjectDir.relativeFilePath(ed->fileName()));
     }
     project.endGroup();
@@ -334,7 +334,7 @@ void Demo::Project::setDrawScript(const QString& name) {
 
 void Demo::Project::toggleAutoCompile(bool on) {
     mAutoCompileOn = on;
-    foreach (CodeEditor* ed, mGlobals->editors()) {
+    for (auto ed: mGlobals->editors()) {
         ed->toggleAutoCompile(on);
     }
 }
@@ -343,25 +343,23 @@ QModelIndex Demo::Project::itemParent(ItemType kind) const{
     return index(kind, QModelIndex());
 }
 
+static int row2Internal(int parent, int row) {
+    return 10000 * (parent + 1) + row + 1;
+}
+
+static int internal2ItemType(int id) {
+    return id / 10000 - 1;
+}
+
+/*static int internal2Row(int id) {
+    return id % 10000 - 1;
+}*/
 
 QModelIndex Demo::Project::index(int row, int column, const QModelIndex &parent) const {
 
     if (!hasIndex(row, column, parent)) return QModelIndex();
     if (!parent.isValid()) return createIndex(row, column, row);
-    int internal_id;
-    if (parent.internalId() == ScriptItems) {
-        internal_id = NumItemTypes + row;
-    } else if (parent.internalId() == ModelItems) {
-        internal_id = NumItemTypes + mGlobals->editors().size() + row;
-    } else if (parent.internalId() == TextureItems) {
-        internal_id = NumItemTypes + mGlobals->editors().size() + mModels->size() + row;
-    } else if (parent.internalId() == ShaderItems) {
-        internal_id = NumItemTypes + mGlobals->editors().size() + mModels->size() + mImages->size() + row;
-    } else {
-        return QModelIndex();
-    }
-
-    return createIndex(row, column, internal_id);
+    return createIndex(row, column, row2Internal(parent.internalId(), row));
 }
 
 
@@ -378,20 +376,9 @@ QModelIndex Demo::Project::parent(const QModelIndex &index) const {
 
     if (!index.isValid()) return QModelIndex();
 
-    int id = index.internalId();
-
-    int offset = NumItemTypes;
-    if (id < offset) return QModelIndex();
-    offset += mGlobals->editors().size();
-    if (id < offset) return createIndex(ScriptItems, 0, ScriptItems);
-    offset += mModels->size();
-    if (id < offset) return createIndex(ModelItems, 0, ModelItems);
-    offset += mImages->size();
-    if (id < offset) return createIndex(TextureItems, 0, TextureItems);
-    offset += mShaders->size();
-    if (id < offset) return createIndex(ShaderItems, 0, ShaderItems);
-
-    return QModelIndex();
+    int itemType = internal2ItemType(index.internalId());
+    if (itemType < 0) return QModelIndex();
+    return createIndex(itemType, 0, itemType);
 }
 
 QVariant Demo::Project::headerData(int, Qt::Orientation, int) const {
@@ -589,7 +576,7 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
             if (ed->fileName() == fname) return false;
             ed->setFileName(fname);
         } else if (role == ScriptRole) {
-            ed->setPlainText(value.toString());
+            ed->insertPlainText(value.toString());
         } else {
             return false;
         }

@@ -31,7 +31,7 @@ void Runner::setup(const Compiler::AssignmentList& ass,
 
 
 void Runner::run() {
-    foreach (Assignment ass, mAssignments) {
+    for (auto& ass: mAssignments) {
         try {
             Variable* v = mVariables[mIndex[ass.var]];
             // qDebug() << v->name() << "=" << v->value();
@@ -47,7 +47,7 @@ void Runner::run() {
 
 Runner::~Runner() {
     // variables are owned by runner, other symbols are shared
-    foreach(Variable* v, mVariables) {
+    for (auto v: qAsConst(mVariables)) {
         // TODO: check
         delete v;
     }
@@ -56,11 +56,11 @@ Runner::~Runner() {
 static void neg_f(QVariant& right, int lrtype) {
 
     static QFunc funcs[] = {
-        Neg<int>, Neg<Real>, Neg<Vector4>, Neg<Matrix4>, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0
+        Neg<int>, Neg<Real>, Neg<Vector4>, Neg<Matrix4>, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
     funcs[lrtype](right);
@@ -70,11 +70,11 @@ static void neg_f(QVariant& right, int lrtype) {
 static void take_f(QVariant& left, int index, int lrtype) {
 
     static QIFunc funcs[] = {
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        Take<Vector4>, 0, 0, 0, 0,
-        Vec<Matrix4>, 0, 0, 0, 0,
-        0, 0, 0, 0, 0
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        Take<Vector4>, nullptr, nullptr, nullptr, nullptr,
+        Vec<Matrix4>, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
     funcs[lrtype](left, index);
@@ -83,11 +83,11 @@ static void take_f(QVariant& left, int index, int lrtype) {
 static void add_f(QVariant& left, const QVariant& right, int lrtype) {
 
     static QQFunc funcs[] = {
-        Add<int, int>, Add<int, Real>, 0, 0, 0,
-        Add<Real, int>, Add<Real, Real>, 0, 0, 0,
-        0, 0, Add<Vector4, Vector4>, 0, 0,
-        0, 0, 0, Add<Matrix4, Matrix4>, 0,
-        0, 0, 0, 0, Add<QString, QString>
+        Add<int, int>, Add<int, Real>, nullptr, nullptr, nullptr,
+        Add<Real, int>, Add<Real, Real>, nullptr, nullptr, nullptr,
+        nullptr, nullptr, Add<Vector4, Vector4>, nullptr, nullptr,
+        nullptr, nullptr, nullptr, Add<Matrix4, Matrix4>, nullptr,
+        nullptr, nullptr, nullptr, nullptr, Add<QString, QString>
     };
 
     funcs[lrtype](left, right);
@@ -96,11 +96,11 @@ static void add_f(QVariant& left, const QVariant& right, int lrtype) {
 static void sub_f(QVariant& left, const QVariant& right, int lrtype) {
 
     static QQFunc funcs[] = {
-        Sub<int, int>, Sub<int, Real>, 0, 0, 0,
-        Sub<Real, int>, Sub<Real, Real>, 0, 0, 0,
-        0, 0, Sub<Vector4, Vector4>, 0, 0,
-        0, 0, 0, Sub<Matrix4, Matrix4>, 0,
-        0, 0, 0, 0, 0
+        Sub<int, int>, Sub<int, Real>, nullptr, nullptr, nullptr,
+        Sub<Real, int>, Sub<Real, Real>, nullptr, nullptr, nullptr,
+        nullptr, nullptr, Sub<Vector4, Vector4>, nullptr, nullptr,
+        nullptr, nullptr, nullptr, Sub<Matrix4, Matrix4>, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
     funcs[lrtype](left, right);
@@ -109,11 +109,11 @@ static void sub_f(QVariant& left, const QVariant& right, int lrtype) {
 static void mul_f(QVariant& left, const QVariant& right, int lrtype) {
 
     static QQFunc funcs[] = {
-        Mul<int, int>, Mul<int, Real>, Mul<int, Vector4>, Mul<int, Matrix4>, 0,
-        Mul<Real, int>, Mul<Real, Real>, Mul<Real, Vector4>, Mul<Real, Matrix4>, 0,
-        Mul<Vector4, int>, Mul<Vector4, Real>, 0, 0, 0,
-        Mul<Matrix4, int>, Mul<Matrix4, Real>, Mul<Matrix4, Vector4>, Mul<Matrix4, Matrix4>, 0,
-        0, 0, 0, 0, 0
+        Mul<int, int>, Mul<int, Real>, Mul<int, Vector4>, Mul<int, Matrix4>, nullptr,
+        Mul<Real, int>, Mul<Real, Real>, Mul<Real, Vector4>, Mul<Real, Matrix4>, nullptr,
+        Mul<Vector4, int>, Mul<Vector4, Real>, nullptr, nullptr, nullptr,
+        Mul<Matrix4, int>, Mul<Matrix4, Real>, Mul<Matrix4, Vector4>, Mul<Matrix4, Matrix4>, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
     funcs[lrtype](left, right);
@@ -123,11 +123,11 @@ static void mul_f(QVariant& left, const QVariant& right, int lrtype) {
 static bool div_f(QVariant& left, const QVariant& right, int lrtype) {
 
     static BQQFunc funcs[] = {
-        Div<int, int>, Div<int, Real>, 0, 0, 0,
-        Div<Real, int>, Div<Real, Real>, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0
+        Div<int, int>, Div<int, Real>, nullptr, nullptr, nullptr,
+        Div<Real, int>, Div<Real, Real>, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
     if (!funcs[lrtype](left, right)) return false;
@@ -137,11 +137,11 @@ static bool div_f(QVariant& left, const QVariant& right, int lrtype) {
 static bool eq_f(QVariant& left, const QVariant& right, int lrtype) {
 
     static BQQFunc funcs[] = {
-        Eq<int, int>, Eq<int, Real>, 0, 0, 0,
-        Eq<Real, int>, Eq<Real, Real>, 0, 0, 0,
-        0, 0, Eq<Vector4, Vector4>, 0, 0,
-        0, 0, 0, Eq<Matrix4, Matrix4>, 0,
-        0, 0, 0, 0, Eq<QString, QString>
+        Eq<int, int>, Eq<int, Real>, nullptr, nullptr, nullptr,
+        Eq<Real, int>, Eq<Real, Real>, nullptr, nullptr, nullptr,
+        nullptr, nullptr, Eq<Vector4, Vector4>, nullptr, nullptr,
+        nullptr, nullptr, nullptr, Eq<Matrix4, Matrix4>, nullptr,
+        nullptr, nullptr, nullptr, nullptr, Eq<QString, QString>
     };
 
     return funcs[lrtype](left, right);
@@ -150,11 +150,11 @@ static bool eq_f(QVariant& left, const QVariant& right, int lrtype) {
 static bool gt_f(QVariant& left, const QVariant& right, int lrtype) {
 
     static BQQFunc funcs[] = {
-        Gt<int, int>, Gt<int, Real>, 0, 0, 0,
-        Gt<Real, int>, Gt<Real, Real>, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0
+        Gt<int, int>, Gt<int, Real>, nullptr, nullptr, nullptr,
+        Gt<Real, int>, Gt<Real, Real>, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
     return funcs[lrtype](left, right);
@@ -163,11 +163,11 @@ static bool gt_f(QVariant& left, const QVariant& right, int lrtype) {
 static bool lt_f(QVariant& left, const QVariant& right, int lrtype) {
 
     static BQQFunc funcs[] = {
-        Lt<int, int>, Lt<int, Real>, 0, 0, 0,
-        Lt<Real, int>, Lt<Real, Real>, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0
+        Lt<int, int>, Lt<int, Real>, nullptr, nullptr, nullptr,
+        Lt<Real, int>, Lt<Real, Real>, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
     return funcs[lrtype](left, right);
@@ -304,7 +304,7 @@ const QVariant& Runner::evalCode(const CodeStack& code,  const ValueStack& immed
 
 
         default:
-            Q_ASSERT(0);
+            Q_ASSERT(false);
         }
     }
 

@@ -22,10 +22,8 @@ public:
     ImageStore();
 
     // tex blob implementation
-    const void* data(const QString& key) const;
-    const TexBlobSpec spec(const QString& key) const;
-
-    ~ImageStore();
+    const void* data(const QString& key) const override;
+    const TexBlobSpec spec(const QString& key) const override;
 
     void rename(const QString& from, const QString& to);
     void remove(int index);

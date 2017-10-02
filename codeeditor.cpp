@@ -86,8 +86,6 @@ CodeEditor::CodeEditor(const QString& name, Scope* globals, Project* owner):
     setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 }
 
-CodeEditor::~CodeEditor() {}
-
 void CodeEditor::toggleAutoCompile(bool on) {
     if (on) {
         connect(this, SIGNAL(textChanged()), mCompileDelay, SLOT(start()));
@@ -212,11 +210,11 @@ void CodeEditor::highlightCurrentLine()
 
 bool CodeEditor::event(QEvent* ev) {
     if (ev->type() == QEvent::ToolTip) {
-        QHelpEvent* helpEvent = static_cast <QHelpEvent*>(ev);
+        QHelpEvent* helpEvent = static_cast<QHelpEvent*>(ev);
         QTextCursor cursor = cursorForPosition(helpEvent->pos());
         cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-        foreach(QTextEdit::ExtraSelection s, extraSelections()) {
+        for (auto& s: extraSelections()) {
             int pos = s.cursor.position();
             if (pos <= cursor.selectionEnd() && pos >= cursor.selectionStart()) {
                 QToolTip::showText(helpEvent->globalPos(), s.format.toolTip());
@@ -323,7 +321,7 @@ void CodeEditor::complete() {
     mCompleter->popupCompletions(completions);
 }
 
-void CodeEditor::insertCompletion(QString item) {
+void CodeEditor::insertCompletion(const QString& item) {
     QTextCursor tc = textCursor();
     int pos = tc.position();
     tc.select(QTextCursor::WordUnderCursor);

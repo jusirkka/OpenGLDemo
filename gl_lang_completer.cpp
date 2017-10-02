@@ -29,7 +29,7 @@ using namespace Demo::GL;
 
 Completer::Completer(Scope* globalScope, CodeEditor *parent):
     QObject(parent),
-    mScanner(0),
+    mScanner(nullptr),
     mCompletions(),
     mGlobalScope(globalScope),
     mCompleter(new QCompleter(parent)),
@@ -37,7 +37,7 @@ Completer::Completer(Scope* globalScope, CodeEditor *parent):
 
     mCompleter->setWidget(parent);
     mCompleter->setWrapAround(false);
-    connect(mCompleter, SIGNAL(activated(QString)), parent, SLOT(insertCompletion(QString)));
+    connect(mCompleter, SIGNAL(activated(QString)), parent, SLOT(insertCompletion(const QString&)));
 }
 
 
@@ -112,7 +112,7 @@ bool Completer::createCompletion(const IdentifierType &id, unsigned mask) {
 
     QList<SymbolIterator> its;
     its << SymbolIterator(mGlobalScope->symbols()) << SymbolIterator(mSymbols);
-    foreach (SymbolIterator it, its) {
+    for (auto& it: its) {
         while (it.hasNext()) {
             it.next();
             if (dynamic_cast<Variable*>(it.value()) && (mask & CompleteVariables)) {
@@ -156,7 +156,7 @@ bool Completer::hasSymbol(const QString& sym) const {
 Demo::Symbol* Completer::symbol(const QString& sym) const {
     if (mGlobalScope->symbols().contains(sym)) return mGlobalScope->symbols()[sym];
     if (mSymbols.contains(sym)) return mSymbols[sym];
-    return 0;
+    return nullptr;
 }
 
 bool Completer::isImported(const Variable* var) const {
@@ -191,7 +191,7 @@ void Completer::addImported(const QString& name, const QString& script) {
 }
 
 bool Completer::isScript(const QString& name) const {
-    return mGlobalScope->compiler(name) != 0;
+    return mGlobalScope->compiler(name) != nullptr;
 }
 
 void Completer::addSubscript(const QString&) {

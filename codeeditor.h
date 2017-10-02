@@ -73,7 +73,7 @@ class CodeEditor : public QPlainTextEdit
 
 public:
 
-    typedef QList<CodeEditor*> EditorList;
+    using EditorList = QList<Demo::CodeEditor *>;
 
 public:
     CodeEditor(const QString& name, Scope* globals, Project* owner);
@@ -81,7 +81,7 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
 
-    bool event(QEvent *e) Q_DECL_OVERRIDE;
+    bool event(QEvent *e) override;
 
     bool hasRunError() const {return mRunErrorPos != -1;}
     bool hasCompileError() const {return mCompileErrorPos != -1;}
@@ -95,8 +95,6 @@ public:
 
     GL::Compiler* compiler() const;
 
-    ~CodeEditor();
-
 public slots:
 
     void compile();
@@ -104,15 +102,15 @@ public slots:
 
 protected:
 
-    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
-    void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;
+    void resizeEvent(QResizeEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
 
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &, int);
-    void insertCompletion(QString item);
+    void insertCompletion(const QString& item);
 
 signals:
 
@@ -137,15 +135,17 @@ private:
 
 class LineNumberArea : public QWidget
 {
+    Q_OBJECT
+
 public:
     LineNumberArea(CodeEditor *editor) : QWidget(editor), mCodeEditor(editor) {}
 
-    QSize sizeHint() const {
+    QSize sizeHint() const override {
         return QSize(mCodeEditor->lineNumberAreaWidth(), 0);
     }
 
 protected:
-    void paintEvent(QPaintEvent *event) {
+    void paintEvent(QPaintEvent *event) override {
         mCodeEditor->lineNumberAreaPaintEvent(event);
     }
 

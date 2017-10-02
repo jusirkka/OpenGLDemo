@@ -9,9 +9,8 @@ using namespace Demo;
 class Dispatcher: public Function {
 public:
     Dispatcher(Scope* p);
-    const QVariant& execute(const QVector<QVariant>& vals, int start);
-    Dispatcher* clone() const;
-    ~Dispatcher();
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override;
+    Dispatcher* clone() const override;
 private:
     Scope* mParent;
 };
@@ -25,7 +24,7 @@ Dispatcher::Dispatcher(Scope* p):
 }
 
 const QVariant& Dispatcher::execute(const QVector<QVariant>& vals, int start) {
-    QString other = vals[start].value<QString>();
+    QString other = vals[start].toString();
     mParent->dispatch(other);
     mValue.setValue(0);
     return mValue;
@@ -35,8 +34,6 @@ Dispatcher* Dispatcher::clone() const {
     return new Dispatcher(*this);
 }
 
-Dispatcher::~Dispatcher() {}
-
 Scope::Scope(GLWidget* glContext, QObject *parent):
     QObject(parent)
 {
@@ -45,17 +42,17 @@ Scope::Scope(GLWidget* glContext, QObject *parent):
 
     // constants
     Constants cons;
-    foreach(Symbol* con, cons.contents) mSymbols[con->name()] = con;
+    for (auto con: qAsConst(cons.contents)) mSymbols[con->name()] = con;
 
     // functions
     Functions funcs;
-    foreach(Symbol* sym, funcs.contents) mSymbols[sym->name()] = sym;
+    for (auto sym: qAsConst(funcs.contents)) mSymbols[sym->name()] = sym;
 
     Function* dispatcher = new Dispatcher(this);
     mSymbols[dispatcher->name()] = dispatcher;
 
     // process functions
-    foreach(Symbol* sym, mSymbols) {
+    for (auto sym: qAsConst(mSymbols)) {
         Function* fun = dynamic_cast<Function*>(sym);
         if (fun) {
             fun->setIndex(mFunctions.size() + FunctionOffset);
@@ -71,11 +68,11 @@ Scope::~Scope() {
 Scope::Scope(const Scope& s):
     QObject()
 {
-    foreach (Symbol* sym, s.symbols()) {
+    for (auto sym: s.symbols()) {
         mSymbols[sym->name()] = sym->clone();
     }
 
-    foreach (Variable* v, s.exports()) {
+    for (auto v: s.exports()) {
         mExports[v->name()] = v->clone();
     }
 
@@ -87,7 +84,7 @@ Scope::Scope(const Scope& s):
     mSymbols[dispatcher->name()] = dispatcher;
 
     // process functions
-    foreach(Symbol* sym, mSymbols) {
+    for (auto sym: qAsConst(mSymbols)) {
         Function* fun = dynamic_cast<Function*>(sym);
         if (fun) {
             fun->setIndex(mFunctions.size() + FunctionOffset);
@@ -97,7 +94,7 @@ Scope::Scope(const Scope& s):
 }
 
 Scope* Scope::clone(QObject* parent) const {
-    Scope* s = new Scope(*this);
+    auto s = new Scope(*this);
     s->setParent(parent);
     return s;
 }
@@ -115,7 +112,7 @@ bool Scope::subscriptRelation(const QString& top, const QString& sub) {
     GL::Compiler* c = compiler(top);
     if (!c) return false;
     if (top == sub) return true;
-    foreach (QString name, c->subscripts()) {
+    for (auto& name: c->subscripts()) {
         if (subscriptRelation(name, sub)) return true;
     }
     return false;
@@ -153,20 +150,20 @@ void Scope::removeEditor(int index) {
 }
 
 CodeEditor* Scope::editor(const QString& name) const {
-    if (!mEditorIndices.contains(name)) return 0;
+    if (!mEditorIndices.contains(name)) return nullptr;
     return mEditors[mEditorIndices[name]];
 }
 
 
 CodeEditor* Scope::editor(int index) const {
-    if (index < 0 || index >= mEditors.size()) return 0;
+    if (index < 0 || index >= mEditors.size()) return nullptr;
     return mEditors[index];
 }
 
 GL::Compiler* Scope::compiler(const QString& name) const {
     CodeEditor* ed = editor(name);
     if (ed) return ed->compiler();
-    return 0;
+    return nullptr;
 }
 
 void Scope::rename(CodeEditor* ed, const QString& name) {
@@ -180,7 +177,7 @@ void Scope::rename(CodeEditor* ed, const QString& name) {
 
 QStringList Scope::itemSample(const QString& except) const {
     QStringList r;
-    foreach (CodeEditor* ed, mEditors) {
+    for (auto ed: mEditors) {
         if (!except.isEmpty() && ed->objectName() == except) continue;
         r.append(ed->objectName());
     }
@@ -209,7 +206,7 @@ void Scope::addFunction(Function* f) {
 
 void Scope::recompileAll() {
     EditorList currFailed;
-    foreach (CodeEditor* ed, mEditors) {
+    for (auto ed: qAsConst(mEditors)) {
         ed->compile();
         if (!ed->compiler()->ready()) {
             // qDebug() << ed->objectName() << ": compile failed";
@@ -221,7 +218,7 @@ void Scope::recompileAll() {
         // qDebug() << "num failed = " << currFailed.size();
         prevFailed = currFailed;
         currFailed.clear();
-        foreach (CodeEditor* ed, prevFailed) {
+        for (auto ed: qAsConst(prevFailed)) {
             ed->compile();
             if (!ed->compiler()->ready()) {
                 // qDebug() << ed->objectName() << ": compile failed";

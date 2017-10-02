@@ -22,7 +22,7 @@ ModelStore::ModelStore():
     QObject(),
     Blob(),
     mError(),
-    mScanner(0) {
+    mScanner(nullptr) {
     setObjectName("modelstore");
     mData[GL_ARRAY_BUFFER] = Data();
     mData[GL_ELEMENT_ARRAY_BUFFER] = Data();
@@ -84,9 +84,9 @@ void ModelStore::appendFace(const WF::TripletList& ts) {
 
     IndexList face;
     // copy normals & texcoords
-    for (int i = 0; i < ts.size(); ++i) {
-        unsigned int v_idx = my_index(ts[i].v_index, lv);
-        if (copyNeeded(v_idx, ts[i])) {
+    for (const WF::Triplet& t: ts) {
+        unsigned int v_idx = my_index(t.v_index, lv);
+        if (copyNeeded(v_idx, t)) {
             // qDebug() << "copying" << v_idx;
             VertexData c(mVertices[v_idx].v);
             v_idx = mVertices.size();
@@ -94,12 +94,12 @@ void ModelStore::appendFace(const WF::TripletList& ts) {
         }
         face.append(v_idx);
 
-        if (ts[i].n_index) {
-            mVertices[v_idx].n = mNormals[my_index(ts[i].n_index, ln)];
+        if (t.n_index) {
+            mVertices[v_idx].n = mNormals[my_index(t.n_index, ln)];
         }
 
-        if (ts[i].t_index) {
-            mVertices[v_idx].t = mTexCoords[my_index(ts[i].t_index, lt)];
+        if (t.t_index) {
+            mVertices[v_idx].t = mTexCoords[my_index(t.t_index, lt)];
         }
     }
 
@@ -129,8 +129,6 @@ bool ModelStore::copyNeeded(unsigned int orig, const WF::Triplet& t) const {
 }
 
 
-ModelStore::~ModelStore() {}
-
 void ModelStore::rename(const QString& from, const QString& to) {
     if (mIndexMap.contains(from)) {
         int index = mIndexMap.take(from);
@@ -153,14 +151,14 @@ void ModelStore::makeModelBuffer() {
     // pass 1: compute specs & buffer length
     uint32_t vertexSize = 0;
     uint32_t elemSize = 0;
-    for (int k = 0; k < mModels.size(); ++k) {
-        uint32_t modelSize = mModels[k].vertices.size() * sizeof(GLfloat) * 8;
+    for (auto& model: mModels) {
+        uint32_t modelSize = model.vertices.size() * sizeof(GLfloat) * 8;
         // blob specs: num components, type, is normalized, packing offset, data offset
-        mSpecs[mModels[k].name + ":vertex"] = BlobSpec(3, GL_FLOAT, false, 0, vertexSize);
-        mSpecs[mModels[k].name + ":normal"] = BlobSpec(3, GL_FLOAT, true, 0, vertexSize + modelSize / 8 * 3);
-        mSpecs[mModels[k].name + ":tex"] = BlobSpec(2, GL_FLOAT, false, 0, vertexSize + modelSize / 8 * 6);
-        mModels[k].elemOffset = elemSize;
-        elemSize += mModels[k].indices.size() * sizeof(GLuint);
+        mSpecs[model.name + ":vertex"] = BlobSpec(3, GL_FLOAT, false, 0, vertexSize);
+        mSpecs[model.name + ":normal"] = BlobSpec(3, GL_FLOAT, true, 0, vertexSize + modelSize / 8 * 3);
+        mSpecs[model.name + ":tex"] = BlobSpec(2, GL_FLOAT, false, 0, vertexSize + modelSize / 8 * 6);
+        model.elemOffset = elemSize;
+        elemSize += model.indices.size() * sizeof(GLuint);
         vertexSize += modelSize;
     }
 
@@ -174,18 +172,18 @@ void ModelStore::makeModelBuffer() {
     unsigned int isize = 1 * sizeof(GLuint);
     char* p = mData[GL_ARRAY_BUFFER].data;
     char* q = mData[GL_ELEMENT_ARRAY_BUFFER].data;
-    foreach (Model m, mModels) {
-        foreach (VertexData d, m.vertices) {
+    for (auto& m: mModels) {
+        for (auto& d: m.vertices) {
             ::memcpy(p, d.v.readArray(), nsize); p += nsize;
         }
-        foreach (VertexData d, m.vertices) {
+        for (auto& d: m.vertices) {
             ::memcpy(p, d.n.readArray(), nsize); p += nsize;
         }
-        foreach (VertexData d, m.vertices) {
+        for (auto& d: m.vertices) {
             ::memcpy(p, d.t.readArray(), tsize); p += tsize;
         }
 
-        foreach (GLuint idx, m.indices) {
+        for (auto idx: qAsConst(m.indices)) {
             ::memcpy(q, &idx, isize); q += isize;
         }
     }
@@ -233,10 +231,10 @@ void ModelStore::parseModelData(const QString& path) {
     // gen missing tex coords
     if (mTexCoords.isEmpty()) {
         // qDebug() << "gen tex" << path;
-        for (int i = 0; i < mVertices.size(); ++i) {
+        for (auto& vd: mVertices) {
             // (x,y,z) -> (x,y)
-            mVertices[i].t = mVertices[i].v;
-            mVertices[i].t(2) = 0;
+            vd.t = vd.v;
+            vd.t(2) = 0;
         }
     }
 
@@ -326,7 +324,8 @@ const QString& ModelStore::modelName(int index) {
 
 QStringList ModelStore::itemSample(const QString& except) const {
     QStringList r;
-    foreach (QString k, mIndexMap.keys()) {
+    const auto keys = mIndexMap.keys();
+    for (auto& k: keys) {
         if (!except.isEmpty() && k == except) continue;
         r.append(k);
     }

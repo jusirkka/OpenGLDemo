@@ -41,13 +41,13 @@ public:
     void setIndex(unsigned idx) {mIndex = idx;}
     virtual bool shared() const = 0;
 
-    virtual Variable* clone() const = 0;
+    Variable* clone() const override = 0;
 
-    virtual ~Variable() {}
+    ~Variable() override = default;
 
 protected:
 
-    Variable(const QString name): Symbol(name), mIndex(0) {}
+    Variable(const QString& name): Symbol(name), mIndex(0) {}
 
 protected:
 
@@ -58,12 +58,11 @@ protected:
 template <typename T> class LocalVar: public Variable {
 public:
     LocalVar(const QString& name): Variable(name), mValue() {}
-    const QVariant& value() const {return mValue;}
-    void setValue(const QVariant& val) {mValue.setValue(val.value<T>());}
-    int type() const {return qMetaTypeId<T>();}
-    LocalVar* clone() const {return new LocalVar(*this);}
-    bool shared() const {return false;}
-    virtual ~LocalVar() {}
+    const QVariant& value() const override {return mValue;}
+    void setValue(const QVariant& val) override {mValue.setValue(val.value<T>());}
+    int type() const override {return qMetaTypeId<T>();}
+    LocalVar* clone() const override {return new LocalVar(*this);}
+    bool shared() const override {return false;}
 protected:
     QVariant mValue;
 };
@@ -71,8 +70,7 @@ protected:
 
 class SharedData: public QSharedData {
 public:
-    SharedData() {}
-    ~SharedData() {}
+    SharedData() = default;
 public:
     QVariant value;
 };
@@ -80,12 +78,11 @@ public:
 template <typename T> class SharedVar: public Variable {
 public:
     SharedVar(const QString& name): Variable(name) {d = new SharedData;}
-    const QVariant& value() const {return d->value;}
-    void setValue(const QVariant& val) {d->value.setValue(val.value<T>());}
-    int type() const {return qMetaTypeId<T>();}
-    bool shared() const {return true;}
-    SharedVar* clone() const {return new SharedVar(*this);}
-    virtual ~SharedVar() {}
+    const QVariant& value() const override {return d->value;}
+    void setValue(const QVariant& val) override {d->value.setValue(val.value<T>());}
+    int type() const override {return qMetaTypeId<T>();}
+    bool shared() const override {return true;}
+    SharedVar* clone() const override {return new SharedVar(*this);}
 protected:
     QExplicitlySharedDataPointer<SharedData> d;
 };
@@ -94,19 +91,19 @@ protected:
 namespace Var {
 
 namespace Local {
-typedef LocalVar<Math3D::Integer> Natural;
-typedef LocalVar<Math3D::Real> Real;
-typedef LocalVar<Math3D::Matrix4> Matrix;
-typedef LocalVar<Math3D::Vector4> Vector;
-typedef LocalVar<QString> Text;
+using Natural = LocalVar<Math3D::Integer>;
+using Real = LocalVar<Math3D::Real>;
+using Matrix = LocalVar<Math3D::Matrix4>;
+using Vector = LocalVar<Math3D::Vector4>;
+using Text = LocalVar<QString>;
 }
 
 namespace Shared {
-typedef SharedVar<Math3D::Integer> Natural;
-typedef SharedVar<Math3D::Real> Real;
-typedef SharedVar<Math3D::Matrix4> Matrix;
-typedef SharedVar<Math3D::Vector4> Vector;
-typedef SharedVar<QString> Text;
+using Natural = SharedVar<Math3D::Integer>;
+using Real = SharedVar<Math3D::Real>;
+using Matrix = SharedVar<Math3D::Matrix4>;
+using Vector = SharedVar<Math3D::Vector4>;
+using Text = SharedVar<QString>;
 }
 
 Variable* Create(int kind, const QString& name, bool shared);

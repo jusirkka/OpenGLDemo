@@ -63,7 +63,7 @@ model_spec_exp = dodeca_spec_exp
 cullface front
 From "get locations" import u_v_light
 From "" import camera
-uniform4f u_v_light, camera * normal_transform(reflect) * light_direction
+uniform4f u_v_light, camera * scaling(-1, -1, -1) * normal_transform(reflect) * light_direction
 Execute "draw model"
 cullface back
 

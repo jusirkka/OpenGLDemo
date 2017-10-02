@@ -37,7 +37,7 @@ class TexBlob {
 
 public:
 
-    TexBlob() {}
+    TexBlob() = default;
 
     QString name() const {return dynamic_cast<const QObject*>(this)->objectName();}
 
@@ -45,7 +45,7 @@ public:
 
     virtual const void* data(const QString& key) const = 0;
 
-    virtual ~TexBlob() {}
+    virtual ~TexBlob() = default;
 
 };
 

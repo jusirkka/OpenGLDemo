@@ -25,7 +25,7 @@ public:
     QModelIndex listParent();
 
 
-    ~NewDialog();
+    ~NewDialog() override;
 
 private slots:
 

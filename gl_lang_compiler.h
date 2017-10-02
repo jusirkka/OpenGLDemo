@@ -42,11 +42,11 @@ class Runner;
 class CompileError {
 
 public:
-    CompileError(const QString& msg, int row, int col, int pos):
-        emsg(msg),
-        erow(row),
-        ecol(col),
-        epos(pos)
+    CompileError(QString msg, int row, int col, int pos)
+        : emsg(std::move(msg))
+        , erow(row)
+        , ecol(col)
+        , epos(pos)
     {}
 
     CompileError():
@@ -78,18 +78,18 @@ class Compiler: public QObject, public Parser {
 
 public:
 
-    typedef QVector<unsigned int> CodeStack;
-    typedef QVector<QVariant> ValueStack;
+    using CodeStack = QVector<unsigned int>;
+    using ValueStack = QVector<QVariant>;
 
     class Assignment {
 
     public:
 
-        Assignment(const QString& v, const CodeStack& c, const ValueStack& i, int p):
-            var(v),
-            code(c),
-            immed(i),
-            pos(p) {}
+        Assignment(QString v, CodeStack c, ValueStack i, int p)
+            : var(std::move(v))
+            , code(std::move(c))
+            , immed(std::move(i))
+            , pos(p) {}
 
         Assignment(const Assignment& a) {
             var = a.var;
@@ -104,13 +104,13 @@ public:
         int pos;
     };
 
-    typedef QList<Variable*> VariableList;
-    typedef QList<Function*> FunctionList;
-    typedef QList<Assignment> AssignmentList;
+    using VariableList = QList<Demo::Variable *>;
+    using FunctionList = QList<Demo::Function *>;
+    using AssignmentList = QList<Demo::GL::Compiler::Assignment>;
 
 public:
 
-    Compiler(const QString& name, Scope* globalScope, QObject* parent = 0);
+    Compiler(const QString& name, Scope* globalScope, QObject* parent = nullptr);
 
     // GL interface
     void compile(const QString& script);
@@ -118,28 +118,28 @@ public:
     void run();
 
     // grammar interface
-    void setCode(const QString& name);
-    void pushBack(unsigned op, unsigned lrtype, int inc);
-    void setJump();
-    void initJump();
-    void pushBackImmed(int constVal);
-    void pushBackImmed(Math3D::Real constVal);
-    void pushBackImmed(const QVariant& constVal);
-    void createError(const QString& item, Error err);
-    bool createCompletion(const IdentifierType& id, unsigned completionMask);
-    void addVariable(Variable* v);
-    bool hasSymbol(const QString& sym) const;
-    Symbol* symbol(const QString& sym) const;
-    bool isImported(const Variable* var) const;
-    bool isExported(const QString& v, const QString& script) const;
-    void addImported(const QString& v, const QString& script);
-    bool isScript(const QString& name) const;
-    void addSubscript(const QString& name);
+    void setCode(const QString& name) override;
+    void pushBack(unsigned op, unsigned lrtype, int inc) override;
+    void setJump() override;
+    void initJump() override;
+    void pushBackImmed(int constVal) override;
+    void pushBackImmed(Math3D::Real constVal) override;
+    void pushBackImmed(const QVariant& constVal) override;
+    void createError(const QString& item, Error err) override;
+    bool createCompletion(const IdentifierType& id, unsigned completionMask) override;
+    void addVariable(Variable* v) override;
+    bool hasSymbol(const QString& sym) const override;
+    Symbol* symbol(const QString& sym) const override;
+    bool isImported(const Variable* var) const override;
+    bool isExported(const QString& v, const QString& script) const override;
+    void addImported(const QString& v, const QString& script) override;
+    bool isScript(const QString& name) const override;
+    void addSubscript(const QString& name) override;
 
     const QStringList& subscripts() const;
     const VariableMap& exports() const;
 
-    ~Compiler();
+    ~Compiler() override;
 
 
 public slots:

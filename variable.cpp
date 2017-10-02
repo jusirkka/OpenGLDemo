@@ -23,5 +23,5 @@ Variable* Var::Create(int kind, const QString& name, bool shared) {
         if (shared) return new Shared::Text(name);
         return new Local::Text(name);
     }
-    return 0;
+    return nullptr;
 }

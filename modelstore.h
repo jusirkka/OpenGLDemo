@@ -14,7 +14,7 @@
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
+using yyscan_t = void *;
 #endif
 
 using Math3D::Vector4;
@@ -36,11 +36,11 @@ public:
 class ModelError {
 
 public:
-    ModelError(const QString& msg, int row, int col, int pos)
-        :emsg(msg),
-          erow(row),
-          ecol(col),
-          epos(pos)
+    ModelError(QString msg, int row, int col, int pos)
+        : emsg(std::move(msg))
+        , erow(row)
+        , ecol(col)
+        , epos(pos)
     {}
 
     ModelError()
@@ -76,7 +76,7 @@ public:
      int n_index;
 };
 
-typedef QList<Triplet> TripletList;
+using TripletList = QList<Demo::WF::Triplet>;
 
 class ValueType {
 public:
@@ -120,9 +120,7 @@ public:
     void createError(WF::LocationType* loc, const QString& msg);
 
     // blob interface implementation
-    void draw(unsigned int mode, const QString& attr) const;
-
-    ~ModelStore();
+    void draw(unsigned int mode, const QString& attr) const override;
 
 
 private:
@@ -136,14 +134,14 @@ private:
         Vector4 v, n, t;
     };
 
-    typedef QList<VertexData> VertexList;
-    typedef QList<Vector4> Vector4List;
-    typedef QList<GLuint> IndexList;
+    using VertexList = QList<Demo::GL::ModelStore::VertexData>;
+    using Vector4List = QList<Math3D::Vector4>;
+    using IndexList = QList<GLuint>;
 
 
     class Model {
     public:
-        Model() {}
+        Model() = default;
         QString name;
         QString fileName;
         VertexList vertices;
@@ -151,7 +149,7 @@ private:
         unsigned int elemOffset;
     };
 
-    typedef QList<Model> ModelList;
+    using ModelList = QList<Demo::GL::ModelStore::Model>;
     typedef QMap<QString, int> IndexMap;
 
     Vector4 makeNormal(int start) const;

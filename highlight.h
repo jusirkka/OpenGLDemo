@@ -8,7 +8,7 @@
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
-typedef void* yyscan_t;
+using yyscan_t = void *;
 #endif
 
 
@@ -27,11 +27,11 @@ class Highlight : public QSyntaxHighlighter
 public:
 
     Highlight(Demo::GL::Compiler* compiler, QTextDocument* parent);
-    ~Highlight();
+    ~Highlight() override;
 
 protected:
 
-    void highlightBlock(const QString &text);
+    void highlightBlock(const QString &text) override;
 
 private:
     typedef QMap<int, QTextCharFormat> FormatMap;

@@ -10,8 +10,8 @@ namespace Math3D {
 
 #define OSTREAM_MATH3D
 
-typedef GLfloat Real;
-typedef int Integer;
+using Real = GLfloat;
+using Integer = int;
 
 // --------------------------------------------------------------
 // Constants
@@ -95,7 +95,7 @@ class Matrix4 {
 
 public:
 
-    Matrix4 () {}
+    Matrix4() = default;
 
     // Note: indices are specified column first: M(x)[y] or M[x][y] means M(y, x)
     Matrix4(Real* vec) {
@@ -339,7 +339,7 @@ inline Matrix4 Matrix4::comatrix() const {
 
 // ----------------- (9) ----------------------------------------
 inline Matrix4& Matrix4::setIdentity() {
-    for(int i = 0; i < 16; ++i) e[i] = 0;
+    for (Real& m: e) m = 0;
     e[0] = e[5] = e[10] = e[15] = 1;
     return *this;
 }

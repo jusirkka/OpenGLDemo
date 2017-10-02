@@ -8,18 +8,18 @@ class Patch
 {
 public:
 
-    typedef QList<unsigned int> IndexList;
+    using IndexList = QList<unsigned int>;
 
     class Strip {
     public:
        unsigned int mode;
        IndexList indices;
     };
-    typedef QList<Strip> StripList;
-    typedef QList<float> DataList;
-    typedef QList<Math3D::Vector4> VectorList;
+    using StripList = QList<Patch::Strip>;
+    using DataList = QList<float>;
+    using VectorList = QList<Math3D::Vector4>;
 
-    Patch(const VectorList& controlpoints);
+    Patch(VectorList controlpoints);
 
     void gendata(int division);
 

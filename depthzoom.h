@@ -16,12 +16,12 @@ class DepthZoom : public QWidget
 
 public:
 
-    DepthZoom(QWidget* p = 0);
+    DepthZoom(QWidget* p = nullptr);
 
     float far() const {return mF;}
     float near() const {return mN;}
 
-    ~DepthZoom();
+    ~DepthZoom() override;
 
 
 private slots:

@@ -28,12 +28,12 @@ class GLWidget : public QGLWidget, public QOpenGLExtraFunctions {
 
 public:
 
-    typedef QList<unsigned int> ResourceList;
+    using ResourceList = QList<unsigned int>;
 
 public:
 
 
-    GLWidget(QWidget *parent = 0);
+    GLWidget(QWidget *parent = nullptr);
     void addGLSymbols(SymbolMap& globals, VariableMap& exports);
 
     ResourceList& resources() {return mResources;}
@@ -50,7 +50,7 @@ public:
 
     void setProjection(float near, float far);
 
-    virtual ~GLWidget();
+    ~GLWidget() override;
 
 
 public slots:
@@ -60,21 +60,21 @@ public slots:
 
 protected:
 
-    void paintGL();
-    void initializeGL();
-    void resizeGL(int w, int h);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-    void mouseDoubleClickEvent(QMouseEvent *event);
+    void paintGL() override;
+    void initializeGL() override;
+    void resizeGL(int w, int h) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private:
 
 
     friend class GL::Emitter;
 
-    typedef QList<GL::Blob*> BlobList;
-    typedef QList<GL::TexBlob*> TexBlobList;
+    using BlobList = QList<GL::Blob *>;
+    using TexBlobList = QList<GL::TexBlob *>;
 
     class Mover {
     public:
@@ -84,7 +84,7 @@ private:
         Demo::GLWidget* parent;
 
         virtual void move() {}
-        virtual ~Mover() {}
+        virtual ~Mover() = default;
     };
 
     class Zoomer: public Mover {
@@ -92,8 +92,7 @@ private:
         Zoomer(Demo::GLWidget* owner):
             Mover(owner) {}
 
-        void move() {parent->zoom();}
-        virtual ~Zoomer() {}
+        void move() override {parent->zoom();}
     };
 
     class Spinner: public Mover {
@@ -101,8 +100,7 @@ private:
         Spinner(Demo::GLWidget* owner):
             Mover(owner) {}
 
-        void move() {parent->spin();}
-        virtual ~Spinner() {}
+        void move() override {parent->spin();}
     };
 
     class Panner: public Mover {
@@ -110,8 +108,7 @@ private:
         Panner(Demo::GLWidget* owner):
             Mover(owner) {}
 
-        void move() {parent->pan();}
-        virtual ~Panner() {}
+        void move() override {parent->pan();}
     };
 
     friend class Spinner;

@@ -32,7 +32,7 @@ class Symbol {
 
     public:
 
-        typedef QList<int> TypeList;
+        using TypeList = QList<int>;
 
         static const int Integer;
         static const int Real;
@@ -45,11 +45,11 @@ class Symbol {
         virtual int type() const = 0;
         virtual Symbol* clone() const = 0;
 
-        virtual ~Symbol() {}
+        virtual ~Symbol() = default;
 
     protected:
 
-        Symbol(const QString& name): mName(name) {}
+        Symbol(QString name): mName(std::move(name)) {}
 
     protected:
 
@@ -62,7 +62,7 @@ typedef QMapIterator<QString, Symbol*> SymbolIterator;
 
 } // namespace Demo
 
-#define CLONEMETHOD(T) T* clone() const {return new T(*this);}
+#define CLONEMETHOD(T) T* clone() const override {return new T(*this);}
 
 
 #endif // DEMO_SYMBOL_H

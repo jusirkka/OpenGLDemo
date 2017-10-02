@@ -27,7 +27,6 @@ public:
     void reset();
     void reset(const Math3D::Vector4& eye, const Math3D::Vector4& center, const Math3D::Vector4& up);
     const Math3D::Matrix4& trans() const;
-    ~Camera() {}
 
 private:
 

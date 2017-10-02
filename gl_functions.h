@@ -23,9 +23,8 @@ namespace GL {
 class GLError {
 
 public:
-    GLError(const QString& msg)
-        :emsg(msg)
-    {}
+    GLError(QString msg)
+        : emsg(std::move(msg)) {}
 
     const QString msg() const {return emsg;}
 
@@ -46,7 +45,7 @@ public:
 
 #define ALT(item) case item: throw GLError(#item); break
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
 
         const QVariant& q = gl_execute(vals, start);
 
@@ -88,7 +87,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         // qDebug() << "glEnable" << vals[start].value<Math3D::Integer>();
         mParent->glEnable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
@@ -96,8 +95,6 @@ public:
     }
 
     CLONEMETHOD(Enable)
-
-    ~Enable() {}
 };
 
 class Disable: public GLProc {
@@ -109,7 +106,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         // qDebug() << "glDisable" << vals[start].value<Math3D::Integer>();
         mParent->glDisable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
@@ -117,8 +114,6 @@ public:
     }
 
     CLONEMETHOD(Disable)
-
-    ~Disable() {}
 };
 
 class DepthRange: public GLProc {
@@ -131,7 +126,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real near = vals[start].value<Math3D::Real>();
         Math3D::Real far = vals[start + 1].value<Math3D::Real>();
         // qDebug() << "glDepthRange" << near << far;
@@ -141,8 +136,6 @@ public:
     }
 
     CLONEMETHOD(DepthRange)
-
-    ~DepthRange() {}
 };
 
 class LineWidth: public GLProc {
@@ -154,7 +147,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real w = vals[start].value<Math3D::Real>();
         // qDebug() << "glLineWidth" << w;
         mParent->glLineWidth(w);
@@ -163,8 +156,6 @@ public:
     }
 
     CLONEMETHOD(LineWidth)
-
-    ~LineWidth() {}
 };
 
 class FrontFace: public GLProc {
@@ -176,7 +167,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer face = vals[start].value<Math3D::Integer>();
         // qDebug() << "glFrontFace" << face;
         mParent->glFrontFace(face);
@@ -185,8 +176,6 @@ public:
     }
 
     CLONEMETHOD(FrontFace)
-
-    ~FrontFace() {}
 };
 
 class CullFace: public GLProc {
@@ -198,7 +187,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer face = vals[start].value<Math3D::Integer>();
         // qDebug() << "glCullFace" << face;
         mParent->glCullFace(face);
@@ -207,8 +196,6 @@ public:
     }
 
     CLONEMETHOD(CullFace)
-
-    ~CullFace() {}
 };
 
 class ColorMask: public GLProc {
@@ -223,7 +210,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer r = vals[start].value<Math3D::Integer>();
         Math3D::Integer g = vals[start+1].value<Math3D::Integer>();
         Math3D::Integer b = vals[start+2].value<Math3D::Integer>();
@@ -235,8 +222,6 @@ public:
     }
 
     CLONEMETHOD(ColorMask)
-
-    ~ColorMask() {}
 };
 
 class DepthMask: public GLProc {
@@ -248,7 +233,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer d = vals[start].value<Math3D::Integer>();
         // qDebug() << "glDepthMask" << d;
         mParent->glDepthMask(d);
@@ -257,8 +242,6 @@ public:
     }
 
     CLONEMETHOD(DepthMask)
-
-    ~DepthMask() {}
 };
 
 class Clear: public GLProc {
@@ -270,7 +253,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer mask = vals[start].value<Math3D::Integer>();
         // qDebug() << "glClear" << mask;
         mParent->glClear(mask);
@@ -279,8 +262,6 @@ public:
     }
 
     CLONEMETHOD(Clear)
-
-    ~Clear() {}
 };
 
 class ClearColor: public GLProc {
@@ -292,7 +273,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Vector4 color = vals[start].value<Vector4>();
         // qDebug() << "glClearColor" << color[X] << color[Y] << color[Z] << color[W];
         mParent->glClearColor(color[X], color[Y], color[Z], color[W]);
@@ -301,8 +282,6 @@ public:
     }
 
     CLONEMETHOD(ClearColor)
-
-    ~ClearColor() {}
 };
 
 class ClearDepth: public GLProc {
@@ -314,7 +293,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real depth = vals[start].value<Math3D::Real>();
         // qDebug() << "glClearDepth" << depth;
         mParent->glClearDepthf(depth);
@@ -323,8 +302,6 @@ public:
     }
 
     CLONEMETHOD(ClearDepth)
-
-    virtual ~ClearDepth() {}
 };
 
 class CreateShader: public GLProc {
@@ -336,7 +313,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int type = vals[start].value<int>();
         // qDebug() << "glCreateShader" << type;
         int ret = mParent->glCreateShader(type);
@@ -346,8 +323,6 @@ public:
     }
 
     CLONEMETHOD(CreateShader)
-
-    virtual ~CreateShader() {}
 };
 
 class CompileShader: public GLProc {
@@ -361,12 +336,12 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
-        QByteArray bytes = vals[start+1].value<QString>().toLatin1();
+        QByteArray bytes = vals[start+1].toString().toLatin1();
         const char *data = bytes.constData();
         // qDebug() << "glShaderSource" << name;
-        mParent->glShaderSource(name, 1, &data, 0);
+        mParent->glShaderSource(name, 1, &data, nullptr);
         // qDebug() << "glCompileShader" << name;
         mParent->glCompileShader(name);
         int status;
@@ -383,8 +358,6 @@ public:
     }
 
     CLONEMETHOD(CompileShader)
-
-    virtual ~CompileShader() {}
 };
 
 class DeleteShader: public GLProc {
@@ -396,7 +369,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
         // qDebug() << "glDeleteShader" << name;
         mParent->glDeleteShader(name);
@@ -406,8 +379,6 @@ public:
     }
 
     CLONEMETHOD(DeleteShader)
-
-    virtual ~DeleteShader() {}
 };
 
 
@@ -417,7 +388,7 @@ public:
 
     CreateProgram(Demo::GLWidget* p): GLProc("createprogram", Symbol::Integer, p) {}
 
-    const QVariant& gl_execute(const QVector<QVariant>&, int) {
+    const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         // qDebug() << "glCreateProgram";
         int ret = mParent->glCreateProgram();
         mParent->resources().append(ret);
@@ -426,8 +397,6 @@ public:
     }
 
     CLONEMETHOD(CreateProgram)
-
-    virtual ~CreateProgram() {}
 };
 
 
@@ -441,7 +410,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
         int shader = vals[start+1].value<int>();
         // qDebug() << "glAttachShader" << prog << shader;
@@ -451,8 +420,6 @@ public:
     }
 
     CLONEMETHOD(AttachShader)
-
-    virtual ~AttachShader() {}
 };
 
 
@@ -466,7 +433,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
         int shader = vals[start+1].value<int>();
         // qDebug() << "glDetachShader" << prog << shader;
@@ -476,8 +443,6 @@ public:
     }
 
     CLONEMETHOD(DetachShader)
-
-    virtual ~DetachShader() {}
 };
 
 
@@ -490,7 +455,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
         // qDebug() << "glLinkProgram" << name;
         mParent->glLinkProgram(name);
@@ -508,8 +473,6 @@ public:
     }
 
     CLONEMETHOD(LinkProgram)
-
-    virtual ~LinkProgram() {}
 };
 
 
@@ -522,7 +485,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
         // qDebug() << "glUseProgram" << name;
         mParent->glUseProgram(name);
@@ -531,8 +494,6 @@ public:
     }
 
     CLONEMETHOD(UseProgram)
-
-    virtual ~UseProgram() {}
 };
 
 
@@ -545,7 +506,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
         // qDebug() << "glDeleteProgram" << name;
         mParent->glDeleteProgram(name);
@@ -555,8 +516,6 @@ public:
     }
 
     CLONEMETHOD(DeleteProgram)
-
-    virtual ~DeleteProgram() {}
 };
 
 class GetAttribLocation: public GLProc {
@@ -570,9 +529,9 @@ public:
         mArgTypes.append(t);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
-        QString name = vals[start+1].value<QString>();
+        QString name = vals[start+1].toString();
         // qDebug() << "glGetAttribLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
@@ -582,8 +541,6 @@ public:
     }
 
     CLONEMETHOD(GetAttribLocation)
-
-    virtual ~GetAttribLocation() {}
 };
 
 
@@ -598,9 +555,9 @@ public:
         mArgTypes.append(t);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
-        QString name = vals[start+1].value<QString>();
+        QString name = vals[start+1].toString();
         // qDebug() << "glGetUniformLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
@@ -610,8 +567,6 @@ public:
     }
 
     CLONEMETHOD(GetUniformLocation)
-
-    virtual ~GetUniformLocation() {}
 };
 
 
@@ -626,7 +581,7 @@ public:
         mArgTypes.append(t);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         Math3D::Real uniform = vals[start+1].value<Math3D::Real>();
         // qDebug() << "glUniform1f" << loc << uniform;
@@ -636,8 +591,6 @@ public:
     }
 
     CLONEMETHOD(Uniform1F)
-
-    virtual ~Uniform1F() {}
 };
 
 class Uniform1I: public GLProc {
@@ -650,7 +603,7 @@ public:
         mArgTypes.append(t);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         int uniform = vals[start+1].value<int>();
         // qDebug() << "glUniform1i" << loc << uniform;
@@ -660,8 +613,6 @@ public:
     }
 
     CLONEMETHOD(Uniform1I)
-
-    virtual ~Uniform1I() {}
 };
 
 class Uniform4F: public GLProc {
@@ -675,7 +626,7 @@ public:
         mArgTypes.append(t);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         Vector4 uni = vals[start+1].value<Vector4>();
         // qDebug() << "glUniform4f" << loc << uni[X] << uni[Y] << uni[Z] << uni[W];
@@ -685,8 +636,6 @@ public:
     }
 
     CLONEMETHOD(Uniform4F)
-
-    virtual ~Uniform4F() {}
 };
 
 
@@ -701,7 +650,7 @@ public:
         mArgTypes.append(t);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         Matrix4 uni = vals[start+1].value<Matrix4>();
         // qDebug() << "glUniformMatrix4F" << loc;
@@ -711,8 +660,6 @@ public:
     }
 
     CLONEMETHOD(UniformMatrix4F)
-
-    virtual ~UniformMatrix4F() {}
 };
 
 class GenBuffer: public GLProc {
@@ -721,7 +668,7 @@ public:
 
     GenBuffer(Demo::GLWidget* p): GLProc("genbuffer", Symbol::Integer, p) {}
 
-    const QVariant& gl_execute(const QVector<QVariant>&, int) {
+    const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         GLuint ret;
         // qDebug() << "glGenBuffers";
         mParent->glGenBuffers(1, &ret);
@@ -731,8 +678,6 @@ public:
     }
 
     CLONEMETHOD(GenBuffer)
-
-    virtual ~GenBuffer() {}
 };
 
 class DeleteBuffer: public GLProc {
@@ -744,7 +689,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "glDeleteBuffers" << name;
         mParent->glDeleteBuffers(1, &name);
@@ -754,8 +699,6 @@ public:
     }
 
     CLONEMETHOD(DeleteBuffer)
-
-    virtual ~DeleteBuffer() {}
 };
 
 
@@ -769,7 +712,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         GLuint buffer = vals[start+1].value<int>();
         // qDebug() << "glBindBuffer" << target << buffer;
@@ -779,8 +722,6 @@ public:
     }
 
     CLONEMETHOD(BindBuffer)
-
-    ~BindBuffer() {}
 };
 
 class BufferData: public GLProc {
@@ -794,7 +735,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         const Blob& blob = mParent->blob(vals[start+1].value<int>());
         GLuint usage = vals[start+2].value<int>();
@@ -805,8 +746,6 @@ public:
     }
 
     CLONEMETHOD(BufferData)
-
-    ~BufferData() {}
 };
 
 class VertexAttribPointer: public GLProc {
@@ -821,10 +760,10 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint index = vals[start].value<int>();
         const Blob& blob = mParent->blob(vals[start+1].value<int>());
-        QString attr = vals[start+2].value<QString>();
+        QString attr = vals[start+2].toString();
         // qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
         const BlobSpec& spec = blob.spec(attr);
         // qDebug() << "VertexAttribPointer" << spec.size << spec.offset;
@@ -839,8 +778,6 @@ public:
     }
 
     CLONEMETHOD(VertexAttribPointer)
-
-    ~VertexAttribPointer() {}
 };
 
 class Draw: public GLProc {
@@ -856,9 +793,9 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         const Blob& blob = mParent->blob(vals[start].value<int>());
-        QString attr = vals[start + 1].value<QString>();
+        QString attr = vals[start + 1].toString();
         GLuint mode = vals[start + 2].value<int>();
         // qDebug() << "Draw" << blob.name() << attr << mode;
         blob.draw(mode, attr);
@@ -867,8 +804,6 @@ public:
     }
 
     CLONEMETHOD(Draw)
-
-    ~Draw() {}
 };
 
 
@@ -881,7 +816,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "glEnableVertexAttribArray" << name;
         mParent->glEnableVertexAttribArray(name);
@@ -890,8 +825,6 @@ public:
     }
 
     CLONEMETHOD(EnableVertexAttribArray)
-
-    ~EnableVertexAttribArray() {}
 };
 
 class DisableVertexAttribArray: public GLProc {
@@ -903,7 +836,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "glDisableVertexAttribArray" << name;
         mParent->glDisableVertexAttribArray(name);
@@ -912,8 +845,6 @@ public:
     }
 
     CLONEMETHOD(DisableVertexAttribArray)
-
-    ~DisableVertexAttribArray() {}
 };
 
 
@@ -926,7 +857,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "ActiveTexture" << name;
         mParent->glActiveTexture(name);
@@ -935,8 +866,6 @@ public:
     }
 
     CLONEMETHOD(ActiveTexture)
-
-    ~ActiveTexture() {}
 };
 
 
@@ -949,7 +878,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         // qDebug() << "GenerateMipMap" << target;
         mParent->glGenerateMipmap(target);
@@ -958,8 +887,6 @@ public:
     }
 
     CLONEMETHOD(GenerateMipMap)
-
-    ~GenerateMipMap() {}
 };
 
 class BindTexture: public GLProc {
@@ -972,7 +899,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         GLuint texture = vals[start + 1].value<int>();
         // qDebug() << "BindTexture" << target << texture;
@@ -982,8 +909,6 @@ public:
     }
 
     CLONEMETHOD(BindTexture)
-
-    ~BindTexture() {}
 };
 
 class GenTexture: public GLProc {
@@ -992,7 +917,7 @@ public:
 
     GenTexture(Demo::GLWidget* p): GLProc("gentexture", Symbol::Integer, p) {}
 
-    const QVariant& gl_execute(const QVector<QVariant>&, int) {
+    const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         GLuint ret;
         // qDebug() << "GenTexture";
         mParent->glGenTextures(1, &ret);
@@ -1002,8 +927,6 @@ public:
     }
 
     CLONEMETHOD(GenTexture)
-
-    virtual ~GenTexture() {}
 };
 
 class DeleteTexture: public GLProc {
@@ -1015,7 +938,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "DeleteTexture" << name;
         mParent->glDeleteTextures(1, &name);
@@ -1025,8 +948,6 @@ public:
     }
 
     CLONEMETHOD(DeleteTexture)
-
-    virtual ~DeleteTexture() {}
 };
 
 
@@ -1041,7 +962,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         GLuint name = vals[start + 1].value<int>();
         GLuint param = vals[start + 2].value<int>();
@@ -1052,8 +973,6 @@ public:
     }
 
     CLONEMETHOD(TexParameter)
-
-    virtual ~TexParameter() {}
 };
 
 
@@ -1071,12 +990,12 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         GLuint level = vals[start + 1].value<int>();
         GLuint iformat = vals[start + 2].value<int>();
         const TexBlob& blob = mParent->texBlob(vals[start + 3].value<int>());
-        QString attr = vals[start + 4].value<QString>();
+        QString attr = vals[start + 4].toString();
         // qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
         const TexBlobSpec spec = blob.spec(attr);
         // qDebug() << "TexImage2D" << spec.width << spec.height << spec.type;
@@ -1086,8 +1005,6 @@ public:
     }
 
     CLONEMETHOD(TexImage2D)
-
-    ~TexImage2D() {}
 };
 
 
@@ -1101,7 +1018,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint src = vals[start].value<int>();
         GLuint dst = vals[start + 1].value<int>();
         mParent->glBlendFunc(src, dst);
@@ -1110,8 +1027,7 @@ public:
     }
 
     CLONEMETHOD(BlendFunc)
-
-    ~BlendFunc() {}
+;
 };
 
 
@@ -1124,7 +1040,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint mode = vals[start].value<int>();
         mParent->glBlendEquation(mode);
         mValue.setValue(0);
@@ -1132,8 +1048,6 @@ public:
     }
 
     CLONEMETHOD(BlendEquation)
-
-    ~BlendEquation() {}
 };
 
 class BlendColor: public GLProc {
@@ -1145,7 +1059,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Vector4 c = vals[start].value<Vector4>();
         mParent->glBlendColor(c[X], c[Y], c[Z], c[W]);
         mValue.setValue(0);
@@ -1153,8 +1067,6 @@ public:
     }
 
     CLONEMETHOD(BlendColor)
-
-    ~BlendColor() {}
 };
 
 class PolygonOffset: public GLProc {
@@ -1167,7 +1079,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real factor = vals[start].value<Math3D::Real>();
         Math3D::Real units = vals[start + 1].value<Math3D::Real>();
         // qDebug() << "glPolygonOffset" << depth;
@@ -1177,8 +1089,6 @@ public:
     }
 
     CLONEMETHOD(PolygonOffset)
-
-    virtual ~PolygonOffset() {}
 };
 
 class DepthFunc: public GLProc {
@@ -1190,7 +1100,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint func = vals[start].value<int>();
         mParent->glDepthFunc(func);
         mValue.setValue(0);
@@ -1198,8 +1108,6 @@ public:
     }
 
     CLONEMETHOD(DepthFunc)
-
-    ~DepthFunc() {}
 };
 
 
@@ -1214,7 +1122,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint func = vals[start].value<int>();
         GLint ref = vals[start+1].value<int>();
         GLuint mask = vals[start+2].value<int>();
@@ -1224,8 +1132,6 @@ public:
     }
 
     CLONEMETHOD(StencilFunc)
-
-    ~StencilFunc() {}
 };
 
 class StencilOp: public GLProc {
@@ -1239,7 +1145,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint sfail = vals[start].value<int>();
         GLuint dpfail = vals[start+1].value<int>();
         GLuint dppass = vals[start+2].value<int>();
@@ -1249,8 +1155,171 @@ public:
     }
 
     CLONEMETHOD(StencilOp)
+};
 
-    ~StencilOp() {}
+class GenFrameBuffer: public GLProc {
+
+public:
+
+    GenFrameBuffer(Demo::GLWidget* p): GLProc("genframebuffer", Symbol::Integer, p) {}
+
+    const QVariant& gl_execute(const QVector<QVariant>&, int) override {
+        GLuint ret;
+        // qDebug() << "glGenFrameBuffers";
+        mParent->glGenFramebuffers(1, &ret);
+        mParent->buffers().append(ret);
+        mValue.setValue(ret);
+        return mValue;
+    }
+
+    CLONEMETHOD(GenFrameBuffer)
+};
+
+class DeleteFrameBuffer: public GLProc {
+
+public:
+
+    DeleteFrameBuffer(Demo::GLWidget* p): GLProc("deleteframebuffer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint name = vals[start].value<int>();
+        // qDebug() << "glDeleteFrameBuffers" << name;
+        mParent->glDeleteFramebuffers(1, &name);
+        mParent->buffers().removeOne(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(DeleteFrameBuffer)
+};
+
+
+class BindFrameBuffer: public GLProc {
+
+public:
+
+    BindFrameBuffer(Demo::GLWidget* p): GLProc("bindframebuffer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        GLuint buffer = vals[start+1].value<int>();
+        // qDebug() << "glBindFrameBuffer" << target << buffer;
+        mParent->glBindFramebuffer(target, buffer);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(BindFrameBuffer)
+};
+
+class FrameBufferParameter: public GLProc {
+
+public:
+
+    FrameBufferParameter(Demo::GLWidget* p): GLProc("framebufferparameter", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        GLuint name = vals[start + 1].value<int>();
+        GLuint param = vals[start + 2].value<int>();
+        // qDebug() << "glFramebufferParameteri" << target << name << param;
+        mParent->glFramebufferParameteri(target, name, param);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(FrameBufferParameter)
+};
+
+class FrameBufferTexture2D: public GLProc {
+
+public:
+
+    FrameBufferTexture2D(Demo::GLWidget* p): GLProc("framebuffertexture2d", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        GLuint attachment = vals[start + 1].value<int>();
+        GLuint textarget = vals[start + 2].value<int>();
+        GLuint texture = vals[start + 3].value<int>();
+        GLint level = vals[start + 4].value<int>();
+        // qDebug() << "glFramebufferTexture2D" << target << name << param;
+        mParent->glFramebufferTexture2D(target, attachment, textarget, texture, level);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(FrameBufferTexture2D)
+};
+
+class FrameBufferTextureLayer: public GLProc {
+
+public:
+
+    FrameBufferTextureLayer(Demo::GLWidget* p): GLProc("framebuffertexturelayer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        GLuint attachment = vals[start + 1].value<int>();
+        GLuint texture = vals[start + 2].value<int>();
+        GLint level = vals[start + 3].value<int>();
+        GLuint layer = vals[start + 4].value<int>();
+        // qDebug() << "glFramebufferTextureLayer" << target << name << param;
+        mParent->glFramebufferTextureLayer(target, attachment, texture, level, layer);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(FrameBufferTextureLayer)
+};
+
+class CheckFrameBufferStatus: public GLProc {
+
+public:
+
+    CheckFrameBufferStatus(Demo::GLWidget* p): GLProc("checkframebufferstatus", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        // qDebug() << "glCheckFramebufferStatus" << target;
+        GLuint status = mParent->glCheckFramebufferStatus(target);
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            throw GLError(QString("Framebuffer is not complete (%1)").arg(status));
+        }
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(CheckFrameBufferStatus)
 };
 
 
@@ -1309,6 +1378,13 @@ public:
         contents.append(new DepthFunc(p));
         contents.append(new StencilFunc(p));
         contents.append(new StencilOp(p));
+        contents.append(new GenFrameBuffer(p));
+        contents.append(new BindFrameBuffer(p));
+        contents.append(new DeleteFrameBuffer(p));
+        contents.append(new FrameBufferParameter(p));
+        contents.append(new FrameBufferTexture2D(p));
+        contents.append(new FrameBufferTextureLayer(p));
+        contents.append(new CheckFrameBufferStatus(p));
     }
 };
 
@@ -1360,6 +1436,7 @@ public:
         CONST(TEXTURE0);
         // texture targets
         CONST(TEXTURE_2D);
+        CONST(TEXTURE_2D_MULTISAMPLE);
         CONST(TEXTURE_CUBE_MAP);
         CONST(TEXTURE_CUBE_MAP_POSITIVE_X);
         CONST(TEXTURE_CUBE_MAP_POSITIVE_Y);
@@ -1392,6 +1469,16 @@ public:
         CONST(UNSIGNED_SHORT_5_6_5);
         CONST(UNSIGNED_SHORT_4_4_4_4);
         CONST(UNSIGNED_SHORT_5_5_5_1);
+        CONST(UNSIGNED_SHORT);
+        CONST(UNSIGNED_INT);
+        CONST(UNSIGNED_INT_24_8);
+        CONST(FLOAT);
+        CONST(FLOAT_32_UNSIGNED_INT_24_8_REV);
+        CONST(DEPTH_COMPONENT16);
+        CONST(DEPTH_COMPONENT24);
+        CONST(DEPTH_COMPONENT32F);
+        CONST(DEPTH24_STENCIL8);
+        CONST(DEPTH32F_STENCIL8);
         // blend func
         CONST(CONSTANT_COLOR);
         CONST(DST_COLOR);
@@ -1432,6 +1519,23 @@ public:
         CONST(KEEP);
         CONST(REPLACE);
         // ZERO already defined (blend func);
+        // bind framebuffer
+        CONST(DRAW_FRAMEBUFFER);
+        CONST(READ_FRAMEBUFFER);
+        // framebuffer parameter
+        CONST(FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS);
+        CONST(FRAMEBUFFER_DEFAULT_HEIGHT);
+        CONST(FRAMEBUFFER_DEFAULT_LAYERS);
+        CONST(FRAMEBUFFER_DEFAULT_SAMPLES);
+        CONST(FRAMEBUFFER_DEFAULT_WIDTH);
+        // framebuffer texture2D
+        CONST(COLOR_ATTACHMENT0);
+        CONST(COLOR_ATTACHMENT1);
+        CONST(COLOR_ATTACHMENT2);
+        CONST(COLOR_ATTACHMENT3);
+        CONST(STENCIL_ATTACHMENT);
+        CONST(DEPTH_ATTACHMENT);
+        CONST(DEPTH_STENCIL_ATTACHMENT);
     }
 
 

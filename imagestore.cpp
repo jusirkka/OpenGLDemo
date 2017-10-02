@@ -118,12 +118,9 @@ const QString& ImageStore::imageName(int index) {
 
 QStringList ImageStore::itemSample(const QString& except) const {
     QStringList r;
-    foreach (QString k, mNames) {
+    for (auto& k: mNames) {
         if (!except.isEmpty() && k == except) continue;
         r.append(k);
     }
     return r;
 }
-
-
-ImageStore::~ImageStore() {}

@@ -16,9 +16,9 @@ namespace GL {
 class RunError {
 
 public:
-    RunError(const QString& msg, int pos)
-        :emsg(msg),
-          epos(pos)
+    RunError(QString msg, int pos)
+        : emsg(std::move(msg))
+        , epos(pos)
     {}
 
     const QString msg() const {return emsg;}
@@ -39,7 +39,7 @@ class Runner: public QObject {
 
 public:
 
-    Runner(QObject* parent = 0);
+    Runner(QObject* parent = nullptr);
 
 
     void setup(
@@ -49,7 +49,7 @@ public:
             int stackSize);
 
 
-    ~Runner();
+    ~Runner() override;
 
 public slots:
 
@@ -57,12 +57,12 @@ public slots:
 
 private:
 
-    typedef Compiler::CodeStack CodeStack;
-    typedef Compiler::ValueStack ValueStack;
-    typedef Compiler::AssignmentList AssignmentList;
-    typedef Compiler::VariableList VariableList;
-    typedef Compiler::FunctionList FunctionList;
-    typedef Compiler::Assignment Assignment;
+    using CodeStack = Compiler::CodeStack;
+    using ValueStack = Compiler::ValueStack;
+    using AssignmentList = Compiler::AssignmentList;
+    using VariableList = Compiler::VariableList;
+    using FunctionList = Compiler::FunctionList;
+    using Assignment = Compiler::Assignment;
 
     typedef QMap<QString, int> IndexMap;
 
@@ -129,10 +129,10 @@ template<typename L, typename R> bool Gt(QVariant& left, const QVariant& right) 
     return left.value<L>() > right.value<R>();
 }
 
-typedef void (*QFunc)(QVariant&);
-typedef void (*QIFunc)(QVariant&, int);
-typedef void (*QQFunc)(QVariant&, const QVariant&);
-typedef bool (*BQQFunc)(QVariant&, const QVariant&);
+using QFunc = void (*)(QVariant &);
+using QIFunc = void (*)(QVariant &, int);
+using QQFunc = void (*)(QVariant &, const QVariant &);
+using BQQFunc = bool (*)(QVariant &, const QVariant &);
 
 
 }}

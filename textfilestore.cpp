@@ -7,9 +7,8 @@ using namespace Demo;
 class TextSource: public Function {
 public:
     TextSource(TextFileStore* p);
-    const QVariant& execute(const QVector<QVariant>& vals, int start);
-    TextSource* clone() const;
-    ~TextSource();
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override;
+    TextSource* clone() const override;
 private:
     TextFileStore* mParent;
 };
@@ -23,7 +22,7 @@ TextSource::TextSource(TextFileStore* p):
 }
 
 const QVariant& TextSource::execute(const QVector<QVariant>& vals, int start) {
-    QString key = vals[start].value<QString>();
+    QString key = vals[start].toString();
     mValue.setValue(mParent->text(key));
     return mValue;
 }
@@ -31,8 +30,6 @@ const QVariant& TextSource::execute(const QVector<QVariant>& vals, int start) {
 TextSource* TextSource::clone() const {
     return new TextSource(*this);
 }
-
-TextSource::~TextSource() {}
 
 
 TextFileStore::TextFileStore(const QString& name, Scope* globals, QObject* parent):
@@ -97,11 +94,9 @@ const QString& TextFileStore::itemName(int index) {
 
 QStringList TextFileStore::itemSample(const QString& except) const {
     QStringList r;
-    foreach (QString n, mNames) {
+    for (auto& n: mNames) {
         if (!except.isEmpty() && n == except) continue;
         r.append(n);
     }
     return r;
 }
-
-TextFileStore::~TextFileStore() {}

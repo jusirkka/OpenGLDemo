@@ -41,17 +41,15 @@ class Function: public Symbol {
 
     public:
 
-        typedef Symbol::TypeList TypeList;
+        using TypeList = Symbol::TypeList;
 
-        int type() const {return mRetType;}
+        int type() const override {return mRetType;}
         const TypeList& argTypes() const {return mArgTypes;}
 
         unsigned index() const {return mIndex;}
         void setIndex(unsigned idx) {mIndex = idx;}
 
         virtual const QVariant& execute(const QVector<QVariant>& vals, int start) = 0;
-
-        virtual ~Function() {}
 
     protected:
 
@@ -71,7 +69,7 @@ class Function: public Symbol {
 
 class StdFunction: public Function {
 
-    typedef Math3D::Real (*stdfun) (Math3D::Real);
+    using stdfun = Math3D::Real (*)(Math3D::Real);
 
     public:
 
@@ -80,14 +78,12 @@ class StdFunction: public Function {
             mArgTypes.append(argt);
         }
 
-        const QVariant& execute(const QVector<QVariant>& vals, int start) {
+        const QVariant& execute(const QVector<QVariant>& vals, int start) override {
             mValue.setValue(mFun(vals[start].value<Math3D::Real>()));
             return mValue;
         }
 
         CLONEMETHOD(StdFunction)
-
-        ~StdFunction() {}
 
     private:
 
@@ -107,7 +103,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Vector4 v(vals[start].value<Math3D::Real>(),
                   vals[start+1].value<Math3D::Real>(),
                   vals[start+2].value<Math3D::Real>(),
@@ -120,7 +116,6 @@ public:
 
     CLONEMETHOD(Vecx)
 
-    ~Vecx() {}
 };
 
 
@@ -136,7 +131,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real values[16];
         for (int i = 0; i < 4; i++) {
             Vector4 v = vals[start + i].value<Math3D::Vector4>();
@@ -154,7 +149,6 @@ public:
 
     CLONEMETHOD(Mat)
 
-    ~Mat() {}
 };
 
 class Rot: public Function {
@@ -168,7 +162,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real angle = vals[start].value<Math3D::Real>() * Math3D::PI / 180;
         Vector4 axis = vals[start + 1].value<Vector4>();
         Matrix4 m;
@@ -179,8 +173,6 @@ public:
     }
 
     CLONEMETHOD(Rot)
-
-    ~Rot() {}
 };
 
 class Tr: public Function {
@@ -192,7 +184,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Vector4 tr = vals[start].value<Vector4>();
         Matrix4 m;
         m.setTranslation(tr);
@@ -202,8 +194,6 @@ public:
     }
 
     CLONEMETHOD(Tr)
-
-    ~Tr() {}
 };
 
 class Sc: public Function {
@@ -217,7 +207,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real x = vals[start].value<Math3D::Real>();
         Math3D::Real y = vals[start+1].value<Math3D::Real>();
         Math3D::Real z = vals[start+2].value<Math3D::Real>();
@@ -229,8 +219,6 @@ public:
     }
 
     CLONEMETHOD(Sc)
-
-    ~Sc() {}
 };
 
 class Norm: public Function {
@@ -242,7 +230,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Vector4 x = vals[start].value<Vector4>();
         Vector4 u = x.normalized3();
         // qDebug() << "Norm";
@@ -251,8 +239,6 @@ public:
     }
 
     CLONEMETHOD(Norm)
-
-    ~Norm() {}
 };
 
 class NormalT: public Function {
@@ -264,7 +250,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Matrix4 m = vals[start].value<Matrix4>();
         // qDebug() << "normal transform: check" << m.comatrix() * m.transpose3();
         // qDebug() << "NormalT";
@@ -273,8 +259,6 @@ public:
     }
 
     CLONEMETHOD(NormalT)
-
-    ~NormalT() {}
 };
 
 class Refl: public Function {
@@ -287,7 +271,7 @@ public:
         mArgTypes.append(argt);
     }
 
-    const QVariant& execute(const QVector<QVariant>& vals, int start) {
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Vector4 normal = vals[start].value<Vector4>();
         normal.normalize3();
         Vector4 point = vals[start + 1].value<Vector4>();
@@ -302,8 +286,6 @@ public:
     }
 
     CLONEMETHOD(Refl)
-
-    ~Refl() {}
 };
 
 
@@ -346,7 +328,7 @@ public:
 
 };
 
-typedef QList<Function*> FunctionList;
+using FunctionList = QList<Demo::Function *>;
 
 } // namespace DEMO
 #endif // DEMO_FUNCTION_H

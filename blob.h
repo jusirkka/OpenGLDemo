@@ -23,7 +23,7 @@ public:
     BlobSpec()
         : size(0),
           type(0),
-          normalized(0),
+          normalized(false),
           stride(0),
           offset(0)
     {}
@@ -49,7 +49,7 @@ public:
 
     virtual void draw(unsigned int mode, const QString& attr) const = 0;
 
-    virtual ~Blob() {}
+    virtual ~Blob() = default;
 
 protected:
 
@@ -63,7 +63,7 @@ protected:
         {}
 
         Data()
-            : data(0),
+            : data(nullptr),
               length(0)
         {}
 

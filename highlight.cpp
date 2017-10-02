@@ -53,7 +53,7 @@ void Highlight::highlightBlock(const QString &text) {
     QString parsed = text;
     int pshift = 0;
     if (previousBlockState() == 1) {
-        parsed = "\"" + text;
+        parsed = R"(")" + text;
         pshift = -1;
     }
     setCurrentBlockState(0);

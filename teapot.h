@@ -20,15 +20,15 @@ public:
 
     Teapot();
 
-    void draw(unsigned int mode, const QString& attr) const;
+    void draw(unsigned int mode, const QString& attr) const override;
 
-    ~Teapot();
+    ~Teapot() override;
 
 private:
 
     class Element {
         public:
-            Element() {}
+            Element() = default;
             Element(unsigned int m, unsigned int cnt, unsigned short index):
                 mode(m),
                 count(cnt),
@@ -39,7 +39,7 @@ private:
             unsigned short offset;
     };
 
-    typedef QVector<Element> ElementVector;
+    using ElementVector = QVector<Demo::GL::Teapot::Element>;
     typedef QMap<unsigned int, unsigned int> ModeMap;
     typedef QMap<unsigned int, ModeMap> ModeMapMap;
 

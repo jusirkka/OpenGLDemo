@@ -14,9 +14,9 @@ class ScriptSelector: public QWidget
     Q_OBJECT
 
 public:
-    explicit ScriptSelector(QWidget *parent = 0);
+    explicit ScriptSelector(QWidget *parent = nullptr);
     void setup(const Project* target);
-    ~ScriptSelector();
+    ~ScriptSelector() override;
 
 signals:
 

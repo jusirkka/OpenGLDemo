@@ -45,11 +45,11 @@ class MainWindow: public QMainWindow {
 public:
 
     MainWindow(const QString& project);
-    virtual ~MainWindow();
+    ~MainWindow() override;
 
 protected:
 
-    virtual void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
 

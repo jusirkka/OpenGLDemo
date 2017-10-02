@@ -63,7 +63,7 @@ const char* Demo::GL::Compiler::explanations[] = {
     "%1 expects a text expression",
     "cannot assign to imported variable %1",
     "variable %1 has not been exported",
-    "script \"%1\" not found",
+    R"(script "%1" not found)",
     "%1 is not a supported operation for Text"
 };
 
@@ -80,7 +80,7 @@ Compiler::Compiler(const QString &name, Scope* globalScope, QObject *parent):
     mStackPos(0),
     mCodeSize(0),
     mImmedSize(0),
-    mScanner(0),
+    mScanner(nullptr),
     mError(),
     mRunner(new Runner(this)),
     mReady(false),
@@ -175,7 +175,7 @@ void Compiler::reset() {
 
     mSubscripts.clear();
 
-    foreach (QString name, mImportScripts) {
+    for (auto& name: mImportScripts) {
         Compiler* c = mGlobalScope->compiler(name);
         if (c) {
             disconnect(c, SIGNAL(resetting()), this, SLOT(compileLater()));
@@ -207,7 +207,7 @@ bool Compiler::hasSymbol(const QString& sym) const {
 Demo::Symbol* Compiler::symbol(const QString& sym) const {
     if (mGlobalScope->symbols().contains(sym)) return mGlobalScope->symbols()[sym];
     if (mSymbols.contains(sym)) return mSymbols[sym];
-    return 0;
+    return nullptr;
 }
 
 bool Compiler::isImported(const Variable* var) const {
@@ -257,7 +257,7 @@ const Demo::VariableMap& Compiler::exports() const {
 }
 
 bool Compiler::isScript(const QString& name) const {
-    return mGlobalScope->compiler(name) != 0;
+    return mGlobalScope->compiler(name) != nullptr;
 }
 
 void Compiler::addSubscript(const QString& name) {

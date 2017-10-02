@@ -45,9 +45,9 @@ GLWidget::GLWidget(QWidget *parent):
 void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
 
     GL::Functions funcs(this);
-    foreach(Symbol* func, funcs.contents) globals[func->name()] = func;
+    for (auto func: qAsConst(funcs.contents)) globals[func->name()] = func;
     GL::Constants constants;
-    foreach(Symbol* c, constants.contents) globals[c->name()] = c;
+    for (auto c: qAsConst(constants.contents)) globals[c->name()] = c;
 
     // shared matrices
     exports["camera"] = new Var::Shared::Matrix("camera");
@@ -64,14 +64,15 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
     mProjectionVar = exports["projection"]->clone();
 
     // retrieve blobs
-    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
+    const auto& statics = QPluginLoader::staticInstances();
+    for (auto plugin: statics) {
         addBlob(plugin, globals);
     }
 
     QDir pluginsDir(qApp->applicationDirPath());
     pluginsDir.cd("plugins");
 
-    foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+    for (auto& fileName: pluginsDir.entryList(QDir::Files)) {
         QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
         addBlob(loader.instance(), globals);
     }
@@ -80,7 +81,7 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
 }
 
 void GLWidget::addBlob(QObject* plugin, SymbolMap& globals) {
-    GL::Blob* blob = qobject_cast<GL::Blob*>(plugin);
+    auto blob = qobject_cast<GL::Blob*>(plugin);
     if (blob) {
         if (globals.contains(blob->name())) {
             qWarning() << "Cannot load blob:" << blob->name() << "is a reserved symbol";
@@ -92,7 +93,7 @@ void GLWidget::addBlob(QObject* plugin, SymbolMap& globals) {
         return;
     }
 
-    GL::TexBlob* texBlob = qobject_cast<GL::TexBlob*>(plugin);
+    auto texBlob = qobject_cast<GL::TexBlob*>(plugin);
     if (texBlob) {
         if (globals.contains(texBlob->name())) {
             qWarning() << "Cannot load blob:" << texBlob->name() << "is a reserved symbol";
@@ -108,7 +109,7 @@ void GLWidget::addBlob(QObject* plugin, SymbolMap& globals) {
 
 static int findIndex(const SymbolMap& globals, const QString& name) {
     if (!globals.contains(name)) return -1;
-    Constant* c = dynamic_cast<Constant*>(globals[name]);
+    auto c = dynamic_cast<Constant*>(globals[name]);
     if (!c) return -1;
     bool ok;
     int index = c->value().toInt(&ok);
@@ -118,13 +119,13 @@ static int findIndex(const SymbolMap& globals, const QString& name) {
 
 GL::Blob* Demo::GLWidget::blob(const SymbolMap& globals, const QString& name) const {
     int index = findIndex(globals, name);
-    if (index < 0 || index >= mBlobs.size()) return 0;
+    if (index < 0 || index >= mBlobs.size()) return nullptr;
     return mBlobs[index];
 }
 
 GL::TexBlob* Demo::GLWidget::texBlob(const SymbolMap& globals, const QString& name) const {
     int index = findIndex(globals, name);
-    if (index < 0 || index >= mTexBlobs.size()) return 0;
+    if (index < 0 || index >= mTexBlobs.size()) return nullptr;
     return mTexBlobs[index];
 }
 
@@ -320,7 +321,7 @@ void Demo::GLWidget::defaults() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glUseProgram(0);
-    foreach (int name, mResources) {
+    for (auto name: qAsConst(mResources)) {
         if (glIsShader(name)) {
             // qDebug() << "deleting shader" << name;
             glDeleteShader(name);

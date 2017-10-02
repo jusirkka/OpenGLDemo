@@ -43,12 +43,10 @@ class Constant: public Symbol {
         Constant(const QString& name, const Math3D::Matrix4& val):
             Symbol(name), mType(Symbol::Matrix), mValue(QVariant::fromValue(val)) {}
 
-        int type() const {return mType;}
+        int type() const  override {return mType;}
         const QVariant& value() const {return mValue;}
 
         CLONEMETHOD(Constant)
-
-        ~Constant() {}
 
     private:
 

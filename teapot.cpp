@@ -576,10 +576,9 @@ GL::Teapot::Teapot()
         vertices.append(p.vertices());
         normals.append(p.normals());
         texcoords.append(p.texcoords());
-        foreach(Patch::Strip s, p.strips()) {
+        for (const auto& s: p.strips()) {
             Patch::IndexList strip;
-            for (int idx = 0; idx < s.indices.length(); ++idx)
-                strip.append(s.indices[idx] + i_offset);
+            for (auto idx: indices) strip.append(s.indices[idx] + i_offset);
             mElements.append(Element(s.mode, s.indices.length(), e_offset));
             e_offset += sizeof(GLuint) * s.indices.length();
             indices.append(strip);
@@ -637,13 +636,13 @@ void GL::Teapot::draw(unsigned int mode, const QString&) const {
     int name;
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &name);
     if (name == 0) return;
-    foreach (Element item, mElements) {
+    for (auto& item: mElements) {
         glDrawElements((GLenum) mModes[item.mode][mode], (GLsizei) item.count, GL_UNSIGNED_INT, (void*) (size_t) item.offset);
     }
 }
 
 GL::Teapot::~Teapot() {
-    foreach(Data c, mData.values()) {
-        delete (char*) c.data;
+    for (auto& c: mData) {
+        delete c.data;
     }
 }

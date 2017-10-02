@@ -21,9 +21,9 @@ class CompleterException {
 
 public:
 
-    CompleterException(const QString& prefix, const QStringList& completions):
-        mPrefix(prefix),
-        mCompletions(completions)
+    CompleterException(QString prefix, QStringList completions)
+        : mPrefix(std::move(prefix))
+        , mCompletions(std::move(completions))
     {}
 
     CompleterException(): mPrefix(), mCompletions() {}
@@ -44,7 +44,7 @@ class Completer: public QObject, public Parser {
 
 public:
 
-    typedef QList<Variable*> VariableList;
+    using VariableList = QList<Demo::Variable *>;
 
 public:
 
@@ -58,25 +58,25 @@ public:
     void updatePopup(const QString& prefix);
 
     // grammar interface
-    void setCode(const QString& name);
-    void pushBack(unsigned op, unsigned lrtype, int inc);
-    void setJump();
-    void initJump();
-    void pushBackImmed(int constVal);
-    void pushBackImmed(Math3D::Real constVal);
-    void pushBackImmed(const QVariant& constVal);
-    void createError(const QString& item, Error err);
-    bool createCompletion(const IdentifierType& id, unsigned completionMask);
-    void addVariable(Variable* v);
-    bool hasSymbol(const QString& sym) const;
-    Symbol* symbol(const QString& sym) const;
-    bool isImported(const Variable* var) const;
-    bool isExported(const QString& v, const QString& script) const;
-    void addImported(const QString& v, const QString& script);
-    bool isScript(const QString& name) const;
-    void addSubscript(const QString& name);
+    void setCode(const QString& name) override;
+    void pushBack(unsigned op, unsigned lrtype, int inc) override;
+    void setJump() override;
+    void initJump() override;
+    void pushBackImmed(int constVal) override;
+    void pushBackImmed(Math3D::Real constVal) override;
+    void pushBackImmed(const QVariant& constVal) override;
+    void createError(const QString& item, Error err) override;
+    bool createCompletion(const IdentifierType& id, unsigned completionMask) override;
+    void addVariable(Variable* v) override;
+    bool hasSymbol(const QString& sym) const override;
+    Symbol* symbol(const QString& sym) const override;
+    bool isImported(const Variable* var) const override;
+    bool isExported(const QString& v, const QString& script) const override;
+    void addImported(const QString& v, const QString& script) override;
+    bool isScript(const QString& name) const override;
+    void addSubscript(const QString& name) override;
 
-    ~Completer();
+    ~Completer() override;
 
 
 private:
