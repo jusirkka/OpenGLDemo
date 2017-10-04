@@ -144,18 +144,15 @@ void Demo::MainWindow::on_actionSaveAll_triggered() {
         setWindowTitle(QString("%1: %2 [*]").arg(QApplication::applicationName(), fname));
     }
 
-    QModelIndex tmp = mSelectedIndex;
     for (int i = 0; i < mProject->rowCount(mProject->itemParent(Project::ScriptItems)); ++i) {
-        mSelectedIndex = mProject->index(i, Project::ScriptItems);
-        QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
-        CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
+        auto script = mProject->index(i, Project::ScriptItems);
+        auto editor = qobject_cast<CodeEditor*>(mProject->data(script, Project::EditorRole).value<QWidget*>());
         if (editor->document()->isModified()) {
-            on_actionSave_triggered();
-        } else if (mProject->data(mSelectedIndex, Project::FileNameRole) == "") {
-            on_actionSaveAs_triggered();
+            saveScript(script);
+        } else if (mProject->data(script, Project::FileNameRole) == "") {
+            saveScriptAs(script);
         }
     }
-    mSelectedIndex = tmp;
 
     mProject->saveProject();
 
@@ -176,8 +173,10 @@ void Demo::MainWindow::on_actionNew_triggered() {
 }
 
 void Demo::MainWindow::on_actionInsert_triggered() {
+    auto script = getSelection();
+    if (!script.isValid()) return;
     // Just be sure, insert shouldn't be active in other cases
-    if (mSelectedIndex.parent() != mProject->itemParent(Project::ScriptItems)) return;
+    if (script.parent() != mProject->itemParent(Project::ScriptItems)) return;
     QString title("Insert contents of a script");
     QString filter("OpenGL script files ( *.ogl)");
 
@@ -196,7 +195,7 @@ void Demo::MainWindow::on_actionInsert_triggered() {
 
     QFile file(fileName);
     file.open(QFile::ReadOnly);
-    mProject->setData(mSelectedIndex, QVariant::fromValue(file.readAll()), Project::ScriptRole);
+    mProject->setData(script, QVariant::fromValue(file.readAll()), Project::ScriptRole);
     file.close();
     setProjectModified();
 }
@@ -204,13 +203,15 @@ void Demo::MainWindow::on_actionInsert_triggered() {
 void Demo::MainWindow::on_actionOpen_triggered() {
     QString title;
     QString filter;
-    if (mSelectedIndex.parent() == mProject->itemParent(Project::ScriptItems)) {
+    auto item = getSelection();
+    if (!item.isValid()) return;
+    if (item.parent() == mProject->itemParent(Project::ScriptItems)) {
         title = "Open a file and bind to a script";
         filter = "OpenGL script files ( *.ogl)";
-    } else if (mSelectedIndex.parent() == mProject->itemParent(Project::ModelItems)) {
+    } else if (item.parent() == mProject->itemParent(Project::ModelItems)) {
         title = "Open a model file to create vertex data";
         filter = "Model files ( *.obj)";
-    } else if (mSelectedIndex.parent() == mProject->itemParent(Project::TextureItems)) {
+    } else if (item.parent() == mProject->itemParent(Project::TextureItems)) {
         title = "Open an image to create texture data";
         filter = "Image files (";
         const auto formats = QImageReader::supportedImageFormats();
@@ -218,7 +219,7 @@ void Demo::MainWindow::on_actionOpen_triggered() {
             filter += QString(" *.%1").arg(QString(b));
         }
         filter += ")";
-    } else if (mSelectedIndex.parent() == mProject->itemParent(Project::ShaderItems)) {
+    } else if (item.parent() == mProject->itemParent(Project::ShaderItems)) {
         title = "Open a shader source file to create a shader";
         filter = "GLSL files ( *.glsl *.vert *.frag)";
     }
@@ -235,16 +236,22 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     mLastDir = info.absoluteDir();
 
     // suggest to save the current script before deleting
-    if(!maybeSave()) return;
+    if(!maybeSave(item)) return;
 
-    mProject->setData(mSelectedIndex, QVariant::fromValue(fileName), Project::FileRole);
+    mProject->setData(item, QVariant::fromValue(fileName), Project::FileRole);
     mProjectModified = true;
     setProjectModified();
 }
 
 void Demo::MainWindow::on_actionSave_triggered() {
+    saveScript(getSelection());
+}
 
-    QString fname = mProject->data(mSelectedIndex, Project::FileNameRole).toString();
+void Demo::MainWindow::saveScript(const QModelIndex& item) {
+
+    if (item.parent() != mProject->itemParent(Project::ScriptItems)) return;
+
+    QString fname = mProject->data(item, Project::FileNameRole).toString();
 
     QFileInfo info(fname);
     if (info.isRelative()) {
@@ -253,14 +260,21 @@ void Demo::MainWindow::on_actionSave_triggered() {
     }
 
     if (info.isFile() && info.isWritable()) {
-        saveScript(fname);
+        saveScript(item, fname);
     } else {
-        on_actionSaveAs_triggered();
+        saveScriptAs(item);
     }
 }
 
 void Demo::MainWindow::on_actionSaveAs_triggered() {
-    QString name = mProject->data(mSelectedIndex).toString();
+    saveScriptAs(getSelection());
+}
+
+void Demo::MainWindow::saveScriptAs(const QModelIndex& item) {
+
+    if (item.parent() != mProject->itemParent(Project::ScriptItems)) return;
+
+    auto name = mProject->data(item).toString();
 
     QString fname = QFileDialog::getSaveFileName(
         this,
@@ -269,18 +283,22 @@ void Demo::MainWindow::on_actionSaveAs_triggered() {
         "OpenGL command files (*.ogl)"
     );
     if (fname.isEmpty()) return;
-    saveScript(fname);
-    mProject->setData(mSelectedIndex, QVariant::fromValue(fname), Project::FileNameRole);
+    saveScript(item, fname);
+    mProject->setData(item, QVariant::fromValue(fname), Project::FileNameRole);
     mProjectModified = true;
     setProjectModified();
 }
 
 void Demo::MainWindow::on_actionDelete_triggered() {
+
+    auto item = getSelection();
+    // do not remove header items
+    if (!item.parent().isValid()) return;
     // suggest to save the current script before deleting
-    if(!maybeSave()) return;
-    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+    if(!maybeSave(item)) return;
+    auto widget = mProject->data(item, Project::EditorRole).value<QWidget*>();
     int idx = mUI->editorsTabs->indexOf(widget);
-    mProject->removeRows(mSelectedIndex.row(), 1, mSelectedIndex.parent());
+    mProject->removeRows(item.row(), 1, item.parent());
     if (idx != -1) { // tab removal generates selection change
         mUI->editorsTabs->removeTab(idx);
     }
@@ -289,17 +307,20 @@ void Demo::MainWindow::on_actionDelete_triggered() {
 }
 
 void Demo::MainWindow::on_actionRename_triggered() {
+    auto item = getSelection();
+    // do not rename headers
+    if (!item.parent().isValid()) return;
     bool ok;
     QString text = QInputDialog::getText(
                         this,
                         "Rename",
                         "New item name:",
                         QLineEdit::Normal,
-                        mProject->data(mSelectedIndex).toString(),
+                        mProject->data(item).toString(),
                         &ok);
    if (ok && !text.isEmpty()) {
-       mProject->setData(mSelectedIndex, QVariant::fromValue(text));
-       QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+       mProject->setData(item, QVariant::fromValue(text));
+       QWidget* widget = mProject->data(item, Project::EditorRole).value<QWidget*>();
        int idx = mUI->editorsTabs->indexOf(widget);
        if (idx != -1) {
            mUI->editorsTabs->setTabText(idx, text);
@@ -311,9 +332,11 @@ void Demo::MainWindow::on_actionRename_triggered() {
 }
 
 void Demo::MainWindow::on_actionEdit_triggered() {
-    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+    auto item = getSelection();
+    if (item.parent() != mProject->itemParent(Project::ScriptItems)) return;
+    auto widget = mProject->data(item, Project::EditorRole).value<QWidget*>();
     if (mUI->editorsTabs->indexOf(widget) == -1) {
-        QString label = mProject->data(mSelectedIndex).toString();
+        auto label = mProject->data(item).toString();
         mUI->editorsTabs->addTab(widget, label);
     }
     mUI->editorsTabs->setCurrentWidget(widget);
@@ -321,9 +344,16 @@ void Demo::MainWindow::on_actionEdit_triggered() {
 }
 
 void Demo::MainWindow::on_actionReload_triggered() {
-    QString fileName = mProject->data(mSelectedIndex, Project::FileNameRole).toString();
+    auto item = getSelection();
+    if (item.parent() != mProject->itemParent(Project::ModelItems) ||
+            item.parent() != mProject->itemParent(Project::TextureItems) ||
+            item.parent() != mProject->itemParent(Project::ShaderItems)) {
+        return;
+    }
+
+    QString fileName = mProject->data(item, Project::FileNameRole).toString();
     if (fileName.isEmpty()) return;
-    mProject->setData(mSelectedIndex, QVariant::fromValue(fileName), Project::FileRole);
+    mProject->setData(item, QVariant::fromValue(fileName), Project::FileRole);
 }
 
 void Demo::MainWindow::on_actionQuit_triggered() {
@@ -383,11 +413,22 @@ void Demo::MainWindow::fps_changed(int value) {
     mGLWidget->animReset(value);
 }
 
-void Demo::MainWindow::selectionChanged() {
+QModelIndex Demo::MainWindow::getSelection() {
     const QItemSelectionModel* s = mUI->projectItems->selectionModel();
-
     if (!s->hasSelection()) {
-        mSelectedIndex = QModelIndex();
+        return QModelIndex();
+    }
+    if (s->selectedIndexes().isEmpty()) {
+        return QModelIndex();
+    }
+    return s->selectedIndexes()[0];
+}
+
+void Demo::MainWindow::selectionChanged() {
+
+    QModelIndex selection = getSelection();
+
+    if (!selection.isValid()) {
         mUI->actionInsert->setEnabled(false);
         mUI->actionOpen->setEnabled(false);
         mUI->actionSave->setEnabled(false);
@@ -404,10 +445,9 @@ void Demo::MainWindow::selectionChanged() {
         return;
     }
 
-    mSelectedIndex = s->selectedIndexes()[0];
 
     // item headers
-    if (mSelectedIndex.parent() == QModelIndex()) {
+    if (selection.parent() == QModelIndex()) {
         const auto as = mUI->projectItems->actions();
         for (auto a: as) {
             mUI->projectItems->removeAction(a);
@@ -429,15 +469,10 @@ void Demo::MainWindow::selectionChanged() {
         return;
     }
 
-    if (mSelectedIndex.parent() == mProject->itemParent(Project::ScriptItems)) {
-        setupScriptActions();
-        return;
-    }
+    setupScriptActions(selection);
 
     // models/textures/shaders
-    setupResourceActions();
-    QWidget* curr = mUI->editorsTabs->currentWidget();
-    if (curr) curr->setDisabled(true);
+    setupResourceActions(selection);
 
 }
 
@@ -448,9 +483,11 @@ void Demo::MainWindow::selectionChanged() {
     if (mUI->projectItems->actions().contains(mUI->action##a)) mUI->projectItems->removeAction(mUI->action##a)
 
 
-void Demo::MainWindow::setupScriptActions() {
+void Demo::MainWindow::setupScriptActions(const QModelIndex& selection) {
 
-    auto scriptName = mProject->data(mSelectedIndex).toString();
+    if (selection.parent() != mProject->itemParent(Project::ScriptItems)) return;
+
+    auto scriptName = mProject->data(selection).toString();
     QStringList unmods;
     unmods << mProject->initScriptName() << mProject->drawScriptName();
 
@@ -483,7 +520,7 @@ void Demo::MainWindow::setupScriptActions() {
     mUI->actionInsert->setEnabled(true);
     mUI->actionOpen->setEnabled(true);
 
-    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+    QWidget* widget = mProject->data(selection, Project::EditorRole).value<QWidget*>();
     if (mUI->editorsTabs->indexOf(widget) != -1) {
         mUI->editorsTabs->setCurrentWidget(widget);
     }
@@ -506,7 +543,14 @@ void Demo::MainWindow::setupScriptActions() {
 
 }
 
-void Demo::MainWindow::setupResourceActions() {
+void Demo::MainWindow::setupResourceActions(const QModelIndex& selection) {
+
+    if (selection.parent() != mProject->itemParent(Project::ModelItems) ||
+            selection.parent() != mProject->itemParent(Project::TextureItems) ||
+            selection.parent() != mProject->itemParent(Project::ShaderItems)) {
+        return;
+    }
+
 
     REMACTION(Insert);
     ADDACTION(Open);
@@ -527,10 +571,14 @@ void Demo::MainWindow::setupResourceActions() {
     mUI->actionCompile->setEnabled(false);
     mUI->actionDelete->setEnabled(true);
 
-    bool unbound = mProject->data(mSelectedIndex, Project::FileNameRole).toString().isEmpty();
+    bool unbound = mProject->data(selection, Project::FileNameRole).toString().isEmpty();
     mUI->actionReload->setDisabled(unbound);
 
     mUI->actionComplete->setEnabled(false);
+
+    QWidget* curr = mUI->editorsTabs->currentWidget();
+    if (curr) curr->setDisabled(true);
+
 }
 
 #undef REMACTION
@@ -636,10 +684,10 @@ bool Demo::MainWindow::maybeSaveProject() {
     return !cancel;
 }
 
-bool Demo::MainWindow::maybeSave() {
-    if (mSelectedIndex.parent() != mProject->itemParent(Project::ScriptItems)) return true;
+bool Demo::MainWindow::maybeSave(const QModelIndex& item) {
+    if (item.parent() != mProject->itemParent(Project::ScriptItems)) return true;
     bool cancel = false;
-    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
+    QWidget* widget = mProject->data(item, Project::EditorRole).value<QWidget*>();
     CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
     if (editor->document()->isModified()) {
         QMessageBox msgBox;
@@ -665,15 +713,14 @@ void Demo::MainWindow::closeEvent(QCloseEvent *event) {
     }
 }
 
-void Demo::MainWindow::saveScript(const QString &fname) {
-    if (mSelectedIndex.parent() != mProject->itemParent(Project::ScriptItems)) return;
-    QString script = mProject->data(mSelectedIndex, Project::ScriptRole).toString();
+void Demo::MainWindow::saveScript(const QModelIndex& script, const QString &fname) {
+    if (script.parent() != mProject->itemParent(Project::ScriptItems)) return;
+    auto data = mProject->data(script, Project::ScriptRole).toString();
     QFile f(fname);
     f.open(QFile::WriteOnly);
-    f.write(script.toUtf8());
+    f.write(data.toUtf8());
     f.close();
-    QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
-    CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
+    auto editor = qobject_cast<CodeEditor*>(mProject->data(script, Project::EditorRole).value<QWidget*>());
     editor->document()->setModified(false);
 }
 

@@ -121,8 +121,7 @@ private:
 
     //! Test if there are unsaved edits before clearing the project.
     bool maybeSaveProject();
-    bool maybeSave();
-    void saveScript(const QString& fname);
+    bool maybeSave(const QModelIndex& item);
 
     //! Read saved state
     void readSettings();
@@ -132,8 +131,13 @@ private:
 
     void openProject(const QString& data);
 
-    void setupScriptActions();
-    void setupResourceActions();
+    void setupScriptActions(const QModelIndex& selection);
+    void setupResourceActions(const QModelIndex& selection);
+    void saveScript(const QModelIndex& script);
+    void saveScriptAs(const QModelIndex& script);
+    void saveScript(const QModelIndex& script, const QString& fname);
+
+    QModelIndex getSelection();
 
 private:
 
@@ -141,7 +145,6 @@ private:
     Ui::MainWindow *mUI;
     GLWidget* mGLWidget;
     Project* mProject;
-    QModelIndex mSelectedIndex;
     bool mProjectModified;
     int mNumEdits;
     Scope* mGlobals;

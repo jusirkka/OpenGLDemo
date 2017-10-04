@@ -1538,6 +1538,7 @@ public:
         // bind framebuffer
         CONST(DRAW_FRAMEBUFFER);
         CONST(READ_FRAMEBUFFER);
+        CONST(FRAMEBUFFER);
         // framebuffer parameter
         CONST(FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS);
         CONST(FRAMEBUFFER_DEFAULT_HEIGHT);
