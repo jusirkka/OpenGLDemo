@@ -22,8 +22,8 @@ public:
     ImageStore();
 
     // tex blob implementation
-    const void* data(const QString& key) const override;
-    const TexBlobSpec spec(const QString& key) const override;
+    const void* readData(const QString& key) const override;
+    TexBlobSpec spec(const QString& key) const override;
 
     void rename(const QString& from, const QString& to);
     void remove(int index);
@@ -37,7 +37,7 @@ public:
 
 private:
 
-    typedef QMap<QString, QImage> ImageMap;
+    using ImageMap = QMap<QString, QImage>;
 
 private:
 

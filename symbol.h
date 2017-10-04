@@ -56,8 +56,8 @@ class Symbol {
         QString mName;
 };
 
-typedef QMap<QString, Symbol*> SymbolMap;
-typedef QMapIterator<QString, Symbol*> SymbolIterator;
+using SymbolMap = QMap<QString, Symbol*>;
+using SymbolIterator = QMapIterator<QString, Symbol*>;
 
 
 } // namespace Demo

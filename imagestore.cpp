@@ -13,16 +13,17 @@ ImageStore::ImageStore():
 
 
 
-const void* ImageStore::data(const QString& key) const {
+const void* ImageStore::readData(const QString& key) const {
     // qDebug() << "GL::ImageStore::data" << key;
     if (mImages.contains(key)) {
         // qDebug() << "has" << mImages[key].size() << "bytes";
         return mImages[key].bits();
     }
-    return 0;
+    return nullptr;
 }
 
-const TexBlobSpec ImageStore::spec(const QString& key) const {
+
+TexBlobSpec ImageStore::spec(const QString& key) const {
     if (mImages.contains(key)) {
         const QImage& image = mImages[key];
         return TexBlobSpec(image.width(), image.height(), GL_RGBA, GL_UNSIGNED_BYTE);

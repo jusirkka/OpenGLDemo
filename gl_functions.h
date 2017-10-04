@@ -372,6 +372,9 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
         // qDebug() << "glDeleteShader" << name;
+        if (!mParent->glIsShader(name)) {
+            throw GLError(QString(R"("%1" is not a shader)").arg(name));
+        }
         mParent->glDeleteShader(name);
         mParent->resources().removeOne(name);
         mValue.setValue(0);
@@ -509,6 +512,9 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
         // qDebug() << "glDeleteProgram" << name;
+        if (!mParent->glIsProgram(name)) {
+            throw GLError(QString(R"("%1" is not a program)").arg(name));
+        }
         mParent->glDeleteProgram(name);
         mParent->resources().removeOne(name);
         mValue.setValue(0);
@@ -672,7 +678,7 @@ public:
         GLuint ret;
         // qDebug() << "glGenBuffers";
         mParent->glGenBuffers(1, &ret);
-        mParent->buffers().append(ret);
+        mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
     }
@@ -692,8 +698,11 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "glDeleteBuffers" << name;
+        if (!mParent->glIsBuffer(name)) {
+            throw GLError(QString(R"("%1" is not a buffer)").arg(name));
+        }
         mParent->glDeleteBuffers(1, &name);
-        mParent->buffers().removeOne(name);
+        mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
     }
@@ -921,7 +930,7 @@ public:
         GLuint ret;
         // qDebug() << "GenTexture";
         mParent->glGenTextures(1, &ret);
-        mParent->textures().append(ret);
+        mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
     }
@@ -941,8 +950,11 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "DeleteTexture" << name;
+        if (!mParent->glIsTexture(name)) {
+            throw GLError(QString(R"("%1" is not a testure)").arg(name));
+        }
         mParent->glDeleteTextures(1, &name);
-        mParent->textures().removeOne(name);
+        mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
     }
@@ -999,7 +1011,8 @@ public:
         // qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
         const TexBlobSpec spec = blob.spec(attr);
         // qDebug() << "TexImage2D" << spec.width << spec.height << spec.type;
-        mParent->glTexImage2D(target, level, iformat, spec.width, spec.height, 0, spec.format, spec.type, blob.data(attr));
+        mParent->glTexImage2D(target, level, iformat,
+                              spec.width, spec.height, 0, spec.format, spec.type, blob.readData(attr));
         mValue.setValue(0);
         return mValue;
     }
@@ -1167,7 +1180,7 @@ public:
         GLuint ret;
         // qDebug() << "glGenFrameBuffers";
         mParent->glGenFramebuffers(1, &ret);
-        mParent->buffers().append(ret);
+        mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
     }
@@ -1187,8 +1200,11 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
         // qDebug() << "glDeleteFrameBuffers" << name;
+        if (!mParent->glIsFramebuffer(name)) {
+            throw GLError(QString(R"("%1" is not a frame buffer)").arg(name));
+        }
         mParent->glDeleteFramebuffers(1, &name);
-        mParent->buffers().removeOne(name);
+        mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
     }

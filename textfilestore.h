@@ -31,7 +31,7 @@ public:
 
 private:
 
-    typedef QMap<QString, QString> TextMap;
+    using TextMap = QMap<QString, QString>;
 
 private:
 

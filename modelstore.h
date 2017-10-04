@@ -150,7 +150,7 @@ private:
     };
 
     using ModelList = QList<Demo::GL::ModelStore::Model>;
-    typedef QMap<QString, int> IndexMap;
+    using IndexMap = QMap<QString, int>;
 
     Vector4 makeNormal(int start) const;
     void makeModelBuffer();

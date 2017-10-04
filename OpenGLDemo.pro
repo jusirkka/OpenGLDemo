@@ -33,7 +33,8 @@ SOURCES += main.cpp\
     textfilestore.cpp \
     depthzoom.cpp \
     gl_lang_completer.cpp \
-    gl_lang_parser_interface.cpp
+    gl_lang_parser_interface.cpp \
+    shadowmap.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -62,7 +63,8 @@ HEADERS  += mainwindow.h \
     textfilestore.h \
     depthzoom.h \
     gl_lang_completer.h \
-    gl_lang_parser_interface.h
+    gl_lang_parser_interface.h \
+    shadowmap.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

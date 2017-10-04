@@ -40,8 +40,8 @@ private:
     };
 
     using ElementVector = QVector<Demo::GL::Teapot::Element>;
-    typedef QMap<unsigned int, unsigned int> ModeMap;
-    typedef QMap<unsigned int, ModeMap> ModeMapMap;
+    using ModeMap = QMap<unsigned int, unsigned int>;
+    using ModeMapMap = QMap<unsigned int, ModeMap>;
 
 private:
 

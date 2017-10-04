@@ -132,8 +132,8 @@ signals:
 private:
 
 
-    typedef QMap<QString, QString> NameMap;
-    typedef QMapIterator<QString, QString> NameIterator;
+    using NameMap = QMap<QString, QString>;
+    using NameIterator = QMapIterator<QString, QString>;
     using EditorList = QList<Demo::CodeEditor *>;
 
 

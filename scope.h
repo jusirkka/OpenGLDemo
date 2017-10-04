@@ -21,7 +21,7 @@ class Scope: public QObject
 public:
 
     using EditorList = QList<Demo::CodeEditor *>;
-    typedef QMap<QString, int> IndexMap;
+    using IndexMap = QMap<QString, int>;
 
     // code offsets: smaller than 0xfff = 4095 (see Compiler::pushBack)
     static const int FunctionOffset = 1000;

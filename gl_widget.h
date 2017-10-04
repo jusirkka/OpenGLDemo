@@ -37,8 +37,6 @@ public:
     void addGLSymbols(SymbolMap& globals, VariableMap& exports);
 
     ResourceList& resources() {return mResources;}
-    ResourceList& buffers() {return mBuffers;}
-    ResourceList& textures() {return mTextures;}
     const GL::Blob& blob(int index) const {return *mBlobs[index];}
     const GL::TexBlob& texBlob(int index) const {return *mTexBlobs[index];}
     GL::Blob* blob(const SymbolMap& globals, const QString& name) const;
@@ -139,8 +137,6 @@ private:
 
     bool mInitialized;
     ResourceList mResources;
-    ResourceList mBuffers;
-    ResourceList mTextures;
     BlobList mBlobs;
     TexBlobList mTexBlobs;
     Variable* mCameraVar;

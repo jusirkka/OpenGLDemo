@@ -64,7 +64,7 @@ private:
     using FunctionList = Compiler::FunctionList;
     using Assignment = Compiler::Assignment;
 
-    typedef QMap<QString, int> IndexMap;
+    using IndexMap = QMap<QString, int>;
 
 private:
 

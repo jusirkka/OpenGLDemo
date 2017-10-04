@@ -110,7 +110,7 @@ Variable* Create(int kind, const QString& name, bool shared);
 
 } // namespace Var
 
-typedef QMap<QString, Variable*> VariableMap;
+using VariableMap = QMap<QString, Variable*>;
 
 } // namespace Demo
 #endif // DEMO_VARIABLE_H

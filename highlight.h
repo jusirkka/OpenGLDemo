@@ -34,7 +34,8 @@ protected:
     void highlightBlock(const QString &text) override;
 
 private:
-    typedef QMap<int, QTextCharFormat> FormatMap;
+
+    using FormatMap = QMap<int, QTextCharFormat>;
 
     Demo::GL::Compiler* mCompiler;
     QRegExp mCommentExp;

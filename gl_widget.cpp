@@ -292,6 +292,20 @@ void Demo::GLWidget::anim() {
 
 #define ALT(item) case item: qDebug() << #item; break
 
+static void checkError() {
+    switch (glGetError()) {
+        ALT(GL_INVALID_ENUM);
+        ALT(GL_INVALID_VALUE);
+        ALT(GL_INVALID_OPERATION);
+        ALT(GL_STACK_UNDERFLOW);
+        ALT(GL_STACK_OVERFLOW);
+        ALT(GL_OUT_OF_MEMORY);
+        ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
+    default: ;
+    }
+}
+
+#undef ALT
 
 void Demo::GLWidget::defaults() {
     // qDebug() << "resetting to defaults";
@@ -328,29 +342,19 @@ void Demo::GLWidget::defaults() {
         } else if (glIsProgram(name)) {
             // qDebug() << "deleting program" << name;
            glDeleteProgram(name);
+        } else if (glIsBuffer(name)) {
+            glDeleteBuffers(1, &name);
+        } else if (glIsFramebuffer(name)) {
+            glDeleteFramebuffers(1, &name);
+        } else if (glIsTexture(name)) {
+            glDeleteTextures(1, &name);
+        } else {
+            qWarning() << "Unknown resource" << name;
         }
-    }
-
-    QVector<GLuint> tmp = mBuffers.toVector();
-    // qDebug() << "deleting buffers" << mBuffers;
-    glDeleteBuffers(tmp.size(), tmp.constData());
-    tmp = mTextures.toVector();
-    // qDebug() << "deleting textures" << mTextures;
-    glDeleteTextures(tmp.size(), tmp.constData());
-
-    switch (glGetError()) {
-        ALT(GL_INVALID_ENUM);
-        ALT(GL_INVALID_VALUE);
-        ALT(GL_INVALID_OPERATION);
-        ALT(GL_STACK_UNDERFLOW);
-        ALT(GL_STACK_OVERFLOW);
-        ALT(GL_OUT_OF_MEMORY);
-        ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
-    default: ;
+        checkError();
     }
 
     mResources.clear();
 }
 
-#undef ALT
 

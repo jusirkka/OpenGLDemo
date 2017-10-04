@@ -53,7 +53,7 @@ public:
 
 protected:
 
-    typedef QMap<QString, BlobSpec> SpecMap;
+    using SpecMap = QMap<QString, BlobSpec>;
 
     class Data {
     public:
@@ -71,7 +71,7 @@ protected:
         unsigned int length;
     };
 
-    typedef QMap<unsigned int, Data> DataMap;
+    using DataMap = QMap<unsigned int, Data>;
 
 protected:
 
