@@ -54,26 +54,33 @@ Demo::Project::~Project() {
 }
 
 
-Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals, bool autoCompileOn):
-    QAbstractItemModel(target),
-    mProjectDir(pdir),
-    mProjectIni(""),
-    mGlobals(globals->clone(this)),
-    mShaders(new TextFileStore("shaders", mGlobals, this)),
-    mInit(nullptr),
-    mDraw(nullptr),
-    mTarget(target),
-    mAutoCompileOn(autoCompileOn) {
+Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals, bool autoCompileOn)
+    : QAbstractItemModel(target)
+    , mProjectDir(pdir)
+    , mProjectIni("")
+    , mGlobals(globals->clone(this))
+    , mShaders(new TextFileStore("shaders", mGlobals, this))
+    , mInitName("init main")
+    , mDrawName("draw main")
+    , mTarget(target)
+    , mAutoCompileOn(autoCompileOn)
+{
     if (!mProjectDir.exists() || !mProjectDir.isReadable())
         throw BadProject(QString("Project dir %1 is not readable").arg(mProjectDir.absolutePath()));
 
     connect(this, SIGNAL(initChanged()), mTarget, SLOT(initChanged()));
     connect(this, SIGNAL(drawChanged()), mTarget, SLOT(drawChanged()));
 
-    CodeEditor* ed = new CodeEditor("Init", mGlobals, this);
+    CodeEditor* ed = new CodeEditor(mInitName, mGlobals, this);
     mGlobals->appendEditor(ed, "clearcolor vec(.1,.2,.2,1)\n", "");
-    ed = new CodeEditor("Draw", mGlobals, this);
+    ed = new CodeEditor(mDrawName, mGlobals, this);
     mGlobals->appendEditor(ed, "clear color_buffer_bit\n", "");
+
+    mInit = mGlobals->editor(mInitName);
+    connect(mTarget, SIGNAL(init()), mInit, SLOT(run()));
+
+    mDraw = mGlobals->editor(mDrawName);
+    connect(mTarget, SIGNAL(draw()), mDraw, SLOT(run()));
 
     mModels = dynamic_cast<ModelStore*>(mTarget->blob(globals->symbols(), "modelstore"));
     mImages = dynamic_cast<ImageStore*>(mTarget->texBlob(globals->symbols(), "imagestore"));
@@ -81,20 +88,18 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals,
     mModels->clean();
     mImages->clean();
 
-    setInitScript("Init");
-    setDrawScript("Draw");
-
     recompileProject();
 }
 
-Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globals, bool autoCompileOn):
-    QAbstractItemModel(target),
-    mGlobals(globals->clone(this)),
-    mShaders(new TextFileStore("shaders", mGlobals, this)),
-    mInit(nullptr),
-    mDraw(nullptr),
-    mTarget(target),
-    mAutoCompileOn(autoCompileOn) {
+Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globals, bool autoCompileOn)
+    : QAbstractItemModel(target)
+    , mGlobals(globals->clone(this))
+    , mShaders(new TextFileStore("shaders", mGlobals, this))
+    , mInitName("init main")
+    , mDrawName("draw main")
+    , mTarget(target)
+    , mAutoCompileOn(autoCompileOn)
+{
 
     connect(this, SIGNAL(initChanged()), mTarget, SLOT(initChanged()));
     connect(this, SIGNAL(drawChanged()), mTarget, SLOT(drawChanged()));
@@ -192,6 +197,20 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
 
     if (project.status() != QSettings::NoError) throw BadProject(QString(R"(%1 is not a valid project file)").arg(path));
 
+    mInit = mGlobals->editor(mInitName);
+    if (!mInit) {
+        throw BadProject(QString(R"("%1" missing in the Scripts section of "%2")").arg(mInitName, path));
+    }
+    connect(mTarget, SIGNAL(init()), mInit, SLOT(run()));
+
+    mDraw = mGlobals->editor(mDrawName);
+    if (!mDraw) {
+        throw BadProject(QString(R"("%1" missing in the Scripts section of "%2")").arg(mDrawName, path));
+    }
+    connect(mTarget, SIGNAL(draw()), mDraw, SLOT(run()));
+
+
+
     // safe to update globals
     mModels = dynamic_cast<ModelStore*>(mTarget->blob(globals->symbols(), "modelstore"));
     mModels->clean();
@@ -209,20 +228,12 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
         mImages->setImage(iti.key(), iti.value());
     }
 
-
-    project.beginGroup("Roles");
-    QString initKey = project.value("Init", "unknown_init").toString();
-    setInitScript(initKey);
-    QString drawKey = project.value("Draw", "unknown_draw").toString();
-    setDrawScript(drawKey);
-    project.endGroup();
-
     recompileProject();
 }
 
 void Demo::Project::recompileProject() {
     mGlobals->recompileAll();
-    if (mInit && mInit->compiler()->ready()) {
+    if (mInit->compiler()->ready()) {
         emit initChanged();
     }
 }
@@ -234,17 +245,6 @@ void Demo::Project::saveProject() {
     project.beginGroup("Scripts");
     for (auto ed: mGlobals->editors()) {
         project.setValue(ed->objectName(), mProjectDir.relativeFilePath(ed->fileName()));
-    }
-    project.endGroup();
-
-    project.beginGroup("Roles");
-    project.setValue("Init", "None");
-    if (mInit) {
-        project.setValue("Init", mInit->objectName());
-    }
-    project.setValue("Draw", "None");
-    if (mDraw) {
-        project.setValue("Draw", mDraw->objectName());
     }
     project.endGroup();
 
@@ -276,9 +276,9 @@ void Demo::Project::setProjectFile(const QString& fname) {
 }
 
 void Demo::Project::scriptCompiled() {
-    if (mInit && mGlobals->subscriptRelation(mInit->objectName(), sender()->objectName())) {
+    if (mGlobals->subscriptRelation(mInit->objectName(), sender()->objectName())) {
         emit initChanged();
-    } else if (mDraw && mGlobals->subscriptRelation(mDraw->objectName(), sender()->objectName())) {
+    } else if (mGlobals->subscriptRelation(mDraw->objectName(), sender()->objectName())) {
         emit drawChanged();
     }
 }
@@ -292,44 +292,6 @@ void Demo::Project::scriptStatus_changed() {
     QModelIndex lower = index(0, ScriptItems);
     QModelIndex upper = index(mGlobals->editors().size() - 1, itemParent(ScriptItems));
     emit dataChanged(lower, upper);
-}
-
-QString Demo::Project::initScript() const {
-    if (mInit) return mInit->objectName();
-    return "";
-}
-
-QString Demo::Project::drawScript() const {
-    if (mDraw) return mDraw->objectName();
-    return "";
-}
-
-void Demo::Project::setInitScript(const QString& name) {
-    if (mInit) {
-        disconnect(mTarget, SIGNAL(init()), mInit, SLOT(run()));
-    }
-
-    mInit = mGlobals->editor(name);
-
-    if (mInit) {
-        connect(mTarget, SIGNAL(init()), mInit, SLOT(run()));
-    }
-
-    emit initChanged();
-}
-
-void Demo::Project::setDrawScript(const QString& name) {
-    if (mDraw) {
-        disconnect(mTarget, SIGNAL(draw()), mDraw, SLOT(run()));
-    }
-
-    mDraw = mGlobals->editor(name);
-
-    if (mDraw) {
-        connect(mTarget, SIGNAL(draw()), mDraw, SLOT(run()));
-    }
-
-    emit drawChanged();
 }
 
 void Demo::Project::toggleAutoCompile(bool on) {

@@ -26,7 +26,6 @@ SOURCES += main.cpp\
     patch.cpp \
     modelstore.cpp \
     fpscontrol.cpp \
-    scriptselector.cpp \
     scope.cpp \
     symbol.cpp \
     variable.cpp \
@@ -58,7 +57,6 @@ HEADERS  += mainwindow.h \
     patch.h \
     modelstore.h \
     fpscontrol.h \
-    scriptselector.h \
     scope.h \
     textfilestore.h \
     depthzoom.h \
@@ -69,7 +67,6 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     newdialog.ui \
     fpscontrol.ui \
-    scriptselector.ui \
     depthzoom.ui
 
 OTHER_FILES += \

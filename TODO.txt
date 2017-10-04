@@ -5,6 +5,5 @@
 - support wavefront patch objects
 - autosave scripts
 - '/' for line concat
-- select init & draw scripts by name: "init main", "draw main"
 - function defs in gl_lang
 - record button for saving the animation as a movie clip

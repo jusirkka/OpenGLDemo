@@ -34,7 +34,6 @@ namespace Demo {
 
 class GLWidget;
 class Project;
-class ScriptSelector;
 class Scope;
 
 
@@ -105,9 +104,6 @@ private slots:
     void on_actionPause_triggered();
     void fps_changed(int);
 
-    void initScript_changed(const QString&);
-    void drawScript_changed(const QString&);
-
     void selectionChanged();
     void setProjectModified();
 
@@ -146,7 +142,6 @@ private:
     GLWidget* mGLWidget;
     Project* mProject;
     QModelIndex mSelectedIndex;
-    ScriptSelector* mScripts;
     bool mProjectModified;
     int mNumEdits;
     Scope* mGlobals;

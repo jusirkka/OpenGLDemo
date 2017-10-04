@@ -67,11 +67,10 @@ public:
     void setProjectFile(const QString& fname);
     bool autoCompileEnabled() const {return mAutoCompileOn;}
     void toggleAutoCompile(bool on);
+    const QString& initScriptName() const {return mInitName;}
+    const QString& drawScriptName() const {return mDrawName;}
 
     void saveProject();
-
-    QString initScript() const;
-    QString drawScript() const;
 
     QModelIndex itemParent(ItemType key) const;
 
@@ -117,9 +116,6 @@ public slots:
     void scriptModification_changed(bool edited);
     void scriptStatus_changed();
 
-    void setInitScript(const QString&);
-    void setDrawScript(const QString&);
-
     void recompileProject();
 
 
@@ -148,6 +144,8 @@ private:
     TextFileStore* mShaders;
     CodeEditor* mInit;
     CodeEditor* mDraw;
+    QString mInitName;
+    QString mDrawName;
     GLWidget* mTarget;
     bool mAutoCompileOn;
 };

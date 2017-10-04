@@ -25,7 +25,6 @@
 #include "project.h"
 #include "codeeditor.h"
 #include "fpscontrol.h"
-#include "scriptselector.h"
 #include "constant.h"
 #include "scope.h"
 #include "depthzoom.h"
@@ -58,11 +57,6 @@ MainWindow::MainWindow(const QString& project):
     auto fps = new FPSControl();
     connect(fps, SIGNAL(valueChanged(int)), this, SLOT(fps_changed(int)));
     mUI->demoBar->addWidget(fps);
-
-    mScripts = new ScriptSelector();
-    connect(mScripts, SIGNAL(initScriptChanged(const QString&)), this, SLOT(initScript_changed(const QString&)));
-    connect(mScripts, SIGNAL(drawScriptChanged(const QString&)), this, SLOT(drawScript_changed(const QString&)));
-    mUI->demoBar->addWidget(mScripts);
 
     auto zoom = new DepthZoom();
     connect(zoom, SIGNAL(valuesChanged(float, float)), this, SLOT(depthChanged(float, float)));
@@ -176,7 +170,6 @@ void Demo::MainWindow::on_actionNew_triggered() {
     NewDialog dlg(mProject);
     if (dlg.exec() == QDialog::Accepted) {
         mProject->appendRow(dlg.name(), "", dlg.listParent());
-        mScripts->setup(mProject);
         mProjectModified = true;
         setProjectModified();
     }
@@ -287,11 +280,10 @@ void Demo::MainWindow::on_actionDelete_triggered() {
     if(!maybeSave()) return;
     QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
     int idx = mUI->editorsTabs->indexOf(widget);
-    if (idx != -1) {
+    mProject->removeRows(mSelectedIndex.row(), 1, mSelectedIndex.parent());
+    if (idx != -1) { // tab removal generates selection change
         mUI->editorsTabs->removeTab(idx);
     }
-    mProject->removeRows(mSelectedIndex.row(), 1, mSelectedIndex.parent());
-    mScripts->setup(mProject);
     mProjectModified = true;
     setProjectModified();
 }
@@ -312,7 +304,6 @@ void Demo::MainWindow::on_actionRename_triggered() {
        if (idx != -1) {
            mUI->editorsTabs->setTabText(idx, text);
        }
-       mScripts->setup(mProject);
 
        mProjectModified = true;
        setProjectModified();
@@ -392,18 +383,6 @@ void Demo::MainWindow::fps_changed(int value) {
     mGLWidget->animReset(value);
 }
 
-void Demo::MainWindow::initScript_changed(const QString& name) {
-    mProject->setInitScript(name);
-    mProjectModified = true;
-    setProjectModified();
-}
-
-void Demo::MainWindow::drawScript_changed(const QString& name) {
-    mProject->setDrawScript(name);
-    mProjectModified = true;
-    setProjectModified();
-}
-
 void Demo::MainWindow::selectionChanged() {
     const QItemSelectionModel* s = mUI->projectItems->selectionModel();
 
@@ -471,16 +450,35 @@ void Demo::MainWindow::selectionChanged() {
 
 void Demo::MainWindow::setupScriptActions() {
 
+    auto scriptName = mProject->data(mSelectedIndex).toString();
+    QStringList unmods;
+    unmods << mProject->initScriptName() << mProject->drawScriptName();
 
-    ADDACTION(Insert);
-    ADDACTION(Open);
-    ADDACTION(Save);
-    ADDACTION(SaveAs);
-    ADDACTION(Rename);
-    ADDACTION(Edit);
-    ADDACTION(Compile);
-    ADDACTION(Delete);
-    REMACTION(Reload);
+    if (unmods.contains(scriptName)) {
+        ADDACTION(Insert);
+        ADDACTION(Open);
+        ADDACTION(Save);
+        ADDACTION(SaveAs);
+        REMACTION(Rename);
+        ADDACTION(Edit);
+        ADDACTION(Compile);
+        REMACTION(Delete);
+        REMACTION(Reload);
+        mUI->actionRename->setEnabled(false);
+        mUI->actionDelete->setEnabled(false);
+    } else {
+        ADDACTION(Insert);
+        ADDACTION(Open);
+        ADDACTION(Save);
+        ADDACTION(SaveAs);
+        ADDACTION(Rename);
+        ADDACTION(Edit);
+        ADDACTION(Compile);
+        ADDACTION(Delete);
+        REMACTION(Reload);
+        mUI->actionRename->setEnabled(true);
+        mUI->actionDelete->setEnabled(true);
+    }
 
     mUI->actionInsert->setEnabled(true);
     mUI->actionOpen->setEnabled(true);
@@ -498,9 +496,7 @@ void Demo::MainWindow::setupScriptActions() {
     }
 
     mUI->actionSaveAs->setEnabled(true);
-    mUI->actionRename->setEnabled(true);
     mUI->actionEdit->setEnabled(true);
-    mUI->actionDelete->setEnabled(true);
 
     mUI->actionCompile->setDisabled(mUI->actionAutocompile->isChecked());
 
@@ -641,8 +637,7 @@ bool Demo::MainWindow::maybeSaveProject() {
 }
 
 bool Demo::MainWindow::maybeSave() {
-    if (mSelectedIndex.parent() != mProject->itemParent(Project::ScriptItems))
-        return true;
+    if (mSelectedIndex.parent() != mProject->itemParent(Project::ScriptItems)) return true;
     bool cancel = false;
     QWidget* widget = mProject->data(mSelectedIndex, Project::EditorRole).value<QWidget*>();
     CodeEditor* editor = qobject_cast<CodeEditor*>(widget);
@@ -718,7 +713,6 @@ void Demo::MainWindow::openProject(const QString &path) {
                 this,
                 SLOT(scriptModification_changed(bool)));
 
-        mScripts->setup(mProject);
         mProjectModified = false;
         mNumEdits = 0;
         setProjectModified();
