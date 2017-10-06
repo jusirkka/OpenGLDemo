@@ -17,6 +17,10 @@ const void* ShadowMap::readData(const QString&) const {
     return nullptr;
 }
 
+void ShadowMap::viewportChanged(GLuint w, GLuint h) {
+    mSpec.width = w;
+    mSpec.height = h;
+}
 
 TexBlobSpec ShadowMap::spec(const QString&) const {
     return mSpec;

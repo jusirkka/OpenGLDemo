@@ -289,6 +289,37 @@ public:
 };
 
 
+class LookAt: public Function {
+
+public:
+
+    LookAt(): Function("lookat", Symbol::Matrix) {
+        int argt = Symbol::Vector;
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        auto eye = vals[start].value<Vector4>();
+        auto center = vals[start + 1].value<Vector4>();
+        auto up = vals[start + 2].value<Vector4>();
+
+        auto z = (eye - center).normalized3();
+        auto y = up - dot3(z, up) * z;
+
+        Matrix4 rot, tr;
+
+        rot.setBasis(y, z);
+        tr.setTranslation(- eye);
+        // qDebug() << rot*tr;
+        mValue.setValue(rot * tr);
+        return mValue;
+    }
+
+    CLONEMETHOD(LookAt)
+};
+
 class Functions {
 
 public:
@@ -306,6 +337,7 @@ public:
         contents.append(new Norm());
         contents.append(new NormalT());
         contents.append(new Refl());
+        contents.append(new LookAt());
         FUN(sin);
         FUN(cos);
         FUN(tan);

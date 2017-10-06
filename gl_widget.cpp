@@ -4,6 +4,7 @@
 #include "gl_functions.h"
 #include "camera.h"
 #include "imagestore.h"
+#include "shadowmap.h"
 
 #include <QDebug>
 #include <QMouseEvent>
@@ -29,7 +30,7 @@ GLWidget::GLWidget(QWidget *parent):
 {
 
     mTime = 0;
-    mCamera = new Camera(Vector4(0, 1.25, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
+    mCamera = new Camera(Vector4(2, 2, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
 
     mTimer = new QTimer(this);
     mTimer->setInterval(1000/25);
@@ -77,7 +78,11 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
         addBlob(loader.instance(), globals);
     }
 
-
+    auto shadowmap = dynamic_cast<GL::ShadowMap*>(texBlob(globals, "shadowmap"));
+    if (shadowmap) {
+        connect(this, SIGNAL(viewportChanged(GLuint,GLuint)), shadowmap, SLOT(viewportChanged(GLuint,GLuint)));
+        shadowmap->viewportChanged(width(), height());
+    }
 }
 
 void GLWidget::addBlob(QObject* plugin, SymbolMap& globals) {
@@ -169,7 +174,9 @@ void Demo::GLWidget::resizeGL(int w, int h) {
     mProj(3)[2] = 2*mNear*mFar / (mNear - mFar);
     mProj(2)[3] = -1;
     mProjectionVar->setValue(QVariant::fromValue(mProj));
-    paintGL();
+    emit viewportChanged(w, h);
+    // init statements might depend on the viewport or projection
+    initChanged();
 }
 
 void Demo::GLWidget::setProjection(float near, float far) {

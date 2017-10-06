@@ -109,8 +109,11 @@
    <property name="accessibleName">
     <string/>
    </property>
+   <property name="features">
+    <set>QDockWidget::NoDockWidgetFeatures</set>
+   </property>
    <property name="allowedAreas">
-    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+    <set>Qt::LeftDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>&amp;Project</string>
@@ -173,6 +176,12 @@
      <verstretch>6</verstretch>
     </sizepolicy>
    </property>
+   <property name="features">
+    <set>QDockWidget::NoDockWidgetFeatures</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::BottomDockWidgetArea|Qt::RightDockWidgetArea|Qt::TopDockWidgetArea</set>
+   </property>
    <property name="windowTitle">
     <string>Edit&amp;ors</string>
    </property>
@@ -203,6 +212,12 @@
      <horstretch>6</horstretch>
      <verstretch>6</verstretch>
     </sizepolicy>
+   </property>
+   <property name="features">
+    <set>QDockWidget::NoDockWidgetFeatures</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>OpenGL &amp;View</string>
@@ -748,54 +763,6 @@
     <hint type="sourcelabel">
      <x>54</x>
      <y>45</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>projectDock</sender>
-   <signal>visibilityChanged(bool)</signal>
-   <receiver>actionProjectDock</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>142</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>graphicsDock</sender>
-   <signal>visibilityChanged(bool)</signal>
-   <receiver>actionGraphicsDock</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>774</x>
-     <y>422</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>editorsDock</sender>
-   <signal>visibilityChanged(bool)</signal>
-   <receiver>actionEditorsDock</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>774</x>
-     <y>186</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>

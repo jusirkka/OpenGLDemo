@@ -24,6 +24,10 @@ public:
     const void* readData(const QString& key) const override;
     TexBlobSpec spec(const QString& key) const override;
 
+public slots:
+
+    void viewportChanged(GLuint w, GLuint h);
+
 private:
 
     TexBlobSpec mSpec;

@@ -39,6 +39,7 @@
 #include <QUndoStack>
 #include <QApplication>
 #include <QImageReader>
+#include <QTimer>
 
 using namespace Demo;
 
@@ -87,6 +88,11 @@ MainWindow::MainWindow(const QString& project):
     readSettings();
 
     openProject(project);
+
+    auto hackTimer = new QTimer(this);
+    connect(hackTimer, SIGNAL(timeout()), this, SLOT(restoreDocking()));
+    hackTimer->setSingleShot(true);
+    hackTimer->start(300);
 }
 
 void Demo::MainWindow::depthChanged(float near, float far) {
@@ -345,8 +351,8 @@ void Demo::MainWindow::on_actionEdit_triggered() {
 
 void Demo::MainWindow::on_actionReload_triggered() {
     auto item = getSelection();
-    if (item.parent() != mProject->itemParent(Project::ModelItems) ||
-            item.parent() != mProject->itemParent(Project::TextureItems) ||
+    if (item.parent() != mProject->itemParent(Project::ModelItems) &&
+            item.parent() != mProject->itemParent(Project::TextureItems) &&
             item.parent() != mProject->itemParent(Project::ShaderItems)) {
         return;
     }
@@ -447,7 +453,7 @@ void Demo::MainWindow::selectionChanged() {
 
 
     // item headers
-    if (selection.parent() == QModelIndex()) {
+    if (!selection.parent().isValid()) {
         const auto as = mUI->projectItems->actions();
         for (auto a: as) {
             mUI->projectItems->removeAction(a);
@@ -545,8 +551,8 @@ void Demo::MainWindow::setupScriptActions(const QModelIndex& selection) {
 
 void Demo::MainWindow::setupResourceActions(const QModelIndex& selection) {
 
-    if (selection.parent() != mProject->itemParent(Project::ModelItems) ||
-            selection.parent() != mProject->itemParent(Project::TextureItems) ||
+    if (selection.parent() != mProject->itemParent(Project::ModelItems) &&
+            selection.parent() != mProject->itemParent(Project::TextureItems) &&
             selection.parent() != mProject->itemParent(Project::ShaderItems)) {
         return;
     }
@@ -644,7 +650,6 @@ void Demo::MainWindow::on_actionComplete_triggered() {
 void Demo::MainWindow::readSettings() {
     QSettings settings;
     restoreGeometry(settings.value("geometry").toByteArray());
-    restoreState(settings.value("windowstate").toByteArray());
     mLastDir = QDir(settings.value("lastdir", mLastDir.absolutePath()).toString());
 
     mUI->actionDemoBar->setChecked(settings.value("demobar", true).toBool());
@@ -653,6 +658,21 @@ void Demo::MainWindow::readSettings() {
     mUI->actionProjectDock->setChecked(settings.value("projectdock", true).toBool());
     mUI->actionEditorsDock->setChecked(settings.value("editorsdock", true).toBool());
     mUI->actionGraphicsDock->setChecked(settings.value("graphicsdock", true).toBool());
+
+}
+
+void Demo::MainWindow::restoreDocking() {
+    QSettings settings;
+    restoreState(settings.value("windowstate").toByteArray());
+    bool ok;
+    int w_pr = settings.value("projectdock-width", 100).toInt(&ok);
+    if (!ok) w_pr = 100;
+    int w_ed = settings.value("editorsdock-width", 300).toInt(&ok);
+    if (!ok) w_ed = 300;
+    int w_gr = settings.value("graphicsdock-width", 300).toInt(&ok);
+    if (!ok) w_gr = 300;
+
+    resizeDocks({mUI->projectDock, mUI->editorsDock, mUI->graphicsDock}, {w_pr, w_ed, w_gr}, Qt::Horizontal);
 }
 
 void Demo::MainWindow::writeSettings() {
@@ -667,6 +687,10 @@ void Demo::MainWindow::writeSettings() {
     settings.setValue("projectdock", QVariant::fromValue(mUI->projectDock->isVisible()));
     settings.setValue("editorsdock", QVariant::fromValue(mUI->editorsDock->isVisible()));
     settings.setValue("graphicsdock", QVariant::fromValue(mUI->graphicsDock->isVisible()));
+
+    settings.setValue("projectdock-width", QVariant::fromValue(mUI->projectDock->width()));
+    settings.setValue("editorsdock-width", QVariant::fromValue(mUI->editorsDock->width()));
+    settings.setValue("graphicsdock-width", QVariant::fromValue(mUI->graphicsDock->width()));
 }
 
 bool Demo::MainWindow::maybeSaveProject() {

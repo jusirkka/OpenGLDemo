@@ -1,0 +1,13 @@
+Shared Natural model_array = genbuffer()
+bindbuffer array_buffer, model_array
+bufferdata array_buffer, modelstore, static_draw
+
+Shared Natural model_elements = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferdata element_array_buffer, modelstore, static_draw
+
+From "get locations" import a_vertex, a_normal, a_tex
+
+enablevertexattribarray a_vertex
+enablevertexattribarray a_normal
+enablevertexattribarray a_tex

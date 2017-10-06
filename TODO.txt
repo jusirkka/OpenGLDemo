@@ -1,9 +1,9 @@
-- shadowmap demo
+- finite light sources
+- '/' for line concat
+- support wavefront patch objects
 - check & implement demos from web
 - knot drawing utility
 - plugin description/config
-- support wavefront patch objects
 - autosave scripts
-- '/' for line concat
 - function defs in gl_lang
 - record button for saving the animation as a movie clip

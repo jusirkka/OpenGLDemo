@@ -1,0 +1,33 @@
+From "create progs" import  a_vertex, a_normal, a_tex
+
+enablevertexattribarray a_vertex
+enablevertexattribarray a_normal
+enablevertexattribarray a_tex
+
+From "draw main" import  model_colors, model_matrix, model_tex, model_tex_scale
+
+vertexattribpointer a_vertex, teapot, "vertex"
+vertexattribpointer a_normal, teapot, "normal"
+vertexattribpointer a_tex, teapot, "tex"
+
+From "create progs" import u_s_scale
+
+bindtexture texture_2d, model_tex
+uniform1f u_s_scale, model_tex_scale
+
+
+From "create progs" import u_m_material_colors
+uniformmatrix4f u_m_material_colors, model_colors
+
+From "" import camera, projection
+From "create progs" import u_m_vm, u_m_pvm, u_m_n
+
+uniformmatrix4f u_m_vm, camera*model_matrix
+uniformmatrix4f u_m_pvm, projection*camera*model_matrix
+uniformmatrix4f u_m_n, normal_transform(camera*model_matrix)
+
+draw teapot, "", triangles
+
+disablevertexattribarray a_vertex
+disablevertexattribarray a_normal
+disablevertexattribarray a_tex

@@ -1338,6 +1338,25 @@ public:
     CLONEMETHOD(CheckFrameBufferStatus)
 };
 
+class DrawBuffer: public GLProc {
+
+public:
+
+    DrawBuffer(Demo::GLWidget* p): GLProc("drawbuffer", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint buf = vals[start].value<int>();
+        // qDebug() << "glDrawBuffer" << target;
+        mParent->glDrawBuffers(1, &buf);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(DrawBuffer)
+};
 
 class Functions {
 
@@ -1401,6 +1420,7 @@ public:
         contents.append(new FrameBufferTexture2D(p));
         contents.append(new FrameBufferTextureLayer(p));
         contents.append(new CheckFrameBufferStatus(p));
+        contents.append(new DrawBuffer(p));
     }
 };
 
@@ -1490,6 +1510,7 @@ public:
         CONST(UNSIGNED_INT_24_8);
         CONST(FLOAT);
         CONST(FLOAT_32_UNSIGNED_INT_24_8_REV);
+        CONST(DEPTH_COMPONENT);
         CONST(DEPTH_COMPONENT16);
         CONST(DEPTH_COMPONENT24);
         CONST(DEPTH_COMPONENT32F);
@@ -1553,6 +1574,8 @@ public:
         CONST(STENCIL_ATTACHMENT);
         CONST(DEPTH_ATTACHMENT);
         CONST(DEPTH_STENCIL_ATTACHMENT);
+        // drawbuffer
+        CONST(NONE);
     }
 
 

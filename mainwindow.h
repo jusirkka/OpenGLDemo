@@ -116,6 +116,8 @@ private slots:
 
     void depthChanged(float near, float far);
 
+    void restoreDocking();
+
 private:
 
 
