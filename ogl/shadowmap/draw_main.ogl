@@ -2,8 +2,8 @@
 From "create progs" import prog_phong, prog_depth
 From "init textures" import tex_checker, fbo_shadow, tex_shadow
 
-Shared Vector light_eye = vec(0, 20, 60, 0)
-Vector light_center = vec(0, 0, 0, 1)
+Shared Vector light_eye = vec(0, 20, 60, 1)
+Vector light_center = vec(0, 0, -30, 1)
 Vector light_up = vec(0, 1, 0, 1)
 
 Shared Matrix camera_light = lookat(light_eye, light_center, light_up)
@@ -14,8 +14,6 @@ Real sc = 50
 Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
 Matrix model_square =  c * translation(vec(1, 1, -0.25, 1))
 
-activetexture texture0 + 1
-bindtexture texture_2d, tex_shadow
 
 bindframebuffer framebuffer, fbo_shadow
 
@@ -46,6 +44,9 @@ colormask true, true, true, true
 clear color_buffer_bit | depth_buffer_bit
 Execute "draw lights"
 
+activetexture texture0 + 1
+bindtexture texture_2d, tex_shadow
+
 
 Shared Matrix model_colors
 Shared Natural model_tex
@@ -54,7 +55,7 @@ Shared Real model_tex_scale, model_spec_exp
 
 model_name = "square"
 model_matrix = model_square
-model_colors = mat(vec(.3, .3, .3, 0), vec(.0, .3, .3, 0), vec(.4, .4, .4, 0), vec(0, 0, 0, 0))
+model_colors = mat(0*vec(.3, .3, .3, 0), 2*vec(.0, .3, .3, 0), 1.5*vec(.4, .4, .4, 0), vec(0, 0, 0, 0))
 model_tex = tex_checker
 model_tex_scale = sc / 10
 model_spec_exp = 50
@@ -63,16 +64,16 @@ Execute "draw model"
 
 model_name = "teddy"
 model_matrix = model_teddy
-model_colors = mat(vec(.3, .1, .1, 0), vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_colors = mat(0*vec(.3, .1, .1, 0), vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = 0
 model_tex_scale = 1
-model_spec_exp = 10
+model_spec_exp = 6
 Execute "draw model"
 
 
 model_name = "teddy"
 model_matrix = model_teddy2
-model_colors = mat(vec(.3, .1, .1, 0), vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_colors = mat(0*vec(.3, .1, .1, 0), 0*vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = 0
 model_tex_scale = 1
 model_spec_exp = 10

@@ -21,9 +21,22 @@ void main(void) {
     shadowcoord = bpvm_matrix * vertex;
 
     vec3 N = normalize((n_matrix * vec4(normal, 0)).xyz);
-    vec3 V = normalize((vm_matrix * vertex).xyz);
-    vec3 L = normalize(light.xyz); // infinite distance
+    vec4 tmp =  vm_matrix * vertex;
+    vec3 vertex_vm = tmp.xyz / tmp.w;
+    vec3 L = normalize(light.xyz - vertex_vm);
 
-    cosines = vec4(1, max(0.0, dot(L,N)), pow(max(0.0, dot(V, reflect(L, N))), shininess), 0);
+    float d = max(0.0, dot(L,N));
+    float s = 0;
+
+    if (d > 0) {
+        vec3 V = normalize(- vertex_vm);
+        vec3 H = normalize(L + V);
+        // Blinn-Phong
+        s = pow(max(0.0, dot(H, N)), shininess);
+        // Phong
+        // s = pow(max(0.0, dot(V, reflect(-L, N))), shininess)
+    }
+
+    cosines = vec4(1, d, s, 0);
     gl_Position = pvm_matrix * vertex;
 }

@@ -2,8 +2,8 @@ From "get locations" import  u_v_light, u_m_light_colors
 From "" import projection, camera
 From "draw main" import light_eye
 
-Matrix colors = mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
-Matrix model = translation(light_eye)
+Matrix colors = mat(10*vec(.1, .1, .0, 0), .6*vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
+Matrix model = translation(light_eye*0.9)
 
 uniform4f u_v_light, camera*light_eye
 uniformmatrix4f u_m_light_colors, colors
@@ -19,6 +19,9 @@ From "get locations" import u_s_scale
 activetexture texture0
 bindtexture texture_2d, 0
 uniform1f u_s_scale, 1
+
+activetexture texture0 + 1
+bindtexture texture_2d, 0
 
 From "get locations" import  u_m_material_colors, u_s_shininess
 uniformmatrix4f u_m_material_colors, colors
