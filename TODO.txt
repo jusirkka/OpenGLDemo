@@ -1,5 +1,3 @@
-- finite light sources
-- '/' for line concat
 - support wavefront patch objects
 - check & implement demos from web
 - knot drawing utility

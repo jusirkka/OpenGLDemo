@@ -93,6 +93,8 @@ import          import
 
 "//".*\n       my_init_line; // eat up comment line
 
+\\\n           my_init_line; // line continuation
+
 \n             my_init_line; return SEP;
 
 

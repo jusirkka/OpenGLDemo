@@ -30,7 +30,7 @@ GLWidget::GLWidget(QWidget *parent):
 {
 
     mTime = 0;
-    mCamera = new Camera(Vector4(2, 2, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
+    mCamera = new Camera(Vector4(2, 2, 60), Vector4(0, 0, 0), Vector4(0, 1, 0));
 
     mTimer = new QTimer(this);
     mTimer->setInterval(1000/25);
