@@ -22,11 +22,10 @@
 #include <QDebug>
 #include <QtPlugin>
 #include <QDebug>
-
+#include <QSurfaceFormat>
 
 #include "mainwindow.h"
 
-Q_IMPORT_PLUGIN(Teapot)
 Q_IMPORT_PLUGIN(ImageStore)
 Q_IMPORT_PLUGIN(ModelStore)
 Q_IMPORT_PLUGIN(ShadowMap)
@@ -52,6 +51,11 @@ int main(int argc, char *argv[]) {
 
     qRegisterMetaType<Math3D::Vector4>();
     qRegisterMetaType<Math3D::Matrix4>();
+
+//    QSurfaceFormat format;
+//    format.setVersion(3, 0);
+//    format.setProfile(QSurfaceFormat::CoreProfile);
+//    QSurfaceFormat::setDefaultFormat(format);
 
     Demo::MainWindow mw(demo);
     mw.show();

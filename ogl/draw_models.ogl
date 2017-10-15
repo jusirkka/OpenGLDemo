@@ -1,37 +1,40 @@
 clear color_buffer_bit | depth_buffer_bit
 
-From "get locations" import  loc_vertex, loc_normal, loc_tex
+From "get locations" import  a_vertex, a_normal, a_tex
 
-enablevertexattribarray loc_vertex
-enablevertexattribarray loc_normal
-enablevertexattribarray loc_tex
+enablevertexattribarray a_vertex
+enablevertexattribarray a_normal
+enablevertexattribarray a_tex
 
-vertexattribpointer loc_vertex, modelstore, "square:vertex"
-vertexattribpointer loc_normal, modelstore, "square:normal"
-vertexattribpointer loc_tex, modelstore, "square:tex"
+vertexattribpointer a_vertex, modelstore, "square:vertex"
+vertexattribpointer a_normal, modelstore, "square:normal"
+vertexattribpointer a_tex, modelstore, "square:tex"
 
 From "init textures" import tex_plaid
 
 bindtexture texture_2d, tex_plaid
 
-From "get locations" import  loc_light, loc_light_colors, loc_specular
+From "get locations" import  u_v_light, u_m_light_colors, u_s_shininess
 
-uniform4f loc_light, vec(1, 1, 0, 0)
-uniformmatrix4f loc_light_colors, mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 0))
+uniform4f u_v_light, vec(1, 1, 0, 0)
+uniformmatrix4f u_m_light_colors, mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 0))
 
-uniform1f loc_specular, 40
+uniform1f u_s_shininess, 40
 
 // uniformmatrix4f loc_view, camera
 // uniformmatrix4f loc_proj, projection
 
-Matrix model
+Matrix model = rotation(-80, vec(1, 0, 0, 1))
 
-From "get locations" import  loc_material_colors
+From "get locations" import  u_m_material_colors
+uniformmatrix4f u_m_material_colors, mat(vec(.1, .1, .1, 0), vec(.1, .1, .1, 0), vec(.7, .7, .7, 0), vec(0, 0, 0, 0))
 
-uniformmatrix4f loc_material_colors, mat(vec(.1, .1, .1, 0), vec(.1, .1, .1, 0), vec(.7, .7, .7, 0), vec(0, 0, 0, 0))
 
-model = rotation(-80, vec(1, 0, 0, 1))
-uniformmatrix4f loc_model, model
+From "" import camera, projection
+From "get locations" import u_m_vm, u_m_pvm, u_m_n
+uniformmatrix4f u_m_vm, camera*model
+uniformmatrix4f u_m_pvm, projection*camera*model
+uniformmatrix4f u_m_n, normal_transform(camera*model)
 
 draw modelstore, "square", triangles
 

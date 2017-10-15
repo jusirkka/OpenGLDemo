@@ -68,7 +68,7 @@ MainWindow::MainWindow(const QString& project):
     // Initialize globals
     mGlobals = new Scope(mGLWidget, this);
 
-     // init the projection near/far values: has to be after Scope Ctor
+     // init the projection near/far values
     depthChanged(zoom->near(), zoom->far());
 
     mUI->graphicsDockLayout->addWidget(mGLWidget);

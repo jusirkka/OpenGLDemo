@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "imagestore.h"
 #include "shadowmap.h"
+#include "modelstore.h"
 
 #include <QDebug>
 #include <QMouseEvent>
@@ -19,9 +20,11 @@ using Math3D::Real;
 
 using namespace Demo;
 
+// #define updateGL update
+
 GLWidget::GLWidget(QWidget *parent):
     QGLWidget(parent),
-    QOpenGLExtraFunctions(),
+    QOpenGLFunctions_3_0(),
     mInitialized(false),
     mDim(500),
     mMover(new Mover(this)),
@@ -30,7 +33,7 @@ GLWidget::GLWidget(QWidget *parent):
 {
 
     mTime = 0;
-    mCamera = new Camera(Vector4(2, 2, 60), Vector4(0, 0, 0), Vector4(0, 1, 0));
+    mCamera = new Camera(Vector4(10, 10, 60), Vector4(0, 0, 0), Vector4(0, 1, 0));
 
     mTimer = new QTimer(this);
     mTimer->setInterval(1000/25);
@@ -39,8 +42,6 @@ GLWidget::GLWidget(QWidget *parent):
     mAnimTimer->setInterval(1000/25);
     connect(mAnimTimer, SIGNAL(timeout()), this, SLOT(anim()));
 
-    makeCurrent();
-    initializeOpenGLFunctions();
 }
 
 void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
@@ -83,6 +84,13 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
         connect(this, SIGNAL(viewportChanged(GLuint,GLuint)), shadowmap, SLOT(viewportChanged(GLuint,GLuint)));
         shadowmap->viewportChanged(width(), height());
     }
+
+    auto modelstore = dynamic_cast<GL::ModelStore*>(blob(globals, "modelstore"));
+    if (modelstore) {
+        modelstore->setContext(this);
+    }
+
+
 }
 
 void GLWidget::addBlob(QObject* plugin, SymbolMap& globals) {
@@ -140,9 +148,13 @@ Demo::GLWidget::~GLWidget() {
 
 
 void Demo::GLWidget::initializeGL() {
-    initializeOpenGLFunctions();
-    defaults();
-    emit init();
+    if (!mInitialized) {
+        qDebug() << "initializeOpenGLFunctions";
+        if (!initializeOpenGLFunctions()) {
+            qFatal("initializeOpenGLFunctions failed");
+        }
+        mInitialized = true;
+    }
 }
 
 void Demo::GLWidget::paintGL()
@@ -151,9 +163,12 @@ void Demo::GLWidget::paintGL()
 }
 
 void Demo::GLWidget::initChanged() {
-    makeCurrent();
-    initializeGL();
-    updateGL();
+    if (mInitialized) {
+        makeCurrent();
+        defaults();
+        emit init();
+        updateGL();
+    }
 }
 
 void Demo::GLWidget::drawChanged() {
@@ -161,6 +176,7 @@ void Demo::GLWidget::drawChanged() {
 }
 
 void Demo::GLWidget::resizeGL(int w, int h) {
+    makeCurrent();
     mDim = w; if (h > w) mDim = h;
     glViewport(0, 0, w, h);
     Real a = Real(w) / Real(h);
@@ -189,8 +205,10 @@ void Demo::GLWidget::setProjection(float near, float far) {
     if (mFar - mNear < 0.001) {
         mFar = mNear + 0.001;
     }
-    resizeGL(width(), height());
-    updateGL();
+    if (mInitialized) { // setProjection might be called before we have been initialized
+        resizeGL(width(), height());
+        updateGL();
+    }
 }
 
 
@@ -297,7 +315,7 @@ void Demo::GLWidget::anim() {
     updateGL();
 }
 
-#define ALT(item) case item: qDebug() << #item; break
+#define ALT(item) case item: qFatal(#item); break
 
 static void checkError() {
     switch (glGetError()) {
@@ -327,7 +345,7 @@ void Demo::GLWidget::defaults() {
 
     glEnable(GL_DITHER);
 
-    glDepthRangef(0, 1);
+    glDepthRange(0, 1);
     glLineWidth(1);
 
     glFrontFace(GL_CCW);
@@ -342,6 +360,12 @@ void Demo::GLWidget::defaults() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glUseProgram(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    // qDebug() << "clearing resources" << mResources;
     for (auto name: qAsConst(mResources)) {
         if (glIsShader(name)) {
             // qDebug() << "deleting shader" << name;
@@ -350,17 +374,20 @@ void Demo::GLWidget::defaults() {
             // qDebug() << "deleting program" << name;
            glDeleteProgram(name);
         } else if (glIsBuffer(name)) {
+            // qDebug() << "deleting buffer" << name;
             glDeleteBuffers(1, &name);
         } else if (glIsFramebuffer(name)) {
+            // qDebug() << "deleting frame buffer" << name;
             glDeleteFramebuffers(1, &name);
         } else if (glIsTexture(name)) {
+            // qDebug() << "deleting texture" << name;
             glDeleteTextures(1, &name);
         } else {
             qWarning() << "Unknown resource" << name;
         }
         checkError();
     }
-
+    // qDebug() << "resources cleared";
     mResources.clear();
 }
 

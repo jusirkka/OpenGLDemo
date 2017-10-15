@@ -57,6 +57,8 @@ model_matrix = reflect * model_dodeca
 model_colors = dodeca_colors
 model_name = "dodeca"
 model_tex = dodeca_tex
+cullface back
+
 model_tex_scale = dodeca_tex_scale
 model_spec_exp = dodeca_spec_exp
 
@@ -65,8 +67,6 @@ From "get locations" import u_v_light
 From "" import camera
 uniform4f u_v_light, camera * scaling(-1, -1, -1) * normal_transform(reflect) * light_direction
 Execute "draw model"
-cullface back
-
 disable stencil_test
 
 uniform4f u_v_light, camera*light_direction

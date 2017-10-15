@@ -16,14 +16,12 @@ SOURCES += main.cpp\
     gl_widget.cpp \
     gl_lang_compiler.cpp \
     gl_lang_runner.cpp \
-    teapot.cpp \
     camera.cpp \
     project.cpp \
     codeeditor.cpp \
     highlight.cpp \
     newdialog.cpp \
     imagestore.cpp \
-    patch.cpp \
     modelstore.cpp \
     fpscontrol.cpp \
     scope.cpp \
@@ -33,7 +31,10 @@ SOURCES += main.cpp\
     depthzoom.cpp \
     gl_lang_completer.cpp \
     gl_lang_parser_interface.cpp \
-    shadowmap.cpp
+    shadowmap.cpp \
+    triangleoptimizer.cpp \
+    patcher.cpp \
+    bezierpatcher.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -46,7 +47,6 @@ HEADERS  += mainwindow.h \
     gl_lang_compiler.h \
     gl_lang_runner.h \
     blob.h \
-    teapot.h \
     camera.h \
     project.h \
     codeeditor.h \
@@ -54,7 +54,6 @@ HEADERS  += mainwindow.h \
     newdialog.h \
     texblob.h \
     imagestore.h \
-    patch.h \
     modelstore.h \
     fpscontrol.h \
     scope.h \
@@ -62,7 +61,10 @@ HEADERS  += mainwindow.h \
     depthzoom.h \
     gl_lang_completer.h \
     gl_lang_parser_interface.h \
-    shadowmap.h
+    shadowmap.h \
+    triangleoptimizer.h \
+    patcher.h \
+    bezierpatcher.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

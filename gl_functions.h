@@ -130,7 +130,7 @@ public:
         Math3D::Real near = vals[start].value<Math3D::Real>();
         Math3D::Real far = vals[start + 1].value<Math3D::Real>();
         // qDebug() << "glDepthRange" << near << far;
-        mParent->glDepthRangef(near, far);
+        mParent->glDepthRange(near, far);
         mValue.setValue(0);
         return mValue;
     }
@@ -296,7 +296,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real depth = vals[start].value<Math3D::Real>();
         // qDebug() << "glClearDepth" << depth;
-        mParent->glClearDepthf(depth);
+        mParent->glClearDepth(depth);
         mValue.setValue(0);
         return mValue;
     }
@@ -317,6 +317,7 @@ public:
         int type = vals[start].value<int>();
         // qDebug() << "glCreateShader" << type;
         int ret = mParent->glCreateShader(type);
+        // qDebug() << "shader" << ret;
         mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
@@ -376,6 +377,7 @@ public:
             throw GLError(QString(R"("%1" is not a shader)").arg(name));
         }
         mParent->glDeleteShader(name);
+        // qDebug() << "delete shader" << name;
         mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
@@ -394,6 +396,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         // qDebug() << "glCreateProgram";
         int ret = mParent->glCreateProgram();
+        // qDebug() << "program" << ret;
         mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
@@ -516,6 +519,7 @@ public:
             throw GLError(QString(R"("%1" is not a program)").arg(name));
         }
         mParent->glDeleteProgram(name);
+        // qDebug() << "delete program" << name;
         mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
@@ -678,6 +682,7 @@ public:
         GLuint ret;
         // qDebug() << "glGenBuffers";
         mParent->glGenBuffers(1, &ret);
+        // qDebug() << "buffer" << ret;
         mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
@@ -702,6 +707,7 @@ public:
             throw GLError(QString(R"("%1" is not a buffer)").arg(name));
         }
         mParent->glDeleteBuffers(1, &name);
+        // qDebug() << "delete buffer" << name;
         mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
@@ -930,6 +936,7 @@ public:
         GLuint ret;
         // qDebug() << "GenTexture";
         mParent->glGenTextures(1, &ret);
+        // qDebug() << "texture" << ret;
         mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
@@ -954,6 +961,7 @@ public:
             throw GLError(QString(R"("%1" is not a testure)").arg(name));
         }
         mParent->glDeleteTextures(1, &name);
+        // qDebug() << "removing texture" << name;
         mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
@@ -1180,6 +1188,7 @@ public:
         GLuint ret;
         // qDebug() << "glGenFrameBuffers";
         mParent->glGenFramebuffers(1, &ret);
+        // qDebug() << "frame buffer" << ret;
         mParent->resources().append(ret);
         mValue.setValue(ret);
         return mValue;
@@ -1204,6 +1213,7 @@ public:
             throw GLError(QString(R"("%1" is not a frame buffer)").arg(name));
         }
         mParent->glDeleteFramebuffers(1, &name);
+        // qDebug() << "delete frame buffer" << name;
         mParent->resources().removeOne(name);
         mValue.setValue(0);
         return mValue;
@@ -1235,29 +1245,6 @@ public:
     CLONEMETHOD(BindFrameBuffer)
 };
 
-class FrameBufferParameter: public GLProc {
-
-public:
-
-    FrameBufferParameter(Demo::GLWidget* p): GLProc("framebufferparameter", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-    }
-
-    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
-        GLuint target = vals[start].value<int>();
-        GLuint name = vals[start + 1].value<int>();
-        GLuint param = vals[start + 2].value<int>();
-        // qDebug() << "glFramebufferParameteri" << target << name << param;
-        mParent->glFramebufferParameteri(target, name, param);
-        mValue.setValue(0);
-        return mValue;
-    }
-
-    CLONEMETHOD(FrameBufferParameter)
-};
 
 class FrameBufferTexture2D: public GLProc {
 
@@ -1416,7 +1403,6 @@ public:
         contents.append(new GenFrameBuffer(p));
         contents.append(new BindFrameBuffer(p));
         contents.append(new DeleteFrameBuffer(p));
-        contents.append(new FrameBufferParameter(p));
         contents.append(new FrameBufferTexture2D(p));
         contents.append(new FrameBufferTextureLayer(p));
         contents.append(new CheckFrameBufferStatus(p));
@@ -1560,12 +1546,6 @@ public:
         CONST(DRAW_FRAMEBUFFER);
         CONST(READ_FRAMEBUFFER);
         CONST(FRAMEBUFFER);
-        // framebuffer parameter
-        CONST(FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS);
-        CONST(FRAMEBUFFER_DEFAULT_HEIGHT);
-        CONST(FRAMEBUFFER_DEFAULT_LAYERS);
-        CONST(FRAMEBUFFER_DEFAULT_SAMPLES);
-        CONST(FRAMEBUFFER_DEFAULT_WIDTH);
         // framebuffer texture2D
         CONST(COLOR_ATTACHMENT0);
         CONST(COLOR_ATTACHMENT1);

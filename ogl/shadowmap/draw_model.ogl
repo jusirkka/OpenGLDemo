@@ -3,6 +3,9 @@ From "get locations" import  a_vertex, a_normal, a_tex
 
 From "draw main" import model_name, model_colors, model_matrix, model_tex, model_tex_scale, model_spec_exp
 
+From "init models" import model_array
+bindbuffer array_buffer, model_array
+
 vertexattribpointer a_vertex, modelstore, model_name + ":vertex"
 vertexattribpointer a_normal, modelstore, model_name + ":normal"
 vertexattribpointer a_tex, modelstore, model_name + ":tex"

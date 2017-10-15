@@ -1,13 +1,13 @@
-Shared Natural pot_array, pot_elements
+Shared Natural model_array, model_elements
 
 // ------------------
 // teapot buffers
 // ------------------
 
-pot_array = genbuffer()
-bindbuffer array_buffer, pot_array
-bufferdata array_buffer, teapot, static_draw
+model_array = genbuffer()
+bindbuffer array_buffer, model_array
+bufferdata array_buffer, modelstore, static_draw
 
-pot_elements = genbuffer()
-bindbuffer element_array_buffer, pot_elements
-bufferdata element_array_buffer, teapot, static_draw
+model_elements = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferdata element_array_buffer, modelstore, static_draw

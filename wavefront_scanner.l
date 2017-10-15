@@ -42,94 +42,108 @@ triple_vn       {unum}\/\/{unum}
 triple_vtn      {unum}\/{unum}\/{unum}
 
 
-space           [ \t]*
-sep             [ \t]
+space           [ \t]
 
-vertex          ^v{sep}
-normal          ^vn{sep}
-texcoord        ^vt{sep}
-face            ^f{sep}
-
-unsupp1         vp|cstype|deg|bmat|step|p|l|curv|curv2|surf|parm|trom|hole|scrv|sp
-unsupp2         end|con|g|s|mg|o|bevel|c_interp|d_interp|lod|usemtl|mtllib|shadow_obj
+unsupp1         vp|bmat|step|p|l|curv|curv2|trom|hole|scrv|sp
+unsupp2         con|g|s|mg|o|bevel|c_interp|d_interp|lod|usemtl|mtllib|shadow_obj
 unsupp3         trace_obj|ctech|stech|call|csh
 
-unsupp          ^({unsupp1}|{unsupp2}|{unsupp3}){sep}
+unsupp          {unsupp1}|{unsupp2}|{unsupp3}
 
+normal          vn
+texcoord        vt
+cstype          cstype
+deg             deg
+surf            surf
+parm            parm
+end             end
+
+typename        bezier
+
+
+vertex          ^v
+face            f
+varname         u|v
 
 
 %%
 
 
-{texcoord}              return TEXCOORD;
-{normal}                return NORMAL;
-{vertex}                return VERTEX;
-{face}                  return FACE;
-{unsupp}                return UNSUPP;
+{texcoord}          return TEXCOORD;
+{normal}            return NORMAL;
+{cstype}            return CSTYPE;
+{deg}               return DEG;
+{surf}              return SURF;
+{parm}              return PARM;
+{end}               return SURFEND;
+{unsupp}            return UNSUPP;
+{vertex}            return VERTEX;
+{face}              return FACE;
 
-{triple_v}              {
-                            char* first = index(yytext, '/');
-                            yylval->v_triplet[0] = strtof(yytext, &first);
-                            yylval->v_triplet[1] = 0;
-                            yylval->v_triplet[2] = 0;
-                            return VERT;
-                        }
+{varname}           {
+                        yylval->v_string = yytext;
+                        return VARNAME;
+                    }
 
-{triple_vt}             {
-                            char* first = index(yytext, '/');
-                            char* last = rindex(yytext, '/');
-                            yylval->v_triplet[0] = strtof(yytext, &first);
-                            yylval->v_triplet[1] = strtof(first + 1, &last);
-                            yylval->v_triplet[2] = 0;
-                            return VERT_TEX;
-                        }
+{typename}          {
+                        yylval->v_string = yytext;
+                        return TYPENAME;
+                    }
 
-{triple_vn}             {
-                            char* first = index(yytext, '/');
-                            char* last = rindex(yytext, '/');
-                            yylval->v_triplet[0] = strtof(yytext, &first);
-                            yylval->v_triplet[1] = 0;
-                            yylval->v_triplet[2] = strtof(last + 1, NULL);
-                            return VERT_NORM;
-                        }
+{triple_v}          {
+                        char* first = index(yytext, '/');
+                        yylval->v_triplet[0] = strtof(yytext, &first);
+                        yylval->v_triplet[1] = 0;
+                        yylval->v_triplet[2] = 0;
+                        return VERT;
+                    }
 
-{triple_vtn}            {
-                            char* first = index(yytext, '/');
-                            char* last = rindex(yytext, '/');
-                            yylval->v_triplet[0] = strtof(yytext, &first);
-                            yylval->v_triplet[1] = strtof(first + 1, &last);
-                            yylval->v_triplet[2] = strtof(last + 1, NULL);
-                            return VERT_TEX_NORM;
-                        }
+{triple_vt}         {
+                        char* first = index(yytext, '/');
+                        char* last = rindex(yytext, '/');
+                        yylval->v_triplet[0] = strtof(yytext, &first);
+                        yylval->v_triplet[1] = strtof(first + 1, &last);
+                        yylval->v_triplet[2] = 0;
+                        return VERT_TEX;
+                    }
 
-{float_1}                yylval->v_float = strtod(yytext, NULL); return FLOAT;
-{float_2}                yylval->v_float = strtod(yytext, NULL); return FLOAT;
-{float_3}                yylval->v_float = strtod(yytext, NULL); return FLOAT;
-{num}                  yylval->v_int = (int) strtol(yytext, NULL, 0); return INT;
+{triple_vn}         {
+                        char* first = index(yytext, '/');
+                        char* last = rindex(yytext, '/');
+                        yylval->v_triplet[0] = strtof(yytext, &first);
+                        yylval->v_triplet[1] = 0;
+                        yylval->v_triplet[2] = strtof(last + 1, NULL);
+                        return VERT_NORM;
+                    }
 
+{triple_vtn}        {
+                        char* first = index(yytext, '/');
+                        char* last = rindex(yytext, '/');
+                        yylval->v_triplet[0] = strtof(yytext, &first);
+                        yylval->v_triplet[1] = strtof(first + 1, &last);
+                        yylval->v_triplet[2] = strtof(last + 1, NULL);
+                        return VERT_TEX_NORM;
+                    }
 
-
-
-^{space}\n            my_init_line; // eat up empty line
-^{space}"#".*\n       my_init_line; // eat up comment line
-
-
-"#".*\n            {
-                        my_init_line;
-                        return ENDLINE;
-                   }
-
-
-\n            {
-                    my_init_line;
-                    return ENDLINE;
-               }
+{float_1}           yylval->v_float = strtod(yytext, NULL); return FLOAT;
+{float_2}           yylval->v_float = strtod(yytext, NULL); return FLOAT;
+{float_3}           yylval->v_float = strtod(yytext, NULL); return FLOAT;
+{num}               yylval->v_int = (int) strtol(yytext, NULL, 0); return INT;
 
 
 
-{sep}+         // eat up whitespace
 
-.             return UNK;
+"#".*\n             my_init_line; // eat up comment line
+
+^{space}*\n         my_init_line; // eat up empty line
+
+\\\n                my_init_line; // line continuation
+
+\n                  my_init_line; return END;
+
+{space}+            // eat up whitespace
+
+.                   return UNK;
 
 
 %%

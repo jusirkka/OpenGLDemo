@@ -63,13 +63,11 @@ Execute "draw model"
 enable cull_face
 // disable blend
 
-model_matrix = translation(vec(10, 0, 0, 1)) * scaling(1, 1, 1)
+model_name = "teapot"
+model_matrix = translation(vec(10, 0, 0, 1)) * scaling(3, 3, 3)
 model_colors = mat(vec(.3, .1, .1, 0), vec(.5, .6, .0, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = tex_plaid
 model_tex_scale = 2
 model_spec_exp = 3
-From "init models" import pot_array, pot_elements
-bindbuffer array_buffer, pot_array
-bindbuffer element_array_buffer, pot_elements
-Execute "draw pot"
+Execute "draw model"
 

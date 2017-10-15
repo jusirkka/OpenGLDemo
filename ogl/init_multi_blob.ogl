@@ -11,4 +11,4 @@ clearcolor vec(.1,.3,.2,1)
 enable depth_test
 enable  cull_face
 frontface cw
-cullface front
+cullface back

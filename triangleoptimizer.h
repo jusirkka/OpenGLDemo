@@ -1,77 +1,138 @@
-/*
- * $Header: /home/grantham/cvsroot/projects/modules/tc/tc.h,v 1.14 2000/10/03 07:19:20 grantham Exp $
- */
+/* Original copyright:
 
-#if !defined(_ACTC_H_)
-#define _ACTC_H_
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  3. All advertising materials mentioning features or use of this software
+     must display the following acknowledgement:
+       This product includes software developed by Brad Grantham and
+       Applied Conjecture.
+  4. Neither the name Brad Grantham nor Applied Conjecture
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+  5. Notification must be made to Brad Grantham about inclusion of this
+     software in a product including the author of the product and the name
+     and purpose of the product.  Notification can be made using email
+     to Brad Grantham's current address (grantham@plunk.org as of September
+     20th, 2000) or current U.S. mail address.
 
-#include <sys/types.h>
+     Adapted to Qt/C++ by Jukka Sirkka 2017
 
-typedef struct _ACTCData ACTCData;
+*/
 
-/*
-    Abbreviated:
-    	vertex		vert
-	primitive	prim
-	maximum		max
-	minimum		min
-	parameter	param
- */
+#ifndef TRIANGLE_OPTIMIZER_H
+#define TRIANGLE_OPTIMIZER_H
 
-#define ACTC_NO_ERROR			0
-#define ACTC_ALLOC_FAILED		-0x2000
-#define ACTC_DURING_INPUT		-0x2001
-#define ACTC_DURING_OUTPUT		-0x2002
-#define ACTC_IDLE			-0x2003
-#define ACTC_INVALID_VALUE		-0x2004
-#define ACTC_DATABASE_EMPTY		-0x2005
-#define ACTC_DATABASE_CORRUPT		-0x2006
-#define ACTC_PRIM_COMPLETE		-0x2007
+#include <QVector>
+#include <QPair>
+#include <QMap>
 
-#define ACTC_OUT_MIN_FAN_VERTS		0x1000
-#define ACTC_OUT_HONOR_WINDING		0x1001
-#define ACTC_OUT_MAX_PRIM_VERTS		0x1004
-#define ACTC_IN_MIN_VERT		0x1005
-#define ACTC_IN_MAX_VERT		0x1006
-#define ACTC_IN_MAX_VERT_SHARING	0x1007
-#define ACTC_IN_MAX_EDGE_SHARING	0x1008
-#define ACTC_MINOR_VERSION		0x1009
-#define ACTC_MAJOR_VERSION		0x1010
+namespace AC {
 
-#define ACTC_PRIM_FAN			0x2000
-#define ACTC_PRIM_STRIP			0x2001
+class TriangleOptimizer {
 
-#define ACTC_TRUE			1
-#define ACTC_FALSE			0
+public:
 
-ACTCData *actcNew(void);
-int actcParami(ACTCData *tc, int param, int value);
-int actcGetParami(ACTCData *tc, int param, int *value);
-int actcParamu(ACTCData *tc, int param, uint value);
-int actcGetParamu(ACTCData *tc, int param, uint *value);
-int actcGetError(ACTCData *tc);
-int actcMakeEmpty(ACTCData *tc);
-void actcDelete(ACTCData *tc);
-void actcDumpState(ACTCData *tc, FILE *fp);
+    using IndexVector = QVector<uint>;
+    using StripVector = QVector<QVector<uint>>;
 
-int actcBeginInput(ACTCData *tc);
-int actcGetIsDuringInput(ACTCData *tc);
-int actcAddTriangle(ACTCData *tc, uint v1, uint v2, uint v3);
-int actcEndInput(ACTCData *tc);
+    const StripVector& strips() const {return mStrips;}
 
-int actcBeginOutput(ACTCData *tc);
-int actcGetIsDuringOutput(ACTCData *tc);
-int actcStartNextPrim(ACTCData *tc, uint *v1Return, uint *v2Return);
-int actcGetNextVert(ACTCData *tc, uint *vReturn);
-int actcEndOutput(ACTCData *tc);
+    TriangleOptimizer(const IndexVector& triangles);
 
-int actcGetMemoryAllocation(ACTCData *tc, size_t *bytesAllocated);
+private:
 
-int actcTrianglesToPrimitives(ACTCData *tc, int triangleCount,
-    uint (*triangles)[3], int primTypes[], int primLengths[], uint vertices[],
-    int maxBatchSize);
+    class Vertex;
 
-#endif /* _ACTC_H_ */
+    class Triangle {
+    public:
+        Triangle()
+            : finalVertex(nullptr) {}
+        Vertex* finalVertex;
+    };
 
-/* vi:tabstop=8
- */
+    using TriangleVector = QVector<Triangle*>;
+    using VertexPair = QPair<Vertex*, Vertex*>;
+
+    class Edge {
+    public:
+        Edge()
+            : vertices()
+            , triangles()
+            , count(0) {}
+        VertexPair vertices;
+        TriangleVector triangles;
+        int count;
+    };
+
+    using EdgeVector = QVector<Edge*>;
+
+    class Vertex {
+    public:
+        Vertex()
+            : index(0)
+            , count(0)
+            , prev(nullptr)
+            , next(nullptr)
+            , edges() {}
+        uint index;
+        int count;
+        Vertex* prev;
+        Vertex* next;
+        EdgeVector edges;
+    };
+
+    using VertexMap = QMap<uint, Vertex*>;
+    using VertexVector = QVector<Vertex*>;
+
+private:
+
+    void addTriangle(uint v1, uint v2, uint v3);
+    bool startNextStrip(uint& v1Return, uint& v2Return);
+    bool getNextVert(uint v1, uint v2, uint& v3);
+
+    Vertex* incVertexValence(uint v);
+    Edge* mapVertexEdge(Vertex* v1, Vertex* v2);
+    void mapEdgeTriangle(Edge* e12, Vertex* v3);
+    Vertex* findNextStripVertex();
+    bool findEdge(uint v1, uint v2, Edge** e);
+    void unmapEdgeTriangle(Edge* e12, uint v3);
+    void unmapEdgeTriangleByVerts(uint v1, uint v2, uint v3);
+    void unmapVertexEdge(uint v1, uint v2);
+    void decVertexValence(uint v);
+
+
+
+
+private:
+
+    // input
+    VertexVector mVertices;
+
+    bool mHonorWinding;
+    uint mVertexCount;
+
+    // output
+    StripVector mStrips;
+
+    /* vertex and edge database */
+    VertexMap mVertexBins;
+
+
+    bool mForwardWinding;
+
+
+
+};
+
+
+
+} // namespace AC
+
+#endif
+

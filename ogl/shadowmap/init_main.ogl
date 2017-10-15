@@ -11,7 +11,7 @@ Execute "init textures"
 clearcolor vec(.1,.3,.2,1)
 enable depth_test
 enable  cull_face
-frontface ccw
+frontface cw
 cullface back
 clearcolor vec(.1,.2,.2,1)
 

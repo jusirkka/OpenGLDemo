@@ -1,10 +1,10 @@
-From "get locations" import loc_vertex, loc_normal, loc_tex
+From "get locations" import a_vertex, a_normal, a_tex
 
-vertexattribpointer loc_vertex, teapot, "vertex"
-vertexattribpointer loc_normal, teapot, "normal"
-vertexattribpointer loc_tex, teapot, "tex"
+vertexattribpointer a_vertex, modelstore, "teapot:vertex"
+vertexattribpointer a_normal, modelstore, "teapot:normal"
+vertexattribpointer a_tex, modelstore, "teapot:tex"
 
 
-enablevertexattribarray loc_vertex
-enablevertexattribarray loc_normal
-enablevertexattribarray loc_tex
+enablevertexattribarray a_vertex
+enablevertexattribarray a_normal
+enablevertexattribarray a_tex

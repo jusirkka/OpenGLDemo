@@ -3,11 +3,12 @@
 
 #include <QObject>
 #include <QtPlugin>
-#include <QList>
+#include <QVector>
 #include <QStringList>
 
 #include "blob.h"
 #include "math3d.h"
+#include "patcher.h"
 
 #define WAVEFRONT_LTYPE Demo::WF::LocationType
 #define WAVEFRONT_STYPE Demo::WF::ValueType
@@ -65,30 +66,40 @@ private:
 };
 
 
-class Triplet {
+class TripletIndex {
 public:
-    Triplet(int v = 0, int t = 0, int n = 0):
-        v_index(v),
-        t_index(t),
-        n_index(n) {}
-     int v_index;
-     int t_index;
-     int n_index;
+    TripletIndex(int v = 0, int t = 0, int n = 0)
+        : v_index(v)
+        , t_index(t)
+        , n_index(n) {}
+
+    int v_index;
+    int t_index;
+    int n_index;
 };
 
-using TripletList = QList<Demo::WF::Triplet>;
+using TripletIndexVector = QVector<TripletIndex>;
+using IndexVector = QVector<int>;
+using NumericVector = QVector<float>;
 
 class ValueType {
 public:
     int v_int;
     float v_float;
     int v_triplet[3];
-    TripletList v_triplet_list;
+    TripletIndexVector v_triplets;
+    QString v_string;
+    NumericVector v_floats;
+    IndexVector v_ints;
 };
+
 
 }
 
+class GLWidget;
+
 namespace GL {
+
 
 class ModelStore : public QObject, public Blob
 {
@@ -99,6 +110,8 @@ class ModelStore : public QObject, public Blob
 public:
 
     ModelStore();
+
+
 
     // project interface
     void rename(const QString& from, const QString& to);
@@ -111,32 +124,111 @@ public:
     QStringList itemSample(const QString& except = QString()) const;
 
     // grammar interface
-    void appendVertex(float, float, float);
+    void appendVertex(float x, float y, float z, float w = 1);
     void appendNormal(float, float, float);
     void appendTex(float, float);
-    void appendFace(const WF::TripletList&);
+    void appendFace(const WF::TripletIndexVector&);
+    bool inPatchDef() const;
+    void setPatchType(const QString& name, bool rat = false);
+    void setPatchKnots(const QString& v, const WF::NumericVector& knots);
+    void setPatchRank(int udeg, int vdeg);
+    bool checkPatchState() const;
+    void beginPatch(float u0, float u1, float v0, float v1, const WF::IndexVector& controlpoints);
+    void endPatch();
+
+    enum Error {InSurfDef, StateNotComplete, SurfDefRequired, Unused};
+    void createError(const QString& item, Error err);
 
     void parseModelData(const QString& path);
-    void createError(WF::LocationType* loc, const QString& msg);
 
     // blob interface implementation
     void draw(unsigned int mode, const QString& attr) const override;
+    // drawing context
+    void setContext(GLWidget* context);
 
 
 private:
 
     class VertexData {
     public:
-        VertexData(float x, float y, float z): v(x, y, z), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
-        VertexData(): v(0, 0, 0, 0), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
-        VertexData(Vector4 v0): v(v0.readArray()), n(0, 0, 1, 0), t(0, 0, 0, 0) {}
+        VertexData(float x, float y, float z, float w = 1)
+            : vertex(x, y, z, w)
+            , normal(0, 0, 1, 0)
+            , tex(0, 0, 0, 0) {}
+        VertexData()
+            : vertex(0, 0, 0, 0)
+            , normal(0, 0, 1, 0)
+            , tex(0, 0, 0, 0) {}
+        VertexData(Vector4 v0)
+            : vertex(v0.readArray(), 4)
+            , normal(0, 0, 1, 0)
+            , tex(0, 0, 0, 0) {}
 
-        Vector4 v, n, t;
+        VertexData(const Vector4& v, const Vector4& n, const Vector4& t)
+            : vertex(v.readArray(), 4)
+            , normal(n.readArray(), 3)
+            , tex(t.readArray(), 2) {}
+
+        Vector4 vertex, normal, tex;
     };
 
-    using VertexList = QList<Demo::GL::ModelStore::VertexData>;
-    using Vector4List = QList<Math3D::Vector4>;
-    using IndexList = QList<GLuint>;
+    using VertexDataVector = QVector<Demo::GL::ModelStore::VertexData>;
+    using Vector4Vector = QVector<Math3D::Vector4>;
+    using IndexVector = QVector<GLuint>;
+    using OffsetVector = QVector<uintptr_t>;
+    using IndexHash = QHash<QString, GLuint>;
+    using StripVector = QVector<QVector<GLuint>>;
+
+    class PatchState {
+    public:
+        PatchState()
+            : patcher(nullptr)
+            , udeg(0)
+            , vdeg(0)
+            , insurf(false)
+            , vertices()
+            , wireframe()
+            , strips() {}
+
+            ~PatchState() {delete patcher;}
+
+        void reset() {
+            delete patcher;
+            patcher = nullptr;
+            udeg = 0;
+            vdeg = 0;
+            insurf = false;
+            vertices.clear();
+            wireframe.clear();
+            strips.clear();
+        }
+
+        void applyOffset(uint offset) {
+            for (uint& idx: wireframe) {
+                idx += offset;
+            }
+            for (IndexVector& strip: strips) {
+                for (uint& idx: strip) {
+                    idx += offset;
+                }
+            }
+        }
+
+        bool checkState() const {
+            if (!patcher) return false;
+            if (udeg == 0) return false;
+            if (vdeg == 0) return false;
+            return true;
+        }
+
+        WF::Patcher* patcher;
+        uint udeg;
+        uint vdeg;
+        bool insurf;
+        VertexDataVector vertices;
+        IndexVector wireframe;
+        StripVector strips;
+    };
 
 
     class Model {
@@ -144,32 +236,51 @@ private:
         Model() = default;
         QString name;
         QString fileName;
-        VertexList vertices;
-        IndexList indices;
-        unsigned int elemOffset;
+        VertexDataVector vertices;
+        StripVector strips;
+        OffsetVector stripOffsets;
+        QVector<GLsizei> stripSizes;
+        IndexVector wireFrame;
+        uint wireFrameOffset;
+
     };
 
-    using ModelList = QList<Demo::GL::ModelStore::Model>;
+    using ModelVector = QVector<Demo::GL::ModelStore::Model>;
     using IndexMap = QMap<QString, int>;
 
     Vector4 makeNormal(int start) const;
     void makeModelBuffer();
-
-    bool copyNeeded(unsigned int orig, const WF::Triplet& t) const;
+    void resetParser();
+    QString makeKey(const WF::TripletIndex&);
+    QString makeKey(uint v1, uint v2);
 
 
 private:
 
-    ModelList mModels;
+    GLWidget* mContext;
+
+    ModelVector mModels;
     IndexMap mIndexMap;
 
-    VertexList mVertices;
-    Vector4List mNormals;
-    Vector4List mTexCoords;
-    IndexList mIndices;
+    VertexDataVector mVertexData;
+    IndexVector mTriangleIndices; // points to vertexdata -- 3 consecutive points form a triangle
+    IndexVector mWireframeIndices;
+
+    // temporary data storages
+    Vector4Vector mVertices;
+    Vector4Vector mNormals;
+    Vector4Vector mTexCoords;
+    IndexHash mVertexCache;
+    IndexHash mEdgeCache;
+
+
+    IndexVector mGenNormals; // indices of missing normals in vertexdata
+    IndexVector mGenTexes; // indices of missing tex coords in vertexdata
 
     WF::ModelError mError;
     yyscan_t mScanner;
+
+    PatchState mPatchState;
 };
 
 }} // namespace Demo::GL

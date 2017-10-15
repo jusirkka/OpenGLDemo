@@ -1,11 +1,11 @@
-Shared Natural tex_plaid
+Shared Natural tex_plaid, tex_french
 
-From "get locations" import loc_img, loc_scale
+From "get locations" import u_t_img, u_s_scale
 
 activetexture texture0
-uniform1i loc_img, 0
+uniform1i u_t_img, 0
 
-uniform1f loc_scale, 4
+uniform1f u_s_scale, 4
 
 
 tex_plaid = gentexture()
@@ -14,3 +14,8 @@ bindtexture texture_2d, tex_plaid
 teximage2d texture_2d, 0, rgba, imagestore, "plaid"
 generatemipmap texture_2d
 
+tex_french = gentexture()
+
+bindtexture texture_2d, tex_french
+teximage2d texture_2d, 0, rgba, imagestore, "french"
+generatemipmap texture_2d

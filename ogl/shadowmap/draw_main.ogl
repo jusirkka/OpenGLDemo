@@ -2,7 +2,7 @@
 From "create progs" import prog_phong, prog_depth
 From "init textures" import tex_checker, fbo_shadow, tex_shadow
 
-Shared Vector light_eye = vec(0, 20, 60, 1)
+Shared Vector light_eye = vec(0, 20, 100, 1)
 Vector light_center = vec(0, 0, -30, 1)
 Vector light_up = vec(0, 1, 0, 1)
 
@@ -14,6 +14,10 @@ Matrix model_teddy2 = translation(vec(5, 10, 15, 1)) * model_teddy
 Real sc = 50
 Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
 Matrix model_square =  c * translation(vec(1, 1, -0.25, 1))
+
+Matrix model_teapot = translation(vec(-7, 10, 6, 1)) * \
+                      scaling(3, 3, 3)
+
 
 
 bindframebuffer framebuffer, fbo_shadow
@@ -38,6 +42,10 @@ model_name = "teddy"
 model_matrix = model_teddy2
 Execute "draw depth"
 
+model_name = "teapot"
+model_matrix = model_teapot
+Execute "draw depth"
+
 bindframebuffer framebuffer, 0
 useprogram prog_phong
 cullface back
@@ -53,7 +61,7 @@ Shared Matrix model_colors
 Shared Natural model_tex
 Shared Real model_tex_scale, model_spec_exp
 
-
+disable cull_face
 model_name = "square"
 model_matrix = model_square
 model_colors = mat(0*vec(.3, .3, .3, 0), \
@@ -64,7 +72,7 @@ model_tex = tex_checker
 model_tex_scale = sc / 10
 model_spec_exp = 50
 Execute "draw model"
-
+enable cull_face
 
 model_name = "teddy"
 model_matrix = model_teddy
@@ -89,7 +97,14 @@ model_tex_scale = 1
 model_spec_exp = 10
 Execute "draw model"
 
+model_colors = mat(0*vec(.3, .1, .1, 0), \
+                   vec(.1, .1, .5, 0), \
+                   vec(.6, .4, .1, 0), \
+                   vec(0, 0, 0, 0))
 
 
+model_name = "teapot"
+model_matrix = model_teapot
+Execute "draw model"
 
 
