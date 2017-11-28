@@ -28,9 +28,10 @@ Shared Natural u_s_time = getuniformlocation(prog_ex1, "iTime")
 Shared Natural u_m_invcam = getuniformlocation(prog_ex1, "iViewToWorld")
 Shared Natural u_m_invproj = getuniformlocation(prog_ex1, "iWindowToView")
 
-
 Shared Natural u_m_model = getuniformlocation(prog_ex1, "model_matrix")
 Shared Natural a_vertex = getattriblocation(prog_ex1, "vertex")
+
+Shared Natural u_s_radius = getuniformlocation(prog_ex1, "iEarthRadius")
 
 // Model buffers
 
@@ -48,6 +49,12 @@ enablevertexattribarray a_vertex
 
 useprogram prog_ex1
 
+
+From "" import inverse_projection, width, height
+
+uniformmatrix4f u_m_invproj, inverse_projection
+
+uniform4f u_v_resolution, vec(width, height, 1000, 1)
 
 bindbuffer array_buffer, model_array
 

@@ -1,5 +1,5 @@
-From "" import time, camera, inverse_projection, width, height
-From "init main" import \
+From "" import time, camera
+From "init main" import  u_s_radius, \
     u_s_time, u_m_model, u_m_invcam, u_m_invproj, u_v_resolution
 
 uniform1f u_s_time, time * 0.1
@@ -7,13 +7,14 @@ uniformmatrix4f u_m_model, translation(vec(0, 0, -2, 1))
 
 Matrix m = affine_inverse(camera)
 
+Real radius = 200
+
+uniform1f u_s_radius, radius
+
 // eye is outside of earths's surface
-cameraconstraint(length(m[3] - vec(0, 0, -250, 1)) > 250)
+cameraconstraint(length(m[3] - vec(0, 0, -radius, 1)) > radius)
 
 uniformmatrix4f u_m_invcam, m
-uniformmatrix4f u_m_invproj, inverse_projection
-
-uniform4f u_v_resolution, vec(width, height, 1000, 1)
 
 draw modelstore, "plate", triangles
 

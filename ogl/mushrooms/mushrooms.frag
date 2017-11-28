@@ -4,6 +4,7 @@ uniform vec4 iResolution;
 uniform float iTime;
 uniform mat4 iWindowToView;
 uniform mat4 iViewToWorld;
+uniform float iEarthRadius;
 
 
 const int MAX_MARCHING_STEPS = 255;
@@ -12,9 +13,7 @@ const float MAX_DIST = 600.0;
 const float EPSILON = 0.0001;
 const float NORMAL_DELTA = 0.1;
 const float PI = 3.1415926535897932384626433832795;
-const float RADIUS_OF_EARTH = 250;
 const float MUSHROOM_RADIUS = 10;
-const float RADIUS_OF_SKY = 500;
 
 
 const int NO_HITS = -1;
@@ -150,7 +149,7 @@ vec3 repeatE(const in vec3 p) {
 
 
 vec3 moveTo(const vec3 p, vec2 pos) {
-    const vec3 coe = vec3(0, 0, -RADIUS_OF_EARTH);
+    vec3 coe = vec3(0, 0, -iEarthRadius);
     // 0: latitude, 1: longitude
     return repeatE(rotateX(rotateZ(p - coe, radians(pos[1])), radians(90 - pos[0]))) + coe;
 }
@@ -190,14 +189,14 @@ HitInfo ground(in HitInfo earth, const in vec3 p, const in vec2 p0) {
 HitInfo sceneH(const in vec3 p) {
     vec3 q;
 
-    const vec3 coe = vec3(0., 0., -RADIUS_OF_EARTH);
+    vec3 coe = vec3(0., 0., -iEarthRadius);
 
     vec2 p1 = vec2(70, 90) + iTime * vec2(-3.3, 3.4);
     vec2 p2 = vec2(70, -30) + iTime * vec2(3.9, -3.4);
     vec2 p3 = vec2(70, 60) + iTime * vec2(3.6, 3.2);
 
     q = p - coe;
-    HitInfo earth = HitInfo(EARTH, sphereSDF(q / RADIUS_OF_EARTH) * RADIUS_OF_EARTH);
+    HitInfo earth = HitInfo(EARTH, sphereSDF(q / iEarthRadius) * iEarthRadius);
 
     earth = ground(earth, p, p1);
     earth = ground(earth, p, p2);
@@ -207,7 +206,8 @@ HitInfo sceneH(const in vec3 p) {
     earth = mushroom(earth, p, p2);
     earth = mushroom(earth, p, p3);
 
-    HitInfo sky = HitInfo(SKY, - sphereSDF(p / RADIUS_OF_SKY) * RADIUS_OF_SKY);
+    float sky_radius = 2 * iEarthRadius;
+    HitInfo sky = HitInfo(SKY, - sphereSDF(p / sky_radius) * sky_radius);
 
     return unionH(sky, earth);
 
