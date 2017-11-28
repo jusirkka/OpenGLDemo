@@ -25,12 +25,12 @@ using Demo::GL::ModelStore;
 %lex-param {yyscan_t scanner}
 
 %token UNK END UNSUPP CSTYPE DEG SURF PARM SURFEND
-%token VERTEX TEXCOORD NORMAL FACE
+%token U V_OR_VERTEX TEXCOORD NORMAL FACE
 
 %token <v_triplet> VERT VERT_NORM VERT_TEX VERT_TEX_NORM
 %token <v_int> INT
 %token <v_float> FLOAT
-%token <v_string> VARNAME TYPENAME
+%token <v_string> TYPENAME
 
 %type <v_triplets> verts verts_norms verts_texes verts_texes_norms ints
 %type <v_ints> controlpoints
@@ -105,12 +105,12 @@ supported:
 
 
 vertex:
-    VERTEX numeric numeric numeric
+    V_OR_VERTEX numeric numeric numeric
         {
             models->appendVertex($2, $3, $4);
         }
     |
-    VERTEX numeric numeric numeric numeric
+    V_OR_VERTEX numeric numeric numeric numeric
         {
             models->appendVertex($2, $3, $4, $5);
         }
@@ -257,12 +257,20 @@ parametricdef:
 
 
 surfparameter:
-    PARM VARNAME numerics
+    PARM U numerics
         {
             if (!models->inPatchDef()) {
                 HANDLE_ERROR("parm", ModelStore::Error::SurfDefRequired);
             }
-            models->setPatchKnots($2, $3);
+            models->setPatchKnots("u", $3);
+        }
+    |
+    PARM V_OR_VERTEX numerics
+        {
+            if (!models->inPatchDef()) {
+                HANDLE_ERROR("parm", ModelStore::Error::SurfDefRequired);
+            }
+            models->setPatchKnots("v", $3);
         }
     ;
 

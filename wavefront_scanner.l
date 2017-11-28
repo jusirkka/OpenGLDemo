@@ -61,9 +61,9 @@ end             end
 typename        bezier
 
 
-vertex          ^v
+v_or_vertex     v
 face            f
-varname         u|v
+varname_u       u
 
 
 %%
@@ -77,13 +77,10 @@ varname         u|v
 {parm}              return PARM;
 {end}               return SURFEND;
 {unsupp}            return UNSUPP;
-{vertex}            return VERTEX;
+{v_or_vertex}       return V_OR_VERTEX;
 {face}              return FACE;
 
-{varname}           {
-                        yylval->v_string = yytext;
-                        return VARNAME;
-                    }
+{varname_u}         return U;
 
 {typename}          {
                         yylval->v_string = yytext;

@@ -12,6 +12,7 @@
 #include <QDebug>
 #include <QIcon>
 #include <QRegExp>
+#include <QFileSystemWatcher>
 
 
 static QString uniqueName(const QString& key, const QStringList& names) {
@@ -64,12 +65,14 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals,
     , mDrawName("draw main")
     , mTarget(target)
     , mAutoCompileOn(autoCompileOn)
+    , mWatcher(new QFileSystemWatcher(this))
 {
     if (!mProjectDir.exists() || !mProjectDir.isReadable())
         throw BadProject(QString("Project dir %1 is not readable").arg(mProjectDir.absolutePath()));
 
     connect(this, SIGNAL(initChanged()), mTarget, SLOT(initChanged()));
     connect(this, SIGNAL(drawChanged()), mTarget, SLOT(drawChanged()));
+    connect(mWatcher, SIGNAL(fileChanged(const QString&)), this, SLOT(fileChanged(const QString&)));
 
     CodeEditor* ed = new CodeEditor(mInitName, mGlobals, this);
     mGlobals->appendEditor(ed, "clearcolor vec(.1,.2,.2,1)\n", "");
@@ -99,10 +102,12 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     , mDrawName("draw main")
     , mTarget(target)
     , mAutoCompileOn(autoCompileOn)
+    , mWatcher(new QFileSystemWatcher(this))
 {
 
     connect(this, SIGNAL(initChanged()), mTarget, SLOT(initChanged()));
     connect(this, SIGNAL(drawChanged()), mTarget, SLOT(drawChanged()));
+    connect(mWatcher, SIGNAL(fileChanged(const QString&)), this, SLOT(fileChanged(const QString&)));
 
     QFileInfo info(path);
     if (!info.exists()) throw BadProject(QString("Project file %1 does not exist").arg(path));
@@ -117,12 +122,11 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     NameMap models;
     for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
-        QString fname = value;
-        QFileInfo info(fname);
+        QFileInfo info(value);
         if (!info.isAbsolute()) {
-            fname = mProjectDir.absoluteFilePath(fname);
-            info = QFileInfo(fname);
+            info = QFileInfo(mProjectDir.absoluteFilePath(value));
         }
+        QString fname = info.canonicalFilePath();
 
         if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
             throw BadProject(QString(R"(Model file "%1" is not readable)").arg(value));
@@ -136,12 +140,11 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     NameMap textures;
     for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
-        QString fname = value;
-        QFileInfo info(fname);
+        QFileInfo info(value);
         if (!info.isAbsolute()) {
-            fname = mProjectDir.absoluteFilePath(fname);
-            info = QFileInfo(fname);
+            info = QFileInfo(mProjectDir.absoluteFilePath(value));
         }
+        QString fname = info.canonicalFilePath();
         if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
             throw BadProject(QString(R"(Image file "%1" is not readable)").arg(value));
         }
@@ -153,29 +156,33 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     project.beginGroup("Shaders");
     for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
-        QString fname = value;
-        QFileInfo info(fname);
+        QFileInfo info(value);
         if (!info.isAbsolute()) {
-            fname = mProjectDir.absoluteFilePath(fname);
-            info = QFileInfo(fname);
+            info = QFileInfo(mProjectDir.absoluteFilePath(value));
         }
+        QString fname = info.canonicalFilePath();
         if (!value.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
             throw BadProject(QString(R"(Shader source file "%1" is not readable)").arg(value));
         }
 
         mShaders->setText(uniqueName(key, mShaders->itemSample()), !value.isEmpty() ? fname : value);
+        if (!value.isEmpty()) {
+            // qDebug() << "adding (project) " << fname;
+            if (!mWatcher->addPath(fname)) {
+                qWarning() << "Ctor: Cannot watch" << fname;
+            }
+        }
     }
     project.endGroup();
 
     project.beginGroup("Scripts");
     for (auto& key: project.childKeys()) {
         QString value = project.value(key).toString();
-        QString fname = value;
-        QFileInfo info(fname);
-        if (info.isRelative()) {
-            fname = mProjectDir.absoluteFilePath(fname);
-            info = QFileInfo(fname);
+        QFileInfo info(value);
+        if (!info.isAbsolute()) {
+            info = QFileInfo(mProjectDir.absoluteFilePath(value));
         }
+        QString fname = info.canonicalFilePath();
 
         if (value.isEmpty()) {
             CodeEditor* ed = new CodeEditor(uniqueName(key, mGlobals->itemSample()), mGlobals, this);
@@ -230,6 +237,25 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
 
     recompileProject();
 }
+
+
+void Demo::Project::fileChanged(const QString& path) {
+    // qDebug() << path;
+    for (int i = 0; i < rowCount(itemParent(ShaderItems)); i++) {
+        QModelIndex addr = index(i, ShaderItems);
+        QString fname = data(addr, FileNameRole).toString();
+        if (fname == path) {
+            // qDebug() << "set data";
+            setData(addr, path, FileRole);
+            // Does not work without resetting!?
+            if (!mWatcher->addPath(path)) {
+                qWarning() << "fileChanged: Cannot watch" << path;
+            }
+            return;
+        }
+    }
+}
+
 
 void Demo::Project::recompileProject() {
     mGlobals->recompileAll();
@@ -554,9 +580,9 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
 
             QFileInfo info(fname);
             if (info.isRelative()) {
-                fname = mProjectDir.absoluteFilePath(fname);
-                info = QFileInfo(fname);
+                info = QFileInfo(mProjectDir.absoluteFilePath(fname));
             }
+            fname = info.canonicalFilePath();
 
             if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
 
@@ -576,9 +602,9 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
 
             QFileInfo info(fname);
             if (info.isRelative()) {
-                fname = mProjectDir.absoluteFilePath(fname);
-                info = QFileInfo(fname);
+                info = QFileInfo(mProjectDir.absoluteFilePath(fname));
             }
+            fname = info.canonicalFilePath();
 
             if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
             mImages->setImage(name, fname);
@@ -592,17 +618,29 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
             if (curr == newname) return false;
             mShaders->rename(curr, uniqueName(newname, mShaders->itemSample(curr)));
         } else if (role == FileRole) {
-            QString fname = value.toString();
+            QString path = value.toString();
             QString name = mShaders->itemName(index.row());
 
-            QFileInfo info(fname);
+            QFileInfo info(path);
             if (info.isRelative()) {
-                fname = mProjectDir.absoluteFilePath(fname);
-                info = QFileInfo(fname);
+                info = QFileInfo(mProjectDir.absoluteFilePath(path));
             }
+            path = info.canonicalFilePath();
 
             if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
-            mShaders->setText(name, fname);
+
+            QString oldpath = QFileInfo(mShaders->fileName(index.row())).canonicalFilePath();
+            if (oldpath != path) {
+                // qDebug() << "removing" << oldpath;
+                if (!mWatcher->removePath(oldpath)) {
+                    qWarning() << "setData: Cannot unwatch" << oldpath;
+                }
+                // qDebug() << "adding" << path;
+                if (!mWatcher->addPath(path)) {
+                    qWarning() << "setData: Cannot watch" << path;
+                }
+            }
+            mShaders->setText(name, path);
         } else {
             return false;
         }
@@ -658,6 +696,11 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
         if (row >= mShaders->size()) return false;
 
         beginRemoveRows(parent, row, row);
+        QString oldpath = data(index(row, ShaderItems), FileNameRole).toString();
+        // qDebug() << "removing" << oldpath;
+        if (!mWatcher->removePath(oldpath)) {
+            qWarning() << "removeRows: Cannot unwatch" << oldpath;
+        }
         mShaders->remove(row);
         endRemoveRows();
 
@@ -690,9 +733,9 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
         QString fname = file;
         QFileInfo info(fname);
         if (info.isRelative()) {
-            fname = mProjectDir.absoluteFilePath(fname);
-            info = QFileInfo(fname);
+            info = QFileInfo(mProjectDir.absoluteFilePath(fname));
         }
+        fname = info.canonicalFilePath();
 
         QString uniq = uniqueName(name, mModels->itemSample());
         if (info.exists() && info.isFile() && info.isReadable()) {
@@ -707,9 +750,9 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
         QString fname = file;
         QFileInfo info(fname);
         if (info.isRelative()) {
-            fname = mProjectDir.absoluteFilePath(fname);
-            info = QFileInfo(fname);
+            info = QFileInfo(mProjectDir.absoluteFilePath(fname));
         }
+        fname = info.canonicalFilePath();
 
         QString uniq = uniqueName(name, mImages->itemSample());
         if (info.exists() && info.isFile() && info.isReadable()) {
@@ -724,13 +767,17 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
         QString fname = file;
         QFileInfo info(fname);
         if (info.isRelative()) {
-            fname = mProjectDir.absoluteFilePath(fname);
-            info = QFileInfo(fname);
+            info = QFileInfo(mProjectDir.absoluteFilePath(fname));
         }
+        fname = info.canonicalFilePath();
 
         QString uniq = uniqueName(name, mShaders->itemSample());
         if (info.exists() && info.isFile() && info.isReadable()) {
             mShaders->setText(uniq, fname);
+            // qDebug() << "adding" << fname;
+            if (!mWatcher->addPath(fname)) {
+                qWarning() << "appendRow: Cannot watch" << fname;
+            }
         } else {
             mShaders->setText(uniq);
         }

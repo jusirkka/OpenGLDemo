@@ -101,7 +101,6 @@ private slots:
     void on_editorsTabs_currentChanged(int index);
 
     void on_actionPlay_triggered();
-    void on_actionPause_triggered();
     void fps_changed(int);
 
     void selectionChanged();
@@ -111,12 +110,15 @@ private slots:
     void on_actionCompile_triggered();
     void on_actionCompileProject_triggered();
     void on_actionComplete_triggered();
+    void on_actionViewScene_triggered();
 
     void scriptModification_changed(bool edited);
 
     void depthChanged(float near, float far);
 
     void restoreDocking();
+
+    void hideScene();
 
 private:
 
@@ -150,6 +152,8 @@ private:
     bool mProjectModified;
     int mNumEdits;
     Scope* mGlobals;
+    bool mPlaying;
+    bool mSceneVisible;
 };
 
 }

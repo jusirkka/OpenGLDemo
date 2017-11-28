@@ -119,6 +119,7 @@ public:
     inline Vector4 translation() const; // (7)
     inline Matrix4 linear() const; // (8)
     inline Matrix4 comatrix() const; // (8b)
+    inline Matrix4 inverse() const; // (8d)
 
     inline Matrix4& doTranspose3(); // (22)
     inline Matrix4& doTranspose4(); // (23)
@@ -336,6 +337,18 @@ inline Matrix4 Matrix4::comatrix() const {
     }
     return m;
 }
+
+
+// ----------------- (8c) ----------------------------------------
+inline Matrix4 Matrix4::inverse() const {
+    Matrix4 m = comatrix().transpose3();
+    Real dt = (*this)[0][0] * m[0][0] + (*this)[0][1] * m[1][0] + (*this)[0][2] * m[2][0];
+    m *= 1 / dt;
+    Matrix4 m2;
+    m2.setTranslation(- m * translation());
+    return m2 * m;
+}
+
 
 // ----------------- (9) ----------------------------------------
 inline Matrix4& Matrix4::setIdentity() {

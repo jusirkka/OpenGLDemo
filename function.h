@@ -261,6 +261,24 @@ public:
     CLONEMETHOD(NormalT)
 };
 
+class Inverse: public Function {
+
+public:
+
+    Inverse(): Function("affine_inverse", Symbol::Matrix) {
+        int argt = Symbol::Matrix;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        Matrix4 m = vals[start].value<Matrix4>();
+        mValue.setValue(m.inverse());
+        return mValue;
+    }
+
+    CLONEMETHOD(Inverse)
+};
+
 class Refl: public Function {
 
 public:
@@ -286,6 +304,25 @@ public:
     }
 
     CLONEMETHOD(Refl)
+};
+
+
+class Length: public Function {
+
+public:
+
+    Length(): Function("length", Symbol::Real) {
+        int argt = Symbol::Vector;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        Vector4 v = vals[start].value<Vector4>();
+        mValue.setValue(v.length3());
+        return mValue;
+    }
+
+    CLONEMETHOD(Length)
 };
 
 
@@ -336,8 +373,10 @@ public:
         contents.append(new Sc());
         contents.append(new Norm());
         contents.append(new NormalT());
+        contents.append(new Inverse());
         contents.append(new Refl());
         contents.append(new LookAt());
+        contents.append(new Length());
         FUN(sin);
         FUN(cos);
         FUN(tan);

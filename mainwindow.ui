@@ -29,6 +29,21 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QTabWidget" name="editorsTabs">
+      <property name="elideMode">
+       <enum>Qt::ElideRight</enum>
+      </property>
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -83,9 +98,6 @@
     <addaction name="actionStatusbar"/>
     <addaction name="actionToolbar"/>
     <addaction name="actionDemoBar"/>
-    <addaction name="actionProjectDock"/>
-    <addaction name="actionEditorsDock"/>
-    <addaction name="actionGraphicsDock"/>
    </widget>
    <addaction name="menuProject"/>
    <addaction name="menuItems"/>
@@ -169,66 +181,6 @@
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
   </widget>
-  <widget class="QDockWidget" name="editorsDock">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-     <horstretch>12</horstretch>
-     <verstretch>6</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="features">
-    <set>QDockWidget::NoDockWidgetFeatures</set>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::BottomDockWidgetArea|Qt::RightDockWidgetArea|Qt::TopDockWidgetArea</set>
-   </property>
-   <property name="windowTitle">
-    <string>Edit&amp;ors</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="editorsDockContents">
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <item>
-      <widget class="QTabWidget" name="editorsTabs">
-       <property name="elideMode">
-        <enum>Qt::ElideRight</enum>
-       </property>
-       <property name="tabsClosable">
-        <bool>true</bool>
-       </property>
-       <property name="movable">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="graphicsDock">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-     <horstretch>6</horstretch>
-     <verstretch>6</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="features">
-    <set>QDockWidget::NoDockWidgetFeatures</set>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::RightDockWidgetArea</set>
-   </property>
-   <property name="windowTitle">
-    <string>OpenGL &amp;View</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="graphicsDockContents">
-    <layout class="QVBoxLayout" name="graphicsDockLayout"/>
-   </widget>
-  </widget>
   <widget class="QToolBar" name="demoBar">
    <property name="windowTitle">
     <string>toolBar_2</string>
@@ -239,8 +191,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionViewScene"/>
    <addaction name="actionPlay"/>
-   <addaction name="actionPause"/>
   </widget>
   <action name="actionNew">
    <property name="enabled">
@@ -360,52 +312,6 @@
   <action name="actionAboutQt">
    <property name="text">
     <string>About &amp;Qt</string>
-   </property>
-  </action>
-  <action name="actionProjectDock">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="folder-project">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Show ProjectDock</string>
-   </property>
-   <property name="toolTip">
-    <string>Toggle ProjectDock visibility</string>
-   </property>
-  </action>
-  <action name="actionEditorsDock">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show &amp;EditorsDock</string>
-   </property>
-   <property name="toolTip">
-    <string>Toggle EditorsDock visibility</string>
-   </property>
-  </action>
-  <action name="actionGraphicsDock">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show &amp;GraphicsDock</string>
-   </property>
-   <property name="toolTip">
-    <string>Toggle GraphicsDock visibility</string>
    </property>
   </action>
   <action name="actionNewProject">
@@ -559,20 +465,8 @@
    <property name="toolTip">
     <string>Start animation</string>
    </property>
-  </action>
-  <action name="actionPause">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="media-playback-pause">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Pause</string>
-   </property>
-   <property name="toolTip">
-    <string>Pause animation</string>
+   <property name="shortcut">
+    <string>Ctrl+Shift+Space</string>
    </property>
   </action>
   <action name="actionAutocompile">
@@ -655,6 +549,20 @@
     <string>Ctrl+Space</string>
    </property>
   </action>
+  <action name="actionViewScene">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="camera-photo"/>
+   </property>
+   <property name="text">
+    <string>View Scene</string>
+   </property>
+   <property name="toolTip">
+    <string>View the GL scene</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections>
@@ -687,54 +595,6 @@
     <hint type="destinationlabel">
      <x>407</x>
      <y>32</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionProjectDock</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>projectDock</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>127</x>
-     <y>305</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionEditorsDock</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>editorsDock</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>676</x>
-     <y>305</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionGraphicsDock</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>graphicsDock</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>127</x>
-     <y>510</y>
     </hint>
    </hints>
   </connection>

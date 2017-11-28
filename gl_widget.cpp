@@ -9,6 +9,7 @@
 
 #include <QDebug>
 #include <QMouseEvent>
+#include <QHideEvent>
 #include <QPluginLoader>
 #include <QDir>
 #include <QApplication>
@@ -20,20 +21,54 @@ using Math3D::Real;
 
 using namespace Demo;
 
+
+class CameraConstraint: public Function {
+public:
+    CameraConstraint(GLWidget* p);
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override;
+    CameraConstraint* clone() const override;
+private:
+    GLWidget* mParent;
+};
+
+
+CameraConstraint::CameraConstraint(GLWidget* p)
+    : Function("cameraconstraint", Symbol::Integer)
+    , mParent(p)
+{
+    int argt = Symbol::Integer;
+    mArgTypes.append(argt);
+}
+
+const QVariant& CameraConstraint::execute(const QVector<QVariant>& vals, int start) {
+    bool doit = ! vals[start].toBool();
+    // qDebug() << "cameraconstraint" << doit << vals[start].toInt();
+    if (doit) {
+        mParent->cameraStop();
+    }
+    mValue.setValue(doit);
+    return mValue;
+}
+
+CameraConstraint* CameraConstraint::clone() const {
+    return new CameraConstraint(*this);
+}
+
 // #define updateGL update
 
-GLWidget::GLWidget(QWidget *parent):
-    QGLWidget(parent),
-    QOpenGLFunctions_3_0(),
-    mInitialized(false),
-    mDim(500),
-    mMover(new Mover(this)),
-    mNear(1),
-    mFar(500)
+GLWidget::GLWidget(QWidget *parent)
+    : QGLWidget(parent)
+    , QOpenGLFunctions_3_0()
+    , mInitialized(false)
+    , mDim(500)
+    , mMover(new Mover(this))
+    , mNear(1)
+    , mFar(500)
+    , mLastOp(None)
 {
 
     mTime = 0;
-    mCamera = new Camera(Vector4(10, 10, 60), Vector4(0, 0, 0), Vector4(0, 1, 0));
+    mCamera = new Camera(Vector4(-10, -10, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
 
     mTimer = new QTimer(this);
     mTimer->setInterval(1000/25);
@@ -41,7 +76,10 @@ GLWidget::GLWidget(QWidget *parent):
     mAnimTimer = new QTimer(this);
     mAnimTimer->setInterval(1000/25);
     connect(mAnimTimer, SIGNAL(timeout()), this, SLOT(anim()));
-
+    mResizeTimer = new QTimer(this);
+    mResizeTimer->setInterval(500);
+    mResizeTimer->setSingleShot(true);
+    connect(mResizeTimer, SIGNAL(timeout()), this, SLOT(realResize()));
 }
 
 void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
@@ -51,19 +89,36 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
     GL::Constants constants;
     for (auto c: qAsConst(constants.contents)) globals[c->name()] = c;
 
+    Function* cameraConstraint = new CameraConstraint(this);
+    globals[cameraConstraint->name()] = cameraConstraint;
+
+
     // shared matrices
     exports["camera"] = new Var::Shared::Matrix("camera");
     exports["projection"] = new Var::Shared::Matrix("projection");
+    exports["inverse_projection"] = new Var::Shared::Matrix("inverse_projection");
     // shared time variable
     exports["time"] = new Var::Shared::Natural("time");
+    // shared dimensions
+    exports["width"] = new Var::Shared::Natural("width");
+    exports["height"] = new Var::Shared::Natural("height");
 
     mCameraVar = exports["camera"]->clone();
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
 
+    mProjectionVar = exports["projection"]->clone();
+
+    mInvProjVar = exports["inverse_projection"]->clone();
+
     mTimeVar = exports["time"]->clone();
     mTimeVar->setValue(QVariant::fromValue(mTime));
 
-    mProjectionVar = exports["projection"]->clone();
+    mWidthVar = exports["width"]->clone();
+    mWidthVar->setValue(QVariant::fromValue(width()));
+
+    mHeightVar = exports["height"]->clone();
+    mHeightVar->setValue(QVariant::fromValue(height()));
+
 
     // retrieve blobs
     const auto& statics = QPluginLoader::staticInstances();
@@ -149,7 +204,7 @@ Demo::GLWidget::~GLWidget() {
 
 void Demo::GLWidget::initializeGL() {
     if (!mInitialized) {
-        qDebug() << "initializeOpenGLFunctions";
+        // qDebug() << "initializeOpenGLFunctions";
         if (!initializeOpenGLFunctions()) {
             qFatal("initializeOpenGLFunctions failed");
         }
@@ -176,20 +231,44 @@ void Demo::GLWidget::drawChanged() {
 }
 
 void Demo::GLWidget::resizeGL(int w, int h) {
-    makeCurrent();
+    mWidthVar->setValue(QVariant::fromValue(w));
+    mHeightVar->setValue(QVariant::fromValue(h));
     mDim = w; if (h > w) mDim = h;
+    mResizeTimer->start();
+}
+
+void Demo::GLWidget::realResize() {
+    int w = mWidthVar->value().toInt();
+    int h = mHeightVar->value().toInt();
     glViewport(0, 0, w, h);
+
     Real a = Real(w) / Real(h);
     Real ct = 1 / tan(Math3D::PI / 180 * 45 / 2);
-    mProj.setIdentity();
+    Real d = (mNear + mFar) / (mNear - mFar);
+    Real e = 2*mNear*mFar / (mNear - mFar);
+
+    Matrix4 proj;
+    proj.setIdentity();
     // column first
-    mProj(0)[0] = ct / a;
-    mProj(1)[1] = ct;
-    mProj(2)[2] = (mNear + mFar) / (mNear - mFar);
-    mProj(3)[3] = 0;
-    mProj(3)[2] = 2*mNear*mFar / (mNear - mFar);
-    mProj(2)[3] = -1;
-    mProjectionVar->setValue(QVariant::fromValue(mProj));
+    proj(0)[0] = ct / a;
+    proj(1)[1] = ct;
+    proj(2)[2] = d;
+    proj(3)[3] = 0;
+    proj(3)[2] = e;
+    proj(2)[3] = -1;
+    mProjectionVar->setValue(QVariant::fromValue(proj));
+
+    Matrix4 invproj;
+    invproj.setIdentity();
+    // column first
+    invproj(0)[0] = a / ct;
+    invproj(1)[1] = 1 / ct;
+    invproj(2)[2] = 0;
+    invproj(3)[3] = d / e;
+    invproj(3)[2] = -1;
+    invproj(2)[3] = 1 / e;
+    mInvProjVar->setValue(QVariant::fromValue(invproj));
+
     emit viewportChanged(w, h);
     // init statements might depend on the viewport or projection
     initChanged();
@@ -275,6 +354,7 @@ void Demo::GLWidget::spin() {
     float phi = atan2f(mDy, mDx);
     mCamera->rotate(phi, theta);
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    mLastOp = Spin;
     updateGL();
 }
 
@@ -283,6 +363,7 @@ void Demo::GLWidget::pan() {
     float phi = atan2f(mDy, mDx);
     mCamera->pan(phi, theta);
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    mLastOp = Pan;
     updateGL();
 }
 
@@ -290,11 +371,25 @@ void Demo::GLWidget::zoom() {
     float dz = 0.05 * mDy;
     mCamera->zoom(dz);
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));
+    mLastOp = Zoom;
     updateGL();
 }
 
 void Demo::GLWidget::move() {
     mMover->move();
+}
+
+void Demo::GLWidget::cameraStop() {
+    if (mTimer->isActive()) mTimer->stop();
+    // revert last op
+    mDx = -mDx;
+    mDy = -mDy;
+    switch (mLastOp) {
+    case Pan: pan(); break;
+    case Spin: spin(); break;
+    case Zoom: zoom(); break;
+    default: break;
+    }
 }
 
 void Demo::GLWidget::animStart() {
@@ -314,6 +409,18 @@ void Demo::GLWidget::anim() {
     mTimeVar->setValue(QVariant::fromValue(mTime));
     updateGL();
 }
+
+void Demo::GLWidget::hideEvent(QHideEvent*) {
+    if (mTimer->isActive()) mTimer->stop();
+    emit hidden();
+}
+
+void Demo::GLWidget::keyPressEvent(QKeyEvent* ev) {
+    if (ev->key() == Qt::Key_Space) {
+        emit toggleAnimate();
+    }
+}
+
 
 #define ALT(item) case item: qFatal(#item); break
 

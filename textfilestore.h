@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QStringList>
 
+
 namespace Demo {
 
 class Scope;

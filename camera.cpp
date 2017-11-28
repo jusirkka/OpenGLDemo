@@ -25,7 +25,7 @@ Camera::Camera(const Vector4& eye, const Vector4& center, const Vector4& up)
 
 void Camera::reset(const Vector4& eye, const Vector4& center, const Vector4& up) {
     Vector4 z = (eye - center).normalized3();
-    Vector4 y = up - dot3(z, up) * z;
+    Vector4 y = (up - dot3(z, up) * z).normalized3();
     mRot.setBasis(y, z);
     mRot0 = mRot;
 

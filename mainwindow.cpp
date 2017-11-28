@@ -43,13 +43,14 @@
 
 using namespace Demo;
 
-MainWindow::MainWindow(const QString& project):
-    QMainWindow(),
-    mLastDir(QDir::home()),
-    mUI(new Ui::MainWindow),
-    mProject(nullptr),
-    mProjectModified(false),
-    mNumEdits(0)
+MainWindow::MainWindow(const QString& project)
+    : QMainWindow()
+    , mLastDir(QDir::home())
+    , mUI(new Ui::MainWindow)
+    , mProject(nullptr)
+    , mProjectModified(false)
+    , mNumEdits(0)
+    , mPlaying(false)
 {
 
 
@@ -63,7 +64,10 @@ MainWindow::MainWindow(const QString& project):
     connect(zoom, SIGNAL(valuesChanged(float, float)), this, SLOT(depthChanged(float, float)));
     mUI->demoBar->addWidget(zoom);
 
-    mGLWidget = new GLWidget(mUI->graphicsDockContents);
+    mGLWidget = new GLWidget();
+    mGLWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+    connect(mGLWidget, SIGNAL(hidden()), this, SLOT(hideScene()));
+    connect(mGLWidget, SIGNAL(toggleAnimate()), this, SLOT(on_actionPlay_triggered()));
 
     // Initialize globals
     mGlobals = new Scope(mGLWidget, this);
@@ -71,9 +75,6 @@ MainWindow::MainWindow(const QString& project):
      // init the projection near/far values
     depthChanged(zoom->near(), zoom->far());
 
-    mUI->graphicsDockLayout->addWidget(mGLWidget);
-
-    mUI->centralwidget->hide();
 
     mUI->projectItems->addAction(mUI->actionInsert);
     mUI->projectItems->addAction(mUI->actionOpen);
@@ -233,7 +234,7 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     QString fileName = QFileDialog::getOpenFileName(
                 this,
                 title,
-                mProject->directory().absolutePath(),
+                mLastDir.canonicalPath(),
                 filter
                 );
     if (fileName.isEmpty()) return;
@@ -404,15 +405,50 @@ void Demo::MainWindow::on_editorsTabs_currentChanged(int index) {
 }
 
 void Demo::MainWindow::on_actionPlay_triggered() {
-    mUI->actionPause->setEnabled(true);
-    mUI->actionPlay->setEnabled(false);
-    mGLWidget->animStart();
+    if (mPlaying) {
+        mGLWidget->animStop();
+        mUI->actionPlay->setIcon(QIcon::fromTheme("media-playback-start"));
+        mUI->actionPlay->setToolTip("Start Animation");
+    } else {
+        mGLWidget->animStart();
+        mUI->actionPlay->setIcon(QIcon::fromTheme("media-playback-pause"));
+        mUI->actionPlay->setToolTip("Pause Animation");
+    }
+    mPlaying = !mPlaying;
 }
 
-void Demo::MainWindow::on_actionPause_triggered() {
-    mUI->actionPlay->setEnabled(true);
-    mUI->actionPause->setEnabled(false);
-    mGLWidget->animStop();
+void Demo::MainWindow::hideScene() {
+    if (mSceneVisible) {
+        mUI->actionViewScene->setIcon(QIcon::fromTheme("camera-photo"));
+        mUI->actionViewScene->setToolTip("View the GL scene");
+        mUI->actionViewScene->setChecked(false);
+        mSceneVisible = false;
+
+        mGLWidget->animStop();
+        mUI->actionPlay->setIcon(QIcon::fromTheme("media-playback-start"));
+        mUI->actionPlay->setToolTip("Start Animation");
+        mPlaying = false;
+    }
+}
+
+void Demo::MainWindow::on_actionViewScene_triggered() {
+    if (mGLWidget->isVisible()) {
+        mGLWidget->hide();
+        mUI->actionViewScene->setToolTip("View the GL scene");
+        mUI->actionViewScene->setChecked(false);
+        mSceneVisible = false;
+
+        mGLWidget->animStop();
+        mUI->actionPlay->setIcon(QIcon::fromTheme("media-playback-start"));
+        mUI->actionPlay->setToolTip("Start Animation");
+        mPlaying = false;
+
+    } else {
+        mGLWidget->show();
+        mUI->actionViewScene->setToolTip("Hide the GL scene");
+        mSceneVisible = true;
+        mUI->actionViewScene->setChecked(true);
+    }
 }
 
 void Demo::MainWindow::fps_changed(int value) {
@@ -655,10 +691,12 @@ void Demo::MainWindow::readSettings() {
     mUI->actionDemoBar->setChecked(settings.value("demobar", true).toBool());
     mUI->actionStatusbar->setChecked(settings.value("statusbar", true).toBool());
     mUI->actionToolbar->setChecked(settings.value("toolbar", true).toBool());
-    mUI->actionProjectDock->setChecked(settings.value("projectdock", true).toBool());
-    mUI->actionEditorsDock->setChecked(settings.value("editorsdock", true).toBool());
-    mUI->actionGraphicsDock->setChecked(settings.value("graphicsdock", true).toBool());
 
+    mGLWidget->resize(settings.value("scenesize", QSize(400, 225)).toSize());
+
+    if (settings.value("scenevisible", false).toBool()) {
+        on_actionViewScene_triggered();
+    }
 }
 
 void Demo::MainWindow::restoreDocking() {
@@ -667,12 +705,8 @@ void Demo::MainWindow::restoreDocking() {
     bool ok;
     int w_pr = settings.value("projectdock-width", 100).toInt(&ok);
     if (!ok) w_pr = 100;
-    int w_ed = settings.value("editorsdock-width", 300).toInt(&ok);
-    if (!ok) w_ed = 300;
-    int w_gr = settings.value("graphicsdock-width", 300).toInt(&ok);
-    if (!ok) w_gr = 300;
 
-    resizeDocks({mUI->projectDock, mUI->editorsDock, mUI->graphicsDock}, {w_pr, w_ed, w_gr}, Qt::Horizontal);
+    resizeDocks({mUI->projectDock}, {w_pr}, Qt::Horizontal);
 }
 
 void Demo::MainWindow::writeSettings() {
@@ -685,12 +719,11 @@ void Demo::MainWindow::writeSettings() {
     settings.setValue("statusbar", QVariant::fromValue(mUI->statusbar->isVisible()));
     settings.setValue("toolbar", QVariant::fromValue(mUI->toolBar->isVisible()));
     settings.setValue("projectdock", QVariant::fromValue(mUI->projectDock->isVisible()));
-    settings.setValue("editorsdock", QVariant::fromValue(mUI->editorsDock->isVisible()));
-    settings.setValue("graphicsdock", QVariant::fromValue(mUI->graphicsDock->isVisible()));
-
     settings.setValue("projectdock-width", QVariant::fromValue(mUI->projectDock->width()));
-    settings.setValue("editorsdock-width", QVariant::fromValue(mUI->editorsDock->width()));
-    settings.setValue("graphicsdock-width", QVariant::fromValue(mUI->graphicsDock->width()));
+
+    settings.setValue("scenevisible", QVariant::fromValue(mGLWidget->isVisible()));
+    settings.setValue("scenesize", QVariant::fromValue(mGLWidget->size()));
+
 }
 
 bool Demo::MainWindow::maybeSaveProject() {
@@ -731,6 +764,7 @@ void Demo::MainWindow::closeEvent(QCloseEvent *event) {
     if (maybeSaveProject()) {
         delete mProject;
         writeSettings();
+        mGLWidget->hide();
         event->accept();
     } else {
         event->ignore();

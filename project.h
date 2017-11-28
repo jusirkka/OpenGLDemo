@@ -7,6 +7,8 @@
 #include "codeeditor.h"
 #include "symbol.h"
 
+class QFileSystemWatcher;
+
 namespace Demo {
 
 class GLWidget;
@@ -119,6 +121,11 @@ public slots:
     void recompileProject();
 
 
+private slots:
+
+    void fileChanged(const QString& path);
+
+
 signals:
 
     void initChanged();
@@ -148,6 +155,8 @@ private:
     QString mDrawName;
     GLWidget* mTarget;
     bool mAutoCompileOn;
+    QFileSystemWatcher* mWatcher;
+
 };
 
 }

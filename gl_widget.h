@@ -45,8 +45,11 @@ public:
     void animStart();
     void animStop();
     void animReset(int);
+    void cameraStop();
 
     void setProjection(float near, float far);
+
+
 
     ~GLWidget() override;
 
@@ -65,6 +68,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void hideEvent(QHideEvent*) override;
+    void keyPressEvent(QKeyEvent*) override;
 
 private:
 
@@ -113,11 +118,15 @@ private:
     friend class Zoomer;
     friend class Panner;
 
+    enum LastOp {Spin, Zoom, Pan, None};
+
 signals:
 
     void init();
     void draw();
     void viewportChanged(GLuint w, GLuint h);
+    void hidden();
+    void toggleAnimate();
 
 private:
 
@@ -132,7 +141,7 @@ private slots:
 
     void move();
     void anim();
-
+    void realResize();
 
 private:
 
@@ -142,18 +151,22 @@ private:
     TexBlobList mTexBlobs;
     Variable* mCameraVar;
     Variable* mProjectionVar;
+    Variable* mInvProjVar;
     Camera* mCamera;
     int mTime;
     Variable* mTimeVar;
-    Math3D::Matrix4 mProj;
+    Variable* mWidthVar;
+    Variable* mHeightVar;
     int mDx, mDy, mDim;
     QPoint mLastPos;
     bool mGravity;
     QTimer* mTimer;
     QTimer* mAnimTimer;
+    QTimer* mResizeTimer;
     Mover* mMover;
     float mNear;
     float mFar;
+    LastOp mLastOp;
 
 };
 

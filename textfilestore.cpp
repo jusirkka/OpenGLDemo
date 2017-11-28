@@ -32,14 +32,12 @@ TextSource* TextSource::clone() const {
 }
 
 
-TextFileStore::TextFileStore(const QString& name, Scope* globals, QObject* parent):
-    QObject(parent)
+TextFileStore::TextFileStore(const QString& name, Scope* globals, QObject* parent)
+    : QObject(parent)
 {
     setObjectName(name);
     globals->addFunction(new TextSource(this));
 }
-
-
 
 QString TextFileStore::text(const QString& key) const {
     if (mTexts.contains(key)) {

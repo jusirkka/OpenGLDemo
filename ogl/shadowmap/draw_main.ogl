@@ -2,7 +2,7 @@
 From "create progs" import prog_phong, prog_depth
 From "init textures" import tex_checker, fbo_shadow, tex_shadow
 
-Shared Vector light_eye = vec(0, 20, 100, 1)
+Shared Vector light_eye = vec(0, 20, 150, 1)
 Vector light_center = vec(0, 0, -30, 1)
 Vector light_up = vec(0, 1, 0, 1)
 
@@ -18,8 +18,14 @@ Matrix model_square =  c * translation(vec(1, 1, -0.25, 1))
 Matrix model_teapot = translation(vec(-7, 10, 6, 1)) * \
                       scaling(3, 3, 3)
 
+Matrix model_cow = scaling(3, 3, 3) * \
+	rotation(90, vec(1, 0, 0, 0)) * \
+	translation(vec(-12, -0.5, 0, 1))
+               
+Matrix model_pumpkin = translation(vec(20, 1, 2, 1)) * \
+	scaling(.1, .1, .1)
 
-
+ 
 bindframebuffer framebuffer, fbo_shadow
 
 useprogram prog_depth
@@ -45,6 +51,15 @@ Execute "draw depth"
 model_name = "teapot"
 model_matrix = model_teapot
 Execute "draw depth"
+
+model_name = "cow"
+model_matrix = model_cow
+Execute "draw depth"
+
+model_name = "pumpkin"
+model_matrix = model_pumpkin
+Execute "draw depth"
+
 
 bindframebuffer framebuffer, 0
 useprogram prog_phong
@@ -76,9 +91,9 @@ enable cull_face
 
 model_name = "teddy"
 model_matrix = model_teddy
-model_colors = mat(0*vec(.3, .1, .1, 0), \
-                   vec(.1, .1, .5, 0), \
-                   vec(.6, .4, .1, 0), \
+model_colors = mat(vec(.1, .1, .1, 0), \
+                   vec(.5, .0, .0, 0), \
+                   vec(.3, .0, .0, 0), \
                    vec(0, 0, 0, 0))
 model_tex = 0
 model_tex_scale = 1
@@ -88,9 +103,9 @@ Execute "draw model"
 
 model_name = "teddy"
 model_matrix = model_teddy2
-model_colors = mat(0*vec(.3, .1, .1, 0), \
-                   0*vec(.1, .1, .5, 0), \
-                   vec(.6, .4, .1, 0), \
+model_colors = mat(vec(.0, .2, .0, 0), \
+                   vec(.0, .4, .0, 0), \
+                   vec(.2, .2, .2, 0), \
                    vec(0, 0, 0, 0))
 model_tex = 0
 model_tex_scale = 1
@@ -106,5 +121,25 @@ model_colors = mat(0*vec(.3, .1, .1, 0), \
 model_name = "teapot"
 model_matrix = model_teapot
 Execute "draw model"
+
+model_colors = mat(vec(.1, .1, .1, 0), \
+                   vec(.1, .0, .1, 0), \
+                   vec(.5, .5, .5, 0), \
+                   vec(0, 0, 0, 0))
+
+model_name = "cow"
+model_matrix = model_cow
+Execute "draw model"
+
+model_colors = mat(vec(.1, .1, .1, 0), \
+                   vec(.85, .65, .0, 0), \
+                   vec(.4, .4, .4, 0), \
+                   vec(0, 0, 0, 0))
+
+model_name = "pumpkin"
+model_matrix = model_pumpkin
+model_spec_exp = 7
+Execute "draw model"
+
 
 

@@ -1,0 +1,55 @@
+// Program
+Shared Natural prog_ex1 = createprogram()
+
+Natural shader_handle
+
+shader_handle = createshader(vertex_shader)
+compileshader shader_handle, source("vert main")
+attachshader prog_ex1, shader_handle
+ 
+
+shader_handle = createshader(fragment_shader)
+compileshader shader_handle, source("frag main")
+attachshader prog_ex1, shader_handle
+
+
+shader_handle = createshader(fragment_shader)
+compileshader shader_handle, source("mushrooms") 
+attachshader prog_ex1, shader_handle
+
+
+
+linkprogram prog_ex1
+
+
+Shared Natural u_v_resolution = getuniformlocation(prog_ex1, "iResolution")
+Shared Natural u_s_time = getuniformlocation(prog_ex1, "iTime")
+
+Shared Natural u_m_invcam = getuniformlocation(prog_ex1, "iViewToWorld")
+Shared Natural u_m_invproj = getuniformlocation(prog_ex1, "iWindowToView")
+
+
+Shared Natural u_m_model = getuniformlocation(prog_ex1, "model_matrix")
+Shared Natural a_vertex = getattriblocation(prog_ex1, "vertex")
+
+// Model buffers
+
+Shared Natural model_array = genbuffer()
+bindbuffer array_buffer, model_array
+bufferdata array_buffer, modelstore, static_draw
+
+Shared Natural model_elements = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferdata element_array_buffer, modelstore, static_draw
+
+enablevertexattribarray a_vertex
+
+// Other
+
+useprogram prog_ex1
+
+
+bindbuffer array_buffer, model_array
+
+vertexattribpointer a_vertex, modelstore, "plate:vertex"
+
