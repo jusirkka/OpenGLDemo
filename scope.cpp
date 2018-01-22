@@ -16,9 +16,10 @@ private:
 };
 
 
-Dispatcher::Dispatcher(Scope* p):
-    Function("dispatch", Symbol::Integer),
-    mParent(p) {
+Dispatcher::Dispatcher(Scope* p)
+    : Function("dispatch", Symbol::Integer)
+    , mParent(p)
+{
     int argt = Symbol::Text;
     mArgTypes.append(argt);
 }
@@ -34,8 +35,8 @@ Dispatcher* Dispatcher::clone() const {
     return new Dispatcher(*this);
 }
 
-Scope::Scope(GLWidget* glContext, QObject *parent):
-    QObject(parent)
+Scope::Scope(GLWidget* glContext, QObject *parent)
+    : QObject(parent)
 {
     // GL functions, constants & variables
     glContext->addGLSymbols(mSymbols, mExports);

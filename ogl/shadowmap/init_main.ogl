@@ -1,4 +1,8 @@
 Execute "create progs"
+
+Natural vao = genvertexarray()
+bindvertexarray vao
+
 Execute "get locations"
 Execute "init models"
 Execute "init textures"
@@ -8,7 +12,7 @@ Execute "init textures"
 // other
 // ------------------
 
-clearcolor vec(.1,.3,.2,1)
+clearcolor vec(.1,.3,.8,1)
 enable depth_test
 enable  cull_face
 frontface cw

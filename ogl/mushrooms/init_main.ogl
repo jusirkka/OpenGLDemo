@@ -34,6 +34,9 @@ Shared Natural a_vertex = getattriblocation(prog_ex1, "vertex")
 Shared Natural u_s_radius = getuniformlocation(prog_ex1, "iEarthRadius")
 
 // Model buffers
+useprogram prog_ex1
+Natural vao = genvertexarray()
+bindvertexarray vao
 
 Shared Natural model_array = genbuffer()
 bindbuffer array_buffer, model_array

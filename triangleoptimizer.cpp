@@ -50,7 +50,7 @@ TriangleOptimizer::TriangleOptimizer(const IndexVector& triangles)
     }
 
     // init bins
-    for (Vertex* v: mVertices) {
+    for (Vertex* v: qAsConst(mVertices)) {
         if (!v) continue;
         if (!mVertexBins.contains(v->count)) {
             v->next = nullptr;
@@ -121,7 +121,7 @@ TriangleOptimizer::Vertex* TriangleOptimizer::incVertexValence(uint v)
 
 TriangleOptimizer::Edge* TriangleOptimizer::mapVertexEdge(Vertex *v1, Vertex *v2)
 {
-    for (Edge* e: v1->edges) {
+    for (Edge* e: qAsConst(v1->edges)) {
         if (e->vertices.second == v2) {
             e->count++;
             return e;
@@ -212,7 +212,7 @@ bool TriangleOptimizer::findEdge(uint v1, uint v2, Edge **edge)
     Vertex* V2 = mVertices[v2];
     if (!V2) return false;
 
-    for (Edge* e: V1->edges) {
+    for (Edge* e: qAsConst(V1->edges)) {
         if (e->vertices.second == V2) {
             *edge = e;
             return true;
@@ -229,7 +229,7 @@ void TriangleOptimizer::unmapEdgeTriangle(Edge* e12, uint v3) {
 
     Triangle* t0 = nullptr;
 
-    for (Triangle* t: e12->triangles) {
+    for (Triangle* t: qAsConst(e12->triangles)) {
         if (t->finalVertex == V3) {
             t0 = t;
             break;
@@ -262,7 +262,7 @@ void TriangleOptimizer::unmapVertexEdge(uint v1, uint v2) {
 
     Edge* e0 = nullptr;
 
-    for (Edge* e: V1->edges) {
+    for (Edge* e: qAsConst(V1->edges)) {
         if (e->vertices.second == V2) {
             e0 = e;
             break;

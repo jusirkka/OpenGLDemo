@@ -325,13 +325,13 @@ void CodeEditor::insertCompletion(const QString& item) {
     QTextCursor tc = textCursor();
     int pos = tc.position();
     tc.select(QTextCursor::WordUnderCursor);
-    qDebug() << "insertCompletion #1" << tc.selectedText();
+    // qDebug() << "insertCompletion #1" << tc.selectedText();
     if (!item.startsWith(tc.selectedText())) {
         tc.setPosition(pos - 1);
         tc.select(QTextCursor::WordUnderCursor);
-        qDebug() << "insertCompletion #2" << tc.selectedText();
+        // qDebug() << "insertCompletion #2" << tc.selectedText();
         if (!item.startsWith(tc.selectedText())) {
-            qDebug() << "insertCompletion: no can do";
+            // qDebug() << "insertCompletion: no can do";
             return;
         }
     }

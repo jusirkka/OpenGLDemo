@@ -76,7 +76,7 @@ void Camera::pan(float phi, float theta) {
 }
 
 void Camera::zoom(float dz) {
-    if (mD + dz < 0.1) return;
+    if (mD + dz < Math3D::EPSILON) return;
     mD += dz;
 
     Vector4 d = dz * mRot.row3(Math3D::Z); // eye - center

@@ -1,4 +1,8 @@
 Execute "create prog"
+
+Natural vao = genvertexarray()
+bindvertexarray vao
+
 Execute "get locations"
 Execute "init models"
 Execute "init textures"

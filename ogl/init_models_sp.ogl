@@ -1,3 +1,7 @@
+Shared Natural vao = genvertexarray()
+bindvertexarray vao
+
+
 Shared Natural model_array, model_elements
 
 

@@ -78,7 +78,7 @@ void Completer::hidePopup() {
 }
 
 void Completer::updatePopup(const QString& prefix) {
-    qDebug() << "updatepopup" << prefix;
+    // qDebug() << "updatepopup" << prefix;
     if (!prefix.startsWith(mCompletions.prefix())) {
         hidePopup();
         return;
@@ -106,7 +106,7 @@ bool Completer::createCompletion(const IdentifierType &id, unsigned mask) {
     if (mCompletionPos < id.pos) return false;
     if (mCompletionPos > id.pos + id.name.length()) return false;
 
-    qDebug() << "Completion:" << id.name << id.pos << mCompletionPos;
+    // qDebug() << "Completion:" << id.name << id.pos << mCompletionPos;
 
     QStringList completions;
 

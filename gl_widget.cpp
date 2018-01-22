@@ -54,11 +54,11 @@ CameraConstraint* CameraConstraint::clone() const {
     return new CameraConstraint(*this);
 }
 
-// #define updateGL update
+#define updateGL update
 
 GLWidget::GLWidget(QWidget *parent)
-    : QGLWidget(parent)
-    , QOpenGLFunctions_3_0()
+    : QOpenGLWidget(parent)
+    , OpenGLFunctions()
     , mInitialized(false)
     , mDim(500)
     , mMover(new Mover(this))
@@ -68,7 +68,7 @@ GLWidget::GLWidget(QWidget *parent)
 {
 
     mTime = 0;
-    mCamera = new Camera(Vector4(-10, -10, 10), Vector4(0, 0, 0), Vector4(0, 1, 0));
+    mCamera = new Camera(Vector4(0, 0, 30), Vector4(0, 0, 0), Vector4(0, 1, 0));
 
     mTimer = new QTimer(this);
     mTimer->setInterval(1000/25);
@@ -218,12 +218,11 @@ void Demo::GLWidget::paintGL()
 }
 
 void Demo::GLWidget::initChanged() {
-    if (mInitialized) {
-        makeCurrent();
-        defaults();
-        emit init();
-        updateGL();
-    }
+    if (!mInitialized) return;
+    makeCurrent();
+    defaults();
+    emit init();
+    updateGL();
 }
 
 void Demo::GLWidget::drawChanged() {
@@ -278,11 +277,11 @@ void Demo::GLWidget::setProjection(float near, float far) {
     mNear = near;
     mFar = far;
     // check sanity
-    if (mNear < 0.001) {
-        mNear = 0.001;
+    if (mNear < Math3D::EPSILON) {
+        mNear = Math3D::EPSILON;
     }
-    if (mFar - mNear < 0.001) {
-        mFar = mNear + 0.001;
+    if (mFar - mNear < Math3D::EPSILON) {
+        mFar = mNear + Math3D::EPSILON;
     }
     if (mInitialized) { // setProjection might be called before we have been initialized
         resizeGL(width(), height());
@@ -472,6 +471,8 @@ void Demo::GLWidget::defaults() {
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+
     // qDebug() << "clearing resources" << mResources;
     for (auto name: qAsConst(mResources)) {
         if (glIsShader(name)) {
@@ -479,7 +480,7 @@ void Demo::GLWidget::defaults() {
             glDeleteShader(name);
         } else if (glIsProgram(name)) {
             // qDebug() << "deleting program" << name;
-           glDeleteProgram(name);
+            glDeleteProgram(name);
         } else if (glIsBuffer(name)) {
             // qDebug() << "deleting buffer" << name;
             glDeleteBuffers(1, &name);
@@ -489,6 +490,9 @@ void Demo::GLWidget::defaults() {
         } else if (glIsTexture(name)) {
             // qDebug() << "deleting texture" << name;
             glDeleteTextures(1, &name);
+        } else if (glIsVertexArray(name)) {
+            // qDebug() << "deleting vertex array" << name;
+            glDeleteVertexArrays(1, &name);
         } else {
             qWarning() << "Unknown resource" << name;
         }

@@ -28,11 +28,11 @@ public:
           offset(0)
     {}
 
-    int size;
-    unsigned int type;
+    qint64 size;
+    quint32 type;
     bool normalized;
-    int stride;
-    unsigned int offset;
+    qint32 stride;
+    quint64 offset;
 };
 
 

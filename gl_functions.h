@@ -130,7 +130,7 @@ public:
         Math3D::Real near = vals[start].value<Math3D::Real>();
         Math3D::Real far = vals[start + 1].value<Math3D::Real>();
         // qDebug() << "glDepthRange" << near << far;
-        mParent->glDepthRange(near, far);
+        mParent->glDepthRangef(near, far);
         mValue.setValue(0);
         return mValue;
     }
@@ -296,7 +296,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real depth = vals[start].value<Math3D::Real>();
         // qDebug() << "glClearDepth" << depth;
-        mParent->glClearDepth(depth);
+        mParent->glClearDepthf(depth);
         mValue.setValue(0);
         return mValue;
     }
@@ -787,7 +787,7 @@ public:
                                        spec.type,
                                        spec.normalized,
                                        spec.stride,
-                                       (const void*) (size_t) spec.offset);
+                                       (const void*) spec.offset);
         mValue.setValue(0);
         return mValue;
     }
@@ -1345,6 +1345,66 @@ public:
     CLONEMETHOD(DrawBuffer)
 };
 
+class BindVertexArray: public GLProc {
+
+public:
+
+    BindVertexArray(Demo::GLWidget* p): GLProc("bindvertexarray", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        mParent->glBindVertexArray(target);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(BindVertexArray)
+};
+
+class GenVertexArray: public GLProc {
+
+public:
+
+    GenVertexArray(Demo::GLWidget* p): GLProc("genvertexarray", Symbol::Integer, p) {}
+
+    const QVariant& gl_execute(const QVector<QVariant>&, int) override {
+        GLuint ret;
+        mParent->glGenVertexArrays(1, &ret);
+        mParent->resources().append(ret);
+        mValue.setValue(ret);
+        return mValue;
+    }
+
+    CLONEMETHOD(GenVertexArray)
+};
+
+class DeleteVertexArray: public GLProc {
+
+public:
+
+    DeleteVertexArray(Demo::GLWidget* p): GLProc("deletevertexarray", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint name = vals[start].value<int>();
+        if (!mParent->glIsVertexArray(name)) {
+            throw GLError(QString(R"("%1" is not a vertex array)").arg(name));
+        }
+        mParent->glDeleteVertexArrays(1, &name);
+        mParent->resources().removeOne(name);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(DeleteVertexArray)
+};
+
+
 class Functions {
 
 public:
@@ -1407,6 +1467,9 @@ public:
         contents.append(new FrameBufferTextureLayer(p));
         contents.append(new CheckFrameBufferStatus(p));
         contents.append(new DrawBuffer(p));
+        contents.append(new GenVertexArray(p));
+        contents.append(new BindVertexArray(p));
+        contents.append(new DeleteVertexArray(p));
     }
 };
 

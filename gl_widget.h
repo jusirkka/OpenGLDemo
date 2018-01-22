@@ -1,8 +1,8 @@
 #ifndef demo_glwidget_h
 #define demo_glwidget_h
 
-#include <QGLWidget>
-#include <QOpenGLFunctions_3_0>
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QDebug>
 #include "math3d.h"
 #include "gl_lang_compiler.h"
@@ -11,6 +11,7 @@ class QMouseEvent;
 
 class Camera;
 
+#define OpenGLFunctions QOpenGLFunctions_4_5_Core
 
 namespace Demo {
 
@@ -22,7 +23,7 @@ namespace GL {
 
 class Variable;
 
-class GLWidget : public QGLWidget, public QOpenGLFunctions_3_0 {
+class GLWidget : public QOpenGLWidget, public OpenGLFunctions {
 
     Q_OBJECT
 

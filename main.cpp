@@ -52,10 +52,10 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<Math3D::Vector4>();
     qRegisterMetaType<Math3D::Matrix4>();
 
-//    QSurfaceFormat format;
-//    format.setVersion(3, 0);
-//    format.setProfile(QSurfaceFormat::CoreProfile);
-//    QSurfaceFormat::setDefaultFormat(format);
+    QSurfaceFormat format;
+    format.setVersion(4, 5);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(format);
 
     Demo::MainWindow mw(demo);
     mw.show();

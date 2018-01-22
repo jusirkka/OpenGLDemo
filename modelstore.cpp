@@ -40,16 +40,16 @@ void ModelStore::setContext(GLWidget *context) {
 #define ALT(item) case item: throw RunError(#item, 0); break
 
 void ModelStore::draw(unsigned int mode, const QString& name) const {
+    if (!mContext) {
+        throw RunError("Context not initialized", 0);
+    }
     int id;
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &id);
+    mContext->glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &id);
     if (id == 0) {
         throw RunError("Missing array buffer binding", 0);
     }
     if (!mIndexMap.contains(name)) {
         throw RunError(QString("%1: no such model").arg(name), 0);
-    }
-    if (!mContext) {
-        throw RunError("Context not initialized", 0);
     }
     int index = mIndexMap[name];
     if (mode == GL_TRIANGLES || mode == GL_POINTS) {
@@ -255,7 +255,7 @@ void ModelStore::makeModelBuffer() {
         model.stripOffsets.clear();
         model.stripSizes.clear();
         int stripSize = 0;
-        for (auto strip: model.strips) {
+        for (const Strip& strip: qAsConst(model.strips)) {
             model.stripOffsets.append(elemSize + stripSize);
             model.stripSizes.append(strip.size());
             stripSize += strip.size() * sizeof(GLuint);
@@ -275,7 +275,7 @@ void ModelStore::makeModelBuffer() {
     unsigned int isize = 1 * sizeof(GLuint);
     char* p = mData[GL_ARRAY_BUFFER].data;
     char* q = mData[GL_ELEMENT_ARRAY_BUFFER].data;
-    for (const Model& m: mModels) {
+    for (const Model& m: qAsConst(mModels)) {
         for (auto& d: m.vertices) {
             ::memcpy(p, d.vertex.readArray(), nsize); p += nsize;
         }
@@ -286,7 +286,7 @@ void ModelStore::makeModelBuffer() {
             ::memcpy(p, d.tex.readArray(), tsize); p += tsize;
         }
 
-        for (auto strip: m.strips) {
+        for (const Strip& strip: m.strips) {
             for (auto idx: strip) {
                 ::memcpy(q, &idx, isize); q += isize;
             }
@@ -344,7 +344,7 @@ void ModelStore::parseModelData(const QString& path) {
     // gen missing tex coords
     if (!mGenTexes.isEmpty()) {
         // qDebug() << "gen tex" << path;
-        for (auto v_index: mGenTexes) {
+        for (auto v_index: qAsConst(mGenTexes)) {
             // (x,y,z) -> (x,y)
             mVertexData[v_index].tex = mVertexData[v_index].vertex;
             mVertexData[v_index].tex(2) = 0;
@@ -364,7 +364,7 @@ void ModelStore::parseModelData(const QString& path) {
                 faceCount[mTriangleIndices[3*face+p]] += 1;
             }
         }
-        for (auto v_index: mGenNormals) {
+        for (auto v_index: qAsConst(mGenNormals)) {
             if (faceCount[v_index] > 0) {
                 mVertexData[v_index].normal = (normalSum[v_index] * (1.0 / faceCount[v_index])).normalized3();
             }
@@ -384,7 +384,7 @@ void ModelStore::setModel(const QString& key, const QString& path) {
     try {
         parseModelData(path);
     } catch (WF::ModelError& e) {
-        qDebug() << e.msg() << e.row() << e.col();
+        qWarning() << e.msg() << e.row() << e.col();
         // parse error - add default object
         parseModelData("");
     }

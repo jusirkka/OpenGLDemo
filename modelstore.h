@@ -177,7 +177,8 @@ private:
     using IndexVector = QVector<GLuint>;
     using OffsetVector = QVector<uintptr_t>;
     using IndexHash = QHash<QString, GLuint>;
-    using StripVector = QVector<QVector<GLuint>>;
+    using Strip = QVector<GLuint>;
+    using StripVector = QVector<Strip>;
 
     class PatchState {
     public:

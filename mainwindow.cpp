@@ -827,7 +827,7 @@ void Demo::MainWindow::openProject(const QString &path) {
             mUI->actionNew->setEnabled(false);
             mUI->actionCompileProject->setEnabled(false);
         }
-        qDebug() << e.msg();
+        qWarning() << e.msg();
     }
     setWindowTitle(title);
 }
