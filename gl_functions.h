@@ -315,11 +315,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int type = vals[start].value<int>();
-        // qDebug() << "glCreateShader" << type;
-        int ret = mParent->glCreateShader(type);
-        // qDebug() << "shader" << ret;
-        mParent->resources().append(ret);
-        mValue.setValue(ret);
+        mValue.setValue(mParent->resource("shader", type));
         return mValue;
     }
 
@@ -376,9 +372,7 @@ public:
         if (!mParent->glIsShader(name)) {
             throw GLError(QString(R"("%1" is not a shader)").arg(name));
         }
-        mParent->glDeleteShader(name);
-        // qDebug() << "delete shader" << name;
-        mParent->resources().removeOne(name);
+        mParent->deresource("shader", name);
         mValue.setValue(0);
         return mValue;
     }
@@ -395,10 +389,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         // qDebug() << "glCreateProgram";
-        int ret = mParent->glCreateProgram();
-        // qDebug() << "program" << ret;
-        mParent->resources().append(ret);
-        mValue.setValue(ret);
+        mValue.setValue(mParent->resource("program"));
         return mValue;
     }
 
@@ -518,9 +509,7 @@ public:
         if (!mParent->glIsProgram(name)) {
             throw GLError(QString(R"("%1" is not a program)").arg(name));
         }
-        mParent->glDeleteProgram(name);
-        // qDebug() << "delete program" << name;
-        mParent->resources().removeOne(name);
+        mParent->deresource("program", name);
         mValue.setValue(0);
         return mValue;
     }
@@ -679,12 +668,7 @@ public:
     GenBuffer(Demo::GLWidget* p): GLProc("genbuffer", Symbol::Integer, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
-        GLuint ret;
-        // qDebug() << "glGenBuffers";
-        mParent->glGenBuffers(1, &ret);
-        // qDebug() << "buffer" << ret;
-        mParent->resources().append(ret);
-        mValue.setValue(ret);
+        mValue.setValue(mParent->resource("buffer"));
         return mValue;
     }
 
@@ -706,9 +690,7 @@ public:
         if (!mParent->glIsBuffer(name)) {
             throw GLError(QString(R"("%1" is not a buffer)").arg(name));
         }
-        mParent->glDeleteBuffers(1, &name);
-        // qDebug() << "delete buffer" << name;
-        mParent->resources().removeOne(name);
+        mParent->deresource("buffer", name);
         mValue.setValue(0);
         return mValue;
     }
@@ -933,12 +915,7 @@ public:
     GenTexture(Demo::GLWidget* p): GLProc("gentexture", Symbol::Integer, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
-        GLuint ret;
-        // qDebug() << "GenTexture";
-        mParent->glGenTextures(1, &ret);
-        // qDebug() << "texture" << ret;
-        mParent->resources().append(ret);
-        mValue.setValue(ret);
+        mValue.setValue(mParent->resource("texture"));
         return mValue;
     }
 
@@ -960,9 +937,7 @@ public:
         if (!mParent->glIsTexture(name)) {
             throw GLError(QString(R"("%1" is not a testure)").arg(name));
         }
-        mParent->glDeleteTextures(1, &name);
-        // qDebug() << "removing texture" << name;
-        mParent->resources().removeOne(name);
+        mParent->deresource("texture", name);
         mValue.setValue(0);
         return mValue;
     }
@@ -1185,12 +1160,7 @@ public:
     GenFrameBuffer(Demo::GLWidget* p): GLProc("genframebuffer", Symbol::Integer, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
-        GLuint ret;
-        // qDebug() << "glGenFrameBuffers";
-        mParent->glGenFramebuffers(1, &ret);
-        // qDebug() << "frame buffer" << ret;
-        mParent->resources().append(ret);
-        mValue.setValue(ret);
+        mValue.setValue(mParent->resource("frame_buffer"));
         return mValue;
     }
 
@@ -1212,9 +1182,7 @@ public:
         if (!mParent->glIsFramebuffer(name)) {
             throw GLError(QString(R"("%1" is not a frame buffer)").arg(name));
         }
-        mParent->glDeleteFramebuffers(1, &name);
-        // qDebug() << "delete frame buffer" << name;
-        mParent->resources().removeOne(name);
+        mParent->deresource("frame_buffer", name);
         mValue.setValue(0);
         return mValue;
     }
@@ -1371,10 +1339,7 @@ public:
     GenVertexArray(Demo::GLWidget* p): GLProc("genvertexarray", Symbol::Integer, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
-        GLuint ret;
-        mParent->glGenVertexArrays(1, &ret);
-        mParent->resources().append(ret);
-        mValue.setValue(ret);
+        mValue.setValue(mParent->resource("vertex_array"));
         return mValue;
     }
 
@@ -1395,8 +1360,7 @@ public:
         if (!mParent->glIsVertexArray(name)) {
             throw GLError(QString(R"("%1" is not a vertex array)").arg(name));
         }
-        mParent->glDeleteVertexArrays(1, &name);
-        mParent->resources().removeOne(name);
+        mParent->deresource("vertex_array", name);
         mValue.setValue(0);
         return mValue;
     }

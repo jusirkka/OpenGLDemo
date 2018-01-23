@@ -27,9 +27,6 @@ class GLWidget : public QOpenGLWidget, public OpenGLFunctions {
 
     Q_OBJECT
 
-public:
-
-    using ResourceList = QList<unsigned int>;
 
 public:
 
@@ -37,7 +34,6 @@ public:
     GLWidget(QWidget *parent = nullptr);
     void addGLSymbols(SymbolMap& globals, VariableMap& exports);
 
-    ResourceList& resources() {return mResources;}
     const GL::Blob& blob(int index) const {return *mBlobs[index];}
     const GL::TexBlob& texBlob(int index) const {return *mTexBlobs[index];}
     GL::Blob* blob(const SymbolMap& globals, const QString& name) const;
@@ -50,6 +46,8 @@ public:
 
     void setProjection(float near, float far);
 
+    GLuint resource(const QString& res, GLenum param = 0);
+    void deresource(const QString& res, GLuint name);
 
 
     ~GLWidget() override;
@@ -121,6 +119,86 @@ private:
 
     enum LastOp {Spin, Zoom, Pan, None};
 
+    class Resource {
+    public:
+        Resource(Demo::GLWidget* owner)
+            : parent(owner) {}
+
+        Demo::GLWidget* parent;
+        GLuint name;
+
+        virtual ~Resource() = default;
+    };
+
+    class Texture: public Resource {
+    public:
+        Texture(Demo::GLWidget* owner)
+            : Resource(owner) {
+            parent->glGenTextures(1, &name);
+        }
+        ~Texture() {
+            parent->glDeleteTextures(1, &name);
+        }
+    };
+
+    class Shader: public Resource {
+    public:
+        Shader(Demo::GLWidget* owner, GLenum type)
+            : Resource(owner) {
+            name = parent->glCreateShader(type);
+        }
+        ~Shader() {
+            parent->glDeleteShader(name);
+        }
+    };
+
+    class Program: public Resource {
+    public:
+        Program(Demo::GLWidget* owner)
+            : Resource(owner) {
+            name = parent->glCreateProgram();
+        }
+        ~Program() {
+            parent->glDeleteProgram(name);
+        }
+    };
+
+    class Buffer: public Resource {
+    public:
+        Buffer(Demo::GLWidget* owner)
+            : Resource(owner) {
+            parent->glGenBuffers(1, &name);
+        }
+        ~Buffer() {
+            parent->glDeleteBuffers(1, &name);
+        }
+    };
+
+    class FrameBuffer: public Resource {
+    public:
+        FrameBuffer(Demo::GLWidget* owner)
+            : Resource(owner) {
+            parent->glGenFramebuffers(1, &name);
+        }
+        ~FrameBuffer() {
+            parent->glDeleteFramebuffers(1, &name);
+        }
+    };
+
+    class VertexArray: public Resource {
+    public:
+        VertexArray(Demo::GLWidget* owner)
+            : Resource(owner) {
+            parent->glGenVertexArrays(1, &name);
+        }
+        ~VertexArray() {
+            parent->glDeleteVertexArrays(1, &name);
+        }
+    };
+
+    using ResourceMap = QMap<QString, Resource*>;
+
+
 signals:
 
     void init();
@@ -147,7 +225,7 @@ private slots:
 private:
 
     bool mInitialized;
-    ResourceList mResources;
+    ResourceMap mResources;
     BlobList mBlobs;
     TexBlobList mTexBlobs;
     Variable* mCameraVar;

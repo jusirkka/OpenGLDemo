@@ -1,0 +1,21 @@
+From "" import time, camera
+From "init main" import  u_s_radius, \
+    u_s_time, u_m_model, u_m_invcam, u_m_invproj, u_v_resolution
+
+uniform1f u_s_time, time * 0.1
+uniformmatrix4f u_m_model, translation(vec(0, 0, -2, 1))
+
+Matrix m = affine_inverse(camera)
+
+Real radius = 200
+
+uniform1f u_s_radius, radius
+
+cameraconstraint(m[3][2] > 0.1)
+
+uniformmatrix4f u_m_invcam, m
+
+draw modelstore, "plate", triangles
+
+
+

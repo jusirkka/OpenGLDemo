@@ -9,7 +9,7 @@ uniform1i u_t_img, 0
 Shared Natural tex_checker = gentexture()
 bindtexture texture_2d, tex_checker
 teximage2d texture_2d, 0, rgba, imagestore, "checker"
-generatemipmap texture_2d
+// generatemipmap texture_2d
 
 activetexture texture0 + 1
 uniform1i u_t_shadow, 1

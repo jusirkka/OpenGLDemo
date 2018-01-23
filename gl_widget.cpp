@@ -237,6 +237,7 @@ void Demo::GLWidget::resizeGL(int w, int h) {
 }
 
 void Demo::GLWidget::realResize() {
+    // qDebug() << "resizing";
     int w = mWidthVar->value().toInt();
     int h = mHeightVar->value().toInt();
     glViewport(0, 0, w, h);
@@ -421,6 +422,50 @@ void Demo::GLWidget::keyPressEvent(QKeyEvent* ev) {
 }
 
 
+GLuint Demo::GLWidget::resource(const QString &res, GLenum param) {
+    if (res == "texture") {
+        auto r = new Texture(this);
+        mResources[QString("texture_%1").arg(r->name)] = r;
+        return r->name;
+    }
+    if (res == "shader") {
+        auto r = new Shader(this, param);
+        mResources[QString("shader_%1").arg(r->name)] = r;
+        return r->name;
+    }
+    if (res == "program") {
+        auto r = new Program(this);
+        mResources[QString("program_%1").arg(r->name)] = r;
+        return r->name;
+    }
+    if (res == "buffer") {
+        auto r = new Buffer(this);
+        mResources[QString("buffer_%1").arg(r->name)] = r;
+        return r->name;
+    }
+    if (res == "frame_buffer") {
+        auto r = new FrameBuffer(this);
+        mResources[QString("frame_buffer_%1").arg(r->name)] = r;
+        return r->name;
+    }
+    if (res == "vertex_array") {
+        auto r = new VertexArray(this);
+        mResources[QString("vertex_array_%1").arg(r->name)] = r;
+        return r->name;
+    }
+    return 0;
+}
+
+
+void Demo::GLWidget::deresource(const QString &res, GLuint name) {
+    QString key = QString("%1_%2").arg(res).arg(name);
+    if (mResources.contains(key)) {
+        delete mResources[key];
+        mResources.remove(key);
+    }
+}
+
+
 #define ALT(item) case item: qFatal(#item); break
 
 static void checkError() {
@@ -473,32 +518,7 @@ void Demo::GLWidget::defaults() {
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
 
-    // qDebug() << "clearing resources" << mResources;
-    for (auto name: qAsConst(mResources)) {
-        if (glIsShader(name)) {
-            // qDebug() << "deleting shader" << name;
-            glDeleteShader(name);
-        } else if (glIsProgram(name)) {
-            // qDebug() << "deleting program" << name;
-            glDeleteProgram(name);
-        } else if (glIsBuffer(name)) {
-            // qDebug() << "deleting buffer" << name;
-            glDeleteBuffers(1, &name);
-        } else if (glIsFramebuffer(name)) {
-            // qDebug() << "deleting frame buffer" << name;
-            glDeleteFramebuffers(1, &name);
-        } else if (glIsTexture(name)) {
-            // qDebug() << "deleting texture" << name;
-            glDeleteTextures(1, &name);
-        } else if (glIsVertexArray(name)) {
-            // qDebug() << "deleting vertex array" << name;
-            glDeleteVertexArrays(1, &name);
-        } else {
-            qWarning() << "Unknown resource" << name;
-        }
-        checkError();
-    }
-    // qDebug() << "resources cleared";
+    qDeleteAll(mResources);
     mResources.clear();
 }
 
