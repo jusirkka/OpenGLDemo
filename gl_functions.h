@@ -1003,6 +1003,62 @@ public:
     CLONEMETHOD(TexImage2D)
 };
 
+class TexEmptyImage2D: public GLProc {
+
+public:
+
+    TexEmptyImage2D(Demo::GLWidget* p): GLProc("texemptyimage2d", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt); // target
+        mArgTypes.append(argt); // level
+        mArgTypes.append(argt); // internalFormat
+        mArgTypes.append(argt); // width
+        mArgTypes.append(argt); // height
+        // skip border: always = 0
+        mArgTypes.append(argt); // format
+        mArgTypes.append(argt); // type
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum target = vals[start].value<int>();
+        GLint level = vals[start + 1].value<int>();
+        GLint iformat = vals[start + 2].value<int>();
+        GLsizei w = vals[start + 3].value<int>();
+        GLsizei h = vals[start + 4].value<int>();
+        GLenum format = vals[start + 5].value<int>();
+        GLenum type = vals[start + 6].value<int>();
+        mParent->glTexImage2D(target, level, iformat, w, h, 0, format, type, (const GLvoid *) nullptr);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(TexEmptyImage2D)
+};
+
+class Viewport: public GLProc {
+
+public:
+
+    Viewport(Demo::GLWidget* p): GLProc("viewport", Symbol::Integer, p) {
+        int argt = Symbol::Integer;
+        mArgTypes.append(argt); // x
+        mArgTypes.append(argt); // y
+        mArgTypes.append(argt); // width
+        mArgTypes.append(argt); // height
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLint x = vals[start].value<int>();
+        GLint y = vals[start + 1].value<int>();
+        GLsizei w = vals[start + 2].value<int>();
+        GLsizei h = vals[start + 3].value<int>();
+        mParent->glViewport(x, y, w, h);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    CLONEMETHOD(Viewport)
+};
 
 class BlendFunc: public GLProc {
 
@@ -1419,6 +1475,8 @@ public:
         contents.append(new DeleteTexture(p));
         contents.append(new TexParameter(p));
         contents.append(new TexImage2D(p));
+        contents.append(new TexEmptyImage2D(p));
+        contents.append(new Viewport(p));
         contents.append(new BlendFunc(p));
         contents.append(new BlendEquation(p));
         contents.append(new BlendColor(p));

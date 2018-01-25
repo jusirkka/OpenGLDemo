@@ -20,11 +20,13 @@ drawbuffer none
 
 Shared Natural tex_shadow = gentexture()
 bindtexture texture_2d, tex_shadow
-teximage2d texture_2d, 0, depth_component, shadowmap, ""
+From "" import width, height
+texemptyimage2d texture_2d, 0, depth_component24, \
+                2 * width, 2 * height, depth_component, float
 texparameter texture_2d, texture_min_filter, nearest
-// texparameter texture_2d, texture_mag_filter, nearest
-// texparameter texture_2d, texture_wrap_s, clamp_to_edge
-// texparameter texture_2d, texture_wrap_t, clamp_to_edge
+texparameter texture_2d, texture_mag_filter, nearest
+texparameter texture_2d, texture_wrap_s, clamp_to_edge
+texparameter texture_2d, texture_wrap_t, clamp_to_edge
 	
 
 framebuffertexture2d framebuffer, depth_attachment, texture_2d, tex_shadow, 0

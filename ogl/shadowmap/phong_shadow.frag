@@ -12,12 +12,12 @@ in vec4 shadowcoord;
 
 void main(void) {
 
- 	float shadow = 1.0;
- 	if (shadowcoord.w > 0.0) {
-    vec4 sc_proj = shadowcoord / shadowcoord.w ;
-    float distanceFromLight = texture2D(shadowmap, sc_proj.st).x;
- 		shadow = distanceFromLight < sc_proj.z ? 0.5 : 1.0;
-  }
+    float shadow = 1.0;
+    if (shadowcoord.w > 0.0) {
+        vec4 sc_proj = shadowcoord / shadowcoord.w ;
+        float distanceFromLight = texture2D(shadowmap, sc_proj.st).x;
+        shadow = distanceFromLight < sc_proj.z ? 0.5 : 1.0;
+    }
 
     mat4 M = matrixCompMult(light_colors, material_colors);
 

@@ -4,7 +4,6 @@
 #include "gl_functions.h"
 #include "camera.h"
 #include "imagestore.h"
-#include "shadowmap.h"
 #include "modelstore.h"
 
 #include <QDebug>
@@ -80,6 +79,7 @@ const QVariant& DefaultFrameBuffer::execute(const QVector<QVariant>&, int) {
 DefaultFrameBuffer* DefaultFrameBuffer::clone() const {
     return new DefaultFrameBuffer(*this);
 }
+
 
 #define updateGL update
 
@@ -163,12 +163,6 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
         addBlob(loader.instance(), globals);
     }
 
-    auto shadowmap = dynamic_cast<GL::ShadowMap*>(texBlob(globals, "shadowmap"));
-    if (shadowmap) {
-        connect(this, SIGNAL(viewportChanged(GLuint,GLuint)), shadowmap, SLOT(viewportChanged(GLuint,GLuint)));
-        shadowmap->viewportChanged(width(), height());
-    }
-
     auto modelstore = dynamic_cast<GL::ModelStore*>(blob(globals, "modelstore"));
     if (modelstore) {
         modelstore->setContext(this);
@@ -233,7 +227,7 @@ Demo::GLWidget::~GLWidget() {
 
 void Demo::GLWidget::initializeGL() {
     if (!mInitialized) {
-        qDebug() << "initializeOpenGLFunctions";
+        // qDebug() << "initializeOpenGLFunctions";
         if (!initializeOpenGLFunctions()) {
             qFatal("initializeOpenGLFunctions failed");
         }
@@ -298,7 +292,6 @@ void Demo::GLWidget::realResize() {
     invproj(2)[3] = 1 / e;
     mInvProjVar->setValue(QVariant::fromValue(invproj));
 
-    emit viewportChanged(w, h);
     // init statements might depend on the viewport or projection
     initChanged();
 }
@@ -494,7 +487,7 @@ void Demo::GLWidget::deresource(const QString &res, GLuint name) {
     }
 }
 
-
+/*
 #define ALT(item) case item: qFatal(#item); break
 
 static void checkError() {
@@ -511,6 +504,7 @@ static void checkError() {
 }
 
 #undef ALT
+*/
 
 void Demo::GLWidget::defaults() {
     // qDebug() << "resetting to defaults";

@@ -203,7 +203,6 @@ signals:
 
     void init();
     void draw();
-    void viewportChanged(GLuint w, GLuint h);
     void hidden();
     void toggleAnimate();
 

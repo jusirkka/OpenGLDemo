@@ -28,7 +28,6 @@
 
 Q_IMPORT_PLUGIN(ImageStore)
 Q_IMPORT_PLUGIN(ModelStore)
-Q_IMPORT_PLUGIN(ShadowMap)
 
 
 

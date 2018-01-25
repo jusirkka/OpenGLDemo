@@ -25,7 +25,7 @@ void main(void) {
     vec3 vertex_vm = tmp.xyz / tmp.w;
     vec3 L = normalize(light.xyz - vertex_vm);
 
-    float d = max(0.0, dot(L,N));
+    float d = max(0.0, dot(L, N));
     float s = 0;
 
     if (d > 0) {

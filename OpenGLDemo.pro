@@ -31,7 +31,6 @@ SOURCES += main.cpp\
     depthzoom.cpp \
     gl_lang_completer.cpp \
     gl_lang_parser_interface.cpp \
-    shadowmap.cpp \
     triangleoptimizer.cpp \
     patcher.cpp \
     bezierpatcher.cpp
@@ -61,7 +60,6 @@ HEADERS  += mainwindow.h \
     depthzoom.h \
     gl_lang_completer.h \
     gl_lang_parser_interface.h \
-    shadowmap.h \
     triangleoptimizer.h \
     patcher.h \
     bezierpatcher.h

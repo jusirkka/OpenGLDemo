@@ -27,7 +27,8 @@ Matrix model_pumpkin = translation(vec(20, 1, 2, 1)) * \
 
  
 bindframebuffer framebuffer, fbo_shadow
-
+From "" import width, height
+viewport 0, 0, 2 * width, 2 * height
 useprogram prog_depth
 cullface front
 colormask false, false, false, false
@@ -62,6 +63,7 @@ Execute "draw depth"
 
 
 bindframebuffer framebuffer, defaultframebuffer()
+viewport 0, 0, width, height
 useprogram prog_phong
 cullface back
 colormask true, true, true, true
