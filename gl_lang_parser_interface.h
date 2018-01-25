@@ -75,7 +75,10 @@ public:
     static const unsigned CompleteFunctions = 0x01;
     static const unsigned CompleteVariables = 0x02;
     static const unsigned CompleteConstants = 0x04;
-    static const unsigned CompleteAll =       0x07;
+    static const unsigned CompleteReserved  = 0x08;
+    static const unsigned CompleteAll =       0x0f;
+    static const unsigned CompleteFVC =       0x07;
+    static const unsigned CompleteFVR =       0x0b;
 
     virtual void setCode(const QString& name) = 0;
     virtual void pushBack(unsigned op, unsigned lrtype, int inc) = 0;

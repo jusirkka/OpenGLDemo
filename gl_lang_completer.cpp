@@ -35,6 +35,9 @@ Completer::Completer(Scope* globalScope, CodeEditor *parent):
     mCompleter(new QCompleter(parent)),
     mCompletionPos(-1) {
 
+    mReserved << "Real" << "Matrix" << "Vector" << "Natural" <<
+                 "Text" << "Shared" << "Execute" << "From" << "import";
+
     mCompleter->setWidget(parent);
     mCompleter->setWrapAround(false);
     connect(mCompleter, SIGNAL(activated(QString)), parent, SLOT(insertCompletion(const QString&)));
@@ -60,6 +63,12 @@ void Completer::complete(const QString& script, int completionPos) {
     // ensure that the source ends with newlines
     YY_BUFFER_STATE buf = gl_lang__scan_string(source.append("\n\n").toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
+    if (err && mCompletions.completions().isEmpty()) {
+        IdentifierType id;
+        id.pos = gl_lang_get_lloc(mScanner)->pos;
+        id.name = QString(gl_lang_get_text(mScanner));
+        createCompletion(id, CompleteReserved);
+    }
     gl_lang__delete_buffer(buf, mScanner);
     if (err && !mCompletions.completions().isEmpty()) throw mCompletions;
 }
@@ -124,6 +133,12 @@ bool Completer::createCompletion(const IdentifierType &id, unsigned mask) {
             }
         }
     }
+    if (mask & CompleteReserved) {
+        for (const QString& word: mReserved) {
+            addCompletion(completions, word, id.name);
+        }
+    }
+
 
     if (completions.isEmpty()) return false;
 

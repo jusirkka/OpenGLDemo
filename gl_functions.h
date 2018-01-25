@@ -1160,7 +1160,9 @@ public:
     GenFrameBuffer(Demo::GLWidget* p): GLProc("genframebuffer", Symbol::Integer, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
-        mValue.setValue(mParent->resource("frame_buffer"));
+        GLuint res = mParent->resource("frame_buffer");
+        // qDebug() << "genframebuffer" << res;
+        mValue.setValue(res);
         return mValue;
     }
 

@@ -204,7 +204,7 @@ statement:
     ID parameters
         {
             if ($2.isEmpty()) {
-                HANDLE_COMPLETION($1, Parser::CompleteFunctions|Parser::CompleteVariables);
+                HANDLE_COMPLETION($1, Parser::CompleteFVR);
             } else {
                 HANDLE_COMPLETION($1, Parser::CompleteFunctions);
             }
@@ -569,7 +569,7 @@ paren_or_variable:
     |
     ID
         {
-            HANDLE_COMPLETION($1, Parser::CompleteAll);
+            HANDLE_COMPLETION($1, Parser::CompleteFVC);
             if (!parser->hasSymbol($1.name)) {
                 HANDLE_ERROR($1.name, Parser::notdeclared);
             }

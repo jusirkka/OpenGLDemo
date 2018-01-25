@@ -9,7 +9,7 @@ uniform1i u_t_img, 0
 Shared Natural tex_checker = gentexture()
 bindtexture texture_2d, tex_checker
 teximage2d texture_2d, 0, rgba, imagestore, "checker"
-// generatemipmap texture_2d
+generatemipmap texture_2d
 
 activetexture texture0 + 1
 uniform1i u_t_shadow, 1
@@ -22,9 +22,9 @@ Shared Natural tex_shadow = gentexture()
 bindtexture texture_2d, tex_shadow
 teximage2d texture_2d, 0, depth_component, shadowmap, ""
 texparameter texture_2d, texture_min_filter, nearest
-texparameter texture_2d, texture_mag_filter, nearest
-texparameter texture_2d, texture_wrap_s, clamp_to_edge
-texparameter texture_2d, texture_wrap_t, clamp_to_edge
+// texparameter texture_2d, texture_mag_filter, nearest
+// texparameter texture_2d, texture_wrap_s, clamp_to_edge
+// texparameter texture_2d, texture_wrap_t, clamp_to_edge
 	
 
 framebuffertexture2d framebuffer, depth_attachment, texture_2d, tex_shadow, 0
@@ -32,7 +32,7 @@ framebuffertexture2d framebuffer, depth_attachment, texture_2d, tex_shadow, 0
 checkframebufferstatus(framebuffer)
 
 
-bindframebuffer framebuffer, 0
+bindframebuffer framebuffer, defaultframebuffer()
 activetexture texture0
 
 

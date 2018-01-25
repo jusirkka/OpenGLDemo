@@ -89,6 +89,7 @@ private:
     VariableList mVariables;
     VariableMap mExports;
     SymbolMap mSymbols;
+    QStringList mReserved;
     yyscan_t mScanner;
     CompleterException mCompletions;
     Scope* mGlobalScope;

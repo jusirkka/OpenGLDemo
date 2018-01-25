@@ -117,6 +117,7 @@ GL::Compiler* CodeEditor::compiler() const {
 void CodeEditor::compile() {
     mCompileDelay->stop();
     int prevPos = mCompileErrorPos;
+    QString prevMsg = mCompileError;
     try {
         mCompiler->compile(toPlainText());
         mCompileErrorPos = -1;
@@ -125,7 +126,7 @@ void CodeEditor::compile() {
         mCompileError = e.msg();
         mCompileErrorPos = e.pos();
     }
-    if (prevPos != mCompileErrorPos) {
+    if (prevPos != mCompileErrorPos || prevMsg != mCompileError) {
         highlightCurrentLine();
         emit statusChanged();
     }
@@ -172,9 +173,10 @@ void CodeEditor::highlightCurrentLine()
         if (mCompileErrorPos <= endpos) {
             err.cursor.setPosition(mCompileErrorPos, QTextCursor::MoveAnchor);
             err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
-            while (err.cursor.anchor() == err.cursor.position() && mCompileErrorPos > 0) {
-                mCompileErrorPos -= 1;
-                err.cursor.setPosition(mCompileErrorPos, QTextCursor::MoveAnchor);
+            int errpos = mCompileErrorPos;
+            while (err.cursor.anchor() == err.cursor.position() && errpos > 0) {
+                errpos -= 1;
+                err.cursor.setPosition(errpos, QTextCursor::MoveAnchor);
                 err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
             }
 

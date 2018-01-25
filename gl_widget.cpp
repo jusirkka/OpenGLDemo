@@ -54,6 +54,33 @@ CameraConstraint* CameraConstraint::clone() const {
     return new CameraConstraint(*this);
 }
 
+class DefaultFrameBuffer: public Function {
+public:
+    DefaultFrameBuffer(GLWidget* p);
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override;
+    DefaultFrameBuffer* clone() const override;
+private:
+    GLWidget* mParent;
+};
+
+
+DefaultFrameBuffer::DefaultFrameBuffer(GLWidget* p)
+    : Function("defaultframebuffer", Symbol::Integer)
+    , mParent(p)
+{
+}
+
+const QVariant& DefaultFrameBuffer::execute(const QVector<QVariant>&, int) {
+    GLuint fbo = mParent->defaultFramebufferObject();
+    // qDebug() << "defaultframebuffer" << fbo;
+    mValue.setValue(fbo);
+    return mValue;
+}
+
+DefaultFrameBuffer* DefaultFrameBuffer::clone() const {
+    return new DefaultFrameBuffer(*this);
+}
+
 #define updateGL update
 
 GLWidget::GLWidget(QWidget *parent)
@@ -89,8 +116,10 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
     GL::Constants constants;
     for (auto c: qAsConst(constants.contents)) globals[c->name()] = c;
 
-    Function* cameraConstraint = new CameraConstraint(this);
-    globals[cameraConstraint->name()] = cameraConstraint;
+    Function* func = new CameraConstraint(this);
+    globals[func->name()] = func;
+    func = new DefaultFrameBuffer(this);
+    globals[func->name()] = func;
 
 
     // shared matrices
@@ -204,7 +233,7 @@ Demo::GLWidget::~GLWidget() {
 
 void Demo::GLWidget::initializeGL() {
     if (!mInitialized) {
-        // qDebug() << "initializeOpenGLFunctions";
+        qDebug() << "initializeOpenGLFunctions";
         if (!initializeOpenGLFunctions()) {
             qFatal("initializeOpenGLFunctions failed");
         }
@@ -285,7 +314,7 @@ void Demo::GLWidget::setProjection(float near, float far) {
         mFar = mNear + Math3D::EPSILON;
     }
     if (mInitialized) { // setProjection might be called before we have been initialized
-        resizeGL(width(), height());
+        realResize();
         updateGL();
     }
 }

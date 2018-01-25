@@ -61,7 +61,7 @@ model_matrix = model_pumpkin
 Execute "draw depth"
 
 
-bindframebuffer framebuffer, 0
+bindframebuffer framebuffer, defaultframebuffer()
 useprogram prog_phong
 cullface back
 colormask true, true, true, true
@@ -79,7 +79,7 @@ Shared Real model_tex_scale, model_spec_exp
 disable cull_face
 model_name = "square"
 model_matrix = model_square
-model_colors = mat(0*vec(.3, .3, .3, 0), \
+model_colors = mat(vec(.3, .3, .3, 0), \
                    2*vec(.0, .3, .3, 0), \
                    1.5*vec(.4, .4, .4, 0), \
                    vec(0, 0, 0, 0))
