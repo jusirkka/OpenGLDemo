@@ -75,8 +75,8 @@ private:
 
     friend class GL::Emitter;
 
-    using BlobList = QList<GL::Blob *>;
-    using TexBlobList = QList<GL::TexBlob *>;
+    using BlobVector = QVector<GL::Blob *>;
+    using TexBlobVector = QVector<GL::TexBlob *>;
 
     class Mover {
     public:
@@ -225,8 +225,8 @@ private:
 
     bool mInitialized;
     ResourceMap mResources;
-    BlobList mBlobs;
-    TexBlobList mTexBlobs;
+    BlobVector mBlobs;
+    TexBlobVector mTexBlobs;
     Variable* mCameraVar;
     Variable* mProjectionVar;
     Variable* mInvProjVar;

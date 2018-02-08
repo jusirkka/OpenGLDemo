@@ -44,7 +44,7 @@ class Completer: public QObject, public Parser {
 
 public:
 
-    using VariableList = QList<Demo::Variable *>;
+    using VariableVector = QVector<Demo::Variable *>;
 
 public:
 
@@ -58,14 +58,6 @@ public:
     void updatePopup(const QString& prefix);
 
     // grammar interface
-    void setCode(const QString& name) override;
-    void pushBack(unsigned op, unsigned lrtype, int inc) override;
-    void setJump() override;
-    void initJump() override;
-    void pushBackImmed(int constVal) override;
-    void pushBackImmed(Math3D::Real constVal) override;
-    void pushBackImmed(const QVariant& constVal) override;
-    void createError(const QString& item, Error err) override;
     bool createCompletion(const IdentifierType& id, unsigned completionMask) override;
     void addVariable(Variable* v) override;
     bool hasSymbol(const QString& sym) const override;
@@ -74,7 +66,21 @@ public:
     bool isExported(const QString& v, const QString& script) const override;
     void addImported(const QString& v, const QString& script) override;
     bool isScript(const QString& name) const override;
-    void addSubscript(const QString& name) override;
+    void createError(const QString&, Error) override {}
+    void addSubscript(const QString&) override {}
+    void setCode(const QString&) override {}
+    void pushBack(unsigned, unsigned, int) override {}
+    void setJump() override {}
+    void initJump() override {}
+    void pushBackImmed(int) override {}
+    void pushBackImmed(Math3D::Real) override {}
+    void pushBackImmed(const QVariant&) override {}
+    void beginWhile() override {}
+    void beginIf() override {}
+    bool endWhile() override {return true;}
+    bool endIf() override {return true;}
+    bool addElse() override {return true;}
+
 
     ~Completer() override;
 
@@ -86,7 +92,7 @@ private:
 
 private:
 
-    VariableList mVariables;
+    VariableVector mVariables;
     VariableMap mExports;
     SymbolMap mSymbols;
     QStringList mReserved;

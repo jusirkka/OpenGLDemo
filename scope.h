@@ -20,7 +20,7 @@ class Scope: public QObject
 
 public:
 
-    using EditorList = QList<Demo::CodeEditor *>;
+    using EditorVector = QVector<Demo::CodeEditor*>;
     using IndexMap = QMap<QString, int>;
 
     // code offsets: smaller than 0xfff = 4095 (see Compiler::pushBack)
@@ -30,10 +30,10 @@ public:
     Scope(GLWidget* glContext, QObject *parent = nullptr);
     Scope* clone(QObject* parent = nullptr) const;
     const SymbolMap& symbols() const;
-    const FunctionList& functions() const;
+    const FunctionVector& functions() const;
     bool subscriptRelation(const QString& top, const QString& sub);
     void dispatch(const QString& other) const;
-    const EditorList& editors() const;
+    const EditorVector& editors() const;
     void appendEditor(CodeEditor* ed, const QString& script, const QString& file);
     void removeEditor(int index);
     CodeEditor* editor(const QString& name) const;
@@ -57,9 +57,9 @@ private:
     Scope(const Scope&);
 
     SymbolMap mSymbols;
-    FunctionList mFunctions;
+    FunctionVector mFunctions;
     VariableMap mExports;
-    EditorList mEditors;
+    EditorVector mEditors;
     IndexMap mEditorIndices;
 };
 

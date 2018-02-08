@@ -51,7 +51,7 @@ public:
     QString v_string;
     IdentifierType v_identifier;
     QStringList v_string_list;
-    Symbol::TypeList v_int_list;
+    Symbol::TypeVector v_int_list;
 };
 
 
@@ -68,7 +68,7 @@ public:
         notvarorconst, expectedmatrix, expectedvectorormatrix, wrongcomps, duplicate,
         notavariable, notasharedvariable, notarealvariable, notavectorvariable,
         notamatrixvariable, notatextvariable, notaintegervariable, expectedarithmetictype,
-        nottext, assimported, notimported, scriptnotfound, expectedtextadd,
+        nottext, assimported, notimported, scriptnotfound, expectedtextadd, roguestatement,
         numerrors
     };
 
@@ -97,6 +97,11 @@ public:
     virtual void addImported(const QString& v, const QString& script) = 0;
     virtual bool isScript(const QString& name) const = 0;
     virtual void addSubscript(const QString& name) = 0;
+    virtual void beginWhile() = 0;
+    virtual void beginIf() = 0;
+    virtual bool endWhile() = 0;
+    virtual bool endIf() = 0;
+    virtual bool addElse() = 0;
 
 
     // codes

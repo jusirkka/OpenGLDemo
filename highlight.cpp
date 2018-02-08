@@ -13,6 +13,7 @@
 #include "gl_lang_scanner.h"
 
 #include "constant.h"
+#include "variable.h"
 
 using Demo::GL::Compiler;
 using Demo::Symbol;
@@ -21,6 +22,7 @@ using Demo::Constant;
 using Demo::GL::LocationType;
 using Demo::GL::ValueType;
 using Demo::GL::Compiler;
+using Demo::Variable;
 
 Highlight::Highlight(Compiler* c, QTextDocument* parent):
     QSyntaxHighlighter(parent),
@@ -30,8 +32,12 @@ Highlight::Highlight(Compiler* c, QTextDocument* parent):
     mComment.setForeground(Qt::gray);
     mReserved.setForeground(Qt::blue);
     mNumeric.setForeground(Qt::darkRed);
+    // a hack
+    QFont font("DejaVu Sans Mono", 14, QFont::Bold);
+    mFunction.setFont(font);
     mFunction.setFontWeight(QFont::Bold);
     mConstant.setForeground(Qt::darkMagenta);
+    mVariable.setFontItalic(true);
     mText.setForeground(Qt::darkGreen);
 
     mFormats[VECTOR] = mReserved;
@@ -43,6 +49,11 @@ Highlight::Highlight(Compiler* c, QTextDocument* parent):
     mFormats[EXECUTE] = mReserved;
     mFormats[FROM] = mReserved;
     mFormats[IMPORT] = mReserved;
+    mFormats[WHILE] = mReserved;
+    mFormats[ENDWHILE] = mReserved;
+    mFormats[IF] = mReserved;
+    mFormats[ELSE] = mReserved;
+    mFormats[ENDIF] = mReserved;
     mFormats[INT] = mNumeric;
     mFormats[FLOAT] = mNumeric;
 
@@ -99,8 +110,12 @@ void Highlight::highlightBlock(const QString &text) {
                         const Constant* con = dynamic_cast<const Constant*>(sym);
                         if (con) {
                             setFormat(loc.pos + pshift, token_len, mConstant);
+                        } else {
+                            const Variable* var = dynamic_cast<const Variable*>(sym);
+                            if (var) {
+                                setFormat(loc.pos + pshift, token_len, mVariable);
+                            }
                         }
-                        // TODO: variables
                     }
                 }
             }

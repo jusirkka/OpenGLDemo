@@ -59,7 +59,7 @@ class Constants {
 
 public:
 
-    QList<Demo::Symbol*> contents;
+    QVector<Demo::Symbol*> contents;
 
     Constants() {
         contents.append(new Constant("true", 1));

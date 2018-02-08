@@ -2,8 +2,8 @@
 From "create progs" import prog_phong, prog_depth
 From "init textures" import tex_checker, fbo_shadow, tex_shadow
 
-Shared Vector light_eye = vec(0, 20, 150, 1)
-Vector light_center = vec(0, 0, -30, 1)
+Shared Vector light_eye = vec(0, 20, 100, 1)
+Vector light_center = vec(0, 0, -60, 1)
 Vector light_up = vec(0, 1, 0, 1)
 
 Shared Matrix camera_light = lookat(light_eye, light_center, light_up)

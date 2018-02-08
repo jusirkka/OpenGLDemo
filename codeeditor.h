@@ -73,7 +73,7 @@ class CodeEditor : public QPlainTextEdit
 
 public:
 
-    using EditorList = QList<Demo::CodeEditor *>;
+    using EditorVector = QVector<Demo::CodeEditor *>;
 
 public:
     CodeEditor(const QString& name, Scope* globals, Project* owner);

@@ -135,15 +135,16 @@ void CodeEditor::compile() {
 void CodeEditor::run() {
     if (!mCompiler->ready()) return;
     int prevPos = mRunErrorPos;
+    QString prevMsg = mRunError;
     try {
         mCompiler->run();
         mRunErrorPos = -1;
-    } catch (GL::RunError& e) {
+    } catch (RunError& e) {
         mRunError = e.msg();
         mRunErrorPos = e.pos();
     }
 
-    if (prevPos != mRunErrorPos) {
+    if (prevPos != mRunErrorPos || prevMsg != mRunError) {
         highlightCurrentLine();
         emit statusChanged();
     }
@@ -172,16 +173,21 @@ void CodeEditor::highlightCurrentLine()
         int endpos = err.cursor.position();
         if (mCompileErrorPos <= endpos) {
             err.cursor.setPosition(mCompileErrorPos, QTextCursor::MoveAnchor);
+            // qDebug() << "errpos" << err.cursor.position();
             err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+            // qDebug() << "errpos sol" << err.cursor.position();
             int errpos = mCompileErrorPos;
             while (err.cursor.anchor() == err.cursor.position() && errpos > 0) {
                 errpos -= 1;
                 err.cursor.setPosition(errpos, QTextCursor::MoveAnchor);
+                // qDebug() << "errpos prev line" << err.cursor.position();
                 err.cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+                // qDebug() << "errpos prev line sol" << err.cursor.position();
             }
 
             if (err.cursor.anchor() == err.cursor.position()) {
                 err.cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+                // qDebug() << "errpos prev line eol" << err.cursor.position();
             }
 
             QColor under = QColor(Qt::red).darker(175);

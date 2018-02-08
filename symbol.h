@@ -23,7 +23,7 @@
 
 #include <QString>
 #include <QMap>
-#include <QList>
+#include <QVector>
 
 namespace Demo {
 
@@ -32,7 +32,7 @@ class Symbol {
 
     public:
 
-        using TypeList = QList<int>;
+        using TypeVector = QVector<int>;
 
         static const int Integer;
         static const int Real;

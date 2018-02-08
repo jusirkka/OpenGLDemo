@@ -25,7 +25,7 @@
 #include "symbol.h"
 #include "math3d.h"
 
-#include <QList>
+#include <QVector>
 #include <QVector>
 #include <QVariant>
 
@@ -41,10 +41,10 @@ class Function: public Symbol {
 
     public:
 
-        using TypeList = Symbol::TypeList;
+        using TypeVector = Symbol::TypeVector;
 
         int type() const override {return mRetType;}
-        const TypeList& argTypes() const {return mArgTypes;}
+        const TypeVector& argTypes() const {return mArgTypes;}
 
         unsigned index() const {return mIndex;}
         void setIndex(unsigned idx) {mIndex = idx;}
@@ -58,7 +58,7 @@ class Function: public Symbol {
 
     protected:
 
-        TypeList mArgTypes;
+        TypeVector mArgTypes;
         QVariant mValue;
 
     private:
@@ -361,7 +361,7 @@ class Functions {
 
 public:
 
-    QList<Demo::Symbol*> contents;
+    QVector<Demo::Symbol*> contents;
 
 #define FUN(fun) contents.append(new StdFunction(#fun, std::fun))
 
@@ -399,7 +399,7 @@ public:
 
 };
 
-using FunctionList = QList<Demo::Function *>;
+using FunctionVector = QVector<Demo::Function*>;
 
 } // namespace DEMO
 #endif // DEMO_FUNCTION_H

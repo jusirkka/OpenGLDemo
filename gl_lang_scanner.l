@@ -38,7 +38,7 @@ float           {float_1}|{float_2}|{float_3}
 hex             [0-9a-fA-F]
 numh            0x{hex}+
 
-singlechar      [\*\/+\-\^=<>\!,\(\)\[\]]
+singlechar      [\*\/+\-\^=<>\!,\(\)\[\]@]
 
 id              [A-Za-z_][A-Za-z0-9_]*
 
@@ -51,6 +51,11 @@ shared          Shared
 execute         Execute
 from            From
 import          import
+while           While
+endwhile        Endwhile
+if              If
+else            Else
+endif           Endif
 
 %x INSTRING
 
@@ -80,6 +85,11 @@ import          import
 {execute}       return EXECUTE;
 {from}          return FROM;
 {import}        return IMPORT;
+{while}         return WHILE;
+{endwhile}      return ENDWHILE;
+{if}            return IF;
+{else}          return ELSE;
+{endif}         return ENDIF;
 
 {id}            {
                     yylval->v_identifier.name = yytext;

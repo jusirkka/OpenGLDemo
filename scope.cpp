@@ -3,6 +3,7 @@
 #include "gl_widget.h"
 #include "gl_lang_runner.h"
 #include "codeeditor.h"
+#include "statement.h"
 
 using namespace Demo;
 
@@ -105,7 +106,7 @@ const SymbolMap& Scope::symbols() const {
 }
 
 
-const FunctionList& Scope::functions() const {
+const FunctionVector& Scope::functions() const {
     return mFunctions;
 }
 
@@ -125,11 +126,11 @@ void Scope::dispatch(const QString& other) const {
         CodeEditor* other_ed = mEditors[mEditorIndices[other]];
         other_ed->run();
     } else {
-        throw GL::RunError(QString("Script %1 not found").arg(other), 0);
+        throw RunError(QString("Script %1 not found").arg(other), 0);
     }
 }
 
-const Scope::EditorList& Scope::editors() const {
+const Scope::EditorVector& Scope::editors() const {
     return mEditors;
 }
 
@@ -206,7 +207,7 @@ void Scope::addFunction(Function* f) {
 }
 
 void Scope::recompileAll() {
-    EditorList currFailed;
+    EditorVector currFailed;
     for (auto ed: qAsConst(mEditors)) {
         ed->compile();
         if (!ed->compiler()->ready()) {
@@ -214,7 +215,7 @@ void Scope::recompileAll() {
             currFailed.append(ed);
         }
     }
-    EditorList prevFailed;
+    EditorVector prevFailed;
     while (!currFailed.isEmpty() && prevFailed != currFailed) {
         // qDebug() << "num failed = " << currFailed.size();
         prevFailed = currFailed;

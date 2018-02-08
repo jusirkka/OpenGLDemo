@@ -17,8 +17,7 @@ class QTextDocument;
 namespace Demo {
 namespace GL {
 class Compiler;
-}
-}
+}}
 
 class Highlight : public QSyntaxHighlighter
 {
@@ -44,6 +43,7 @@ private:
     QTextCharFormat mNumeric;
     QTextCharFormat mFunction;
     QTextCharFormat mConstant;
+    QTextCharFormat mVariable;
     QTextCharFormat mText;
     FormatMap mFormats;
     yyscan_t mScanner;

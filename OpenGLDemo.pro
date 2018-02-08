@@ -33,7 +33,8 @@ SOURCES += main.cpp\
     gl_lang_parser_interface.cpp \
     triangleoptimizer.cpp \
     patcher.cpp \
-    bezierpatcher.cpp
+    bezierpatcher.cpp \
+    statement.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -62,7 +63,8 @@ HEADERS  += mainwindow.h \
     gl_lang_parser_interface.h \
     triangleoptimizer.h \
     patcher.h \
-    bezierpatcher.h
+    bezierpatcher.h \
+    statement.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

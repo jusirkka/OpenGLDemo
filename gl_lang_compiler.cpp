@@ -64,7 +64,8 @@ const char* Demo::GL::Compiler::explanations[] = {
     "cannot assign to imported variable %1",
     "variable %1 has not been exported",
     R"(script "%1" not found)",
-    "%1 is not a supported operation for Text"
+    "%1 is not a supported operation for Text",
+    "unmatching %1"
 };
 
 using Math3D::Real;
@@ -102,17 +103,40 @@ void Compiler::compile(const QString& script) {
     // ensure that the source ends with newlines
     YY_BUFFER_STATE buf = gl_lang__scan_string(mSource.append("\n\n").toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
+
+    if (!err) err = checkControls();
+
     gl_lang__delete_buffer(buf, mScanner);
 
     if (err) throw mError;
 
-    mRunner->setup(mAssignments, mVariables, mGlobalScope->functions(), mStackSize);
+    mRunner->setup(mStatements, mVariables, mGlobalScope->functions());
     mReady = true;
+}
+
+int Compiler::checkControls() {
+    if (mWhiles.isEmpty() && mConds.isEmpty()) return 0;
+
+    int pos = 0;
+
+    if (!mWhiles.isEmpty()) {
+        Statement::Statement* s = mStatements[mWhiles.top()];
+        if (s->pos() > pos) pos = s->pos();
+    }
+
+    if (!mConds.isEmpty()) {
+        Statement::Statement* s = mStatements[mConds.top()];
+        if (s->pos() > pos) pos = s->pos();
+    }
+
+    mError = CompileError("Unclosed control statement", pos);
+    return 1;
 }
 
 bool Compiler::ready() const {
     return mReady || mRecompile;
 }
+
 
 void Compiler::run() {
     if (mRecompile) {
@@ -135,7 +159,7 @@ void Compiler::createError(const QString &item, Error err) {
         detail = QString(explanations[err]).arg(item);
     }
     LocationType* loc = gl_lang_get_lloc(mScanner);
-    mError = CompileError(detail, loc->row, loc->col, loc->pos);
+    mError = CompileError(detail, loc->pos);
 }
 
 bool Compiler::createCompletion(const IdentifierType&, unsigned) {
@@ -162,13 +186,19 @@ void Compiler::reset() {
     mCodeSize = 0;
     mImmedSize = 0;
 
+    mWhiles.clear();
+    mConds.clear();
+
     mCurrent.clear();
     mCurrImmed.clear();
 
-    mAssignments.clear();
+    mStatements.clear();
 
     qDeleteAll(mSymbols);
     mSymbols.clear();
+
+    qDeleteAll(mStatements);
+    mStatements.clear();
 
     mVariables.clear();
     mExports.clear();
@@ -191,7 +221,7 @@ void Compiler::reset() {
 void Compiler::addVariable(Variable* v) {
     // qDebug() << "adding" << objectName() << v->name();
     v->setIndex(mVariables.size() + Scope::VariableOffset);
-    mVariables.append(v);
+    mVariables[v->name()] = v;
     mSymbols[v->name()] = v;
     if (v->shared()) {
         // qDebug() << "exporting" << objectName() << v->name();
@@ -247,7 +277,7 @@ void Compiler::addImported(const QString& name, const QString& script) {
     }
 
     v->setIndex(mVariables.size() + Scope::VariableOffset);
-    mVariables.append(v);
+    mVariables[v->name()] = v;
     mSymbols[v->name()] = v;
 
 }
@@ -266,18 +296,92 @@ void Compiler::addSubscript(const QString& name) {
 
 void Compiler::setCode(const QString& name) {
     LocationType* loc = gl_lang_get_lloc(mScanner);
-    mAssignments.append(Assignment(name, mCurrent, mCurrImmed, loc->pos));
+    int index = mVariables[name]->index();
+    mStatements.append(new Statement::Assignment(index, mCurrent, mCurrImmed, mStackSize, loc->pos));
     mCurrent.clear();
     mCurrImmed.clear();
     mCodeSize = 0;
     mImmedSize = 0;
+    mStackPos = 0;
     // qDebug() << name << ": assignment: Byte code ready. Stack size =" << mStackSize;
+    mStackSize = 0;
 }
+
+
+void Compiler::beginWhile() {
+    mWhiles.push(mStatements.size()); // index of the statement
+    LocationType* loc = gl_lang_get_lloc(mScanner);
+    mStatements.append(new Statement::CondJump(mCurrent, mCurrImmed, mStackSize, loc->pos));
+
+    mCurrent.clear();
+    mCurrImmed.clear();
+    mCodeSize = 0;
+    mImmedSize = 0;
+    mStackPos = 0;
+    mStackSize = 0;
+}
+
+bool Compiler::endWhile() {
+    if (mWhiles.isEmpty()) return false;
+
+    int condIndex = mWhiles.pop();
+    int myIndex = mStatements.size();
+
+    auto cond = dynamic_cast<Statement::BaseJump*>(mStatements[condIndex]);
+    cond->setJump(myIndex - condIndex + 1);
+
+    LocationType* loc = gl_lang_get_lloc(mScanner);
+    mStatements.append(new Statement::Jump(loc->pos, condIndex - myIndex));
+
+    return true;
+}
+
+void Compiler::beginIf() {
+    mConds.push(mStatements.size()); // index of the statement
+    LocationType* loc = gl_lang_get_lloc(mScanner);
+    mStatements.append(new Statement::CondJump(mCurrent, mCurrImmed, mStackSize, loc->pos));
+
+    mCurrent.clear();
+    mCurrImmed.clear();
+    mCodeSize = 0;
+    mImmedSize = 0;
+    mStackPos = 0;
+    // qDebug() << name << ": condjump: Byte code ready. Stack size =" << mStackSize;
+    mStackSize = 0;
+}
+
+
+bool Compiler::endIf() {
+    if (mConds.isEmpty()) return false;
+    int jumpIndex = mConds.pop();
+    int myIndex = mStatements.size();
+    auto jump = dynamic_cast<Statement::BaseJump*>(mStatements[jumpIndex]);
+    jump->setJump(myIndex - jumpIndex);
+    return true;
+}
+
+bool Compiler::addElse() {
+    if (mConds.isEmpty()) return false;
+
+    int condIndex = mConds.pop();
+    int myIndex = mStatements.size();
+    mConds.push(myIndex);
+
+    auto cond = dynamic_cast<Statement::BaseJump*>(mStatements[condIndex]);
+    cond->setJump(myIndex - condIndex + 1);
+
+    LocationType* loc = gl_lang_get_lloc(mScanner);
+    // add 4 to go to the end of line
+    mStatements.append(new Statement::Jump(loc->pos + 4));
+    return true;
+}
+
 
 void Compiler::pushBack(unsigned op, unsigned lrtype, int inc) {
     mCurrent.append((op & 0xfff) | ((lrtype & 0xff) << 12));
     mStackPos += inc;
     if (mStackSize < mStackPos) mStackSize = mStackPos;
+    // qDebug() << "push back: stack pos = " << mStackPos << "code size = " << mCurrent.size();
 }
 
 void Compiler::setJump() {
@@ -285,6 +389,9 @@ void Compiler::setJump() {
     if (mCodeSize) {
         mCurrent[mCodeSize - 2] = mCurrent.size() - mCodeSize;
         mCurrent[mCodeSize - 1] = mCurrImmed.size() - mImmedSize;
+        /*qDebug() << "set jump: codesize = " << mCodeSize <<
+                    "code jump = " << mCurrent.size() - mCodeSize <<
+                    "immed jump = " << mCurrImmed.size() - mImmedSize; */
     }
 }
 
@@ -292,17 +399,21 @@ void Compiler::initJump() {
     mStackPos = 0;
     mCodeSize = mCurrent.size();
     mImmedSize = mCurrImmed.size();
+    // qDebug() << "init jump: code addr = " << mCodeSize << "immed addr = " << mImmedSize;
 }
 
 
 void Compiler::pushBackImmed(int constVal) {
     mCurrImmed.append(QVariant(constVal));
+    // qDebug() << "push back immed: immed size = " << mCurrImmed.size();
 }
 
 void Compiler::pushBackImmed(Math3D::Real constVal) {
     mCurrImmed.append(QVariant(constVal));
+    // qDebug() << "push back immed: immed size = " << mCurrImmed.size();
 }
 
 void Compiler::pushBackImmed(const QVariant& constVal) {
     mCurrImmed.append(constVal);
+    // qDebug() << "push back immed: immed size = " << mCurrImmed.size();
 }

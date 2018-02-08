@@ -36,7 +36,8 @@ Completer::Completer(Scope* globalScope, CodeEditor *parent):
     mCompletionPos(-1) {
 
     mReserved << "Real" << "Matrix" << "Vector" << "Natural" <<
-                 "Text" << "Shared" << "Execute" << "From" << "import";
+                 "Text" << "Shared" << "Execute" << "From" << "import" <<
+                 "While" << "Endwhile" << "If" << "Else" << "Endif";
 
     mCompleter->setWidget(parent);
     mCompleter->setWrapAround(false);
@@ -100,10 +101,6 @@ void Completer::updatePopup(const QString& prefix) {
 }
 
 
-
-void Completer::createError(const QString&, Error) {
-    // noop
-}
 
 static void addCompletion(QStringList& c, const QString& symbol, const QString& candidate) {
     if (symbol.startsWith(candidate)) c.append(symbol);
@@ -207,37 +204,4 @@ void Completer::addImported(const QString& name, const QString& script) {
 
 bool Completer::isScript(const QString& name) const {
     return mGlobalScope->compiler(name) != nullptr;
-}
-
-void Completer::addSubscript(const QString&) {
-    // noop
-}
-
-void Completer::setCode(const QString&) {
-    // noop
-}
-
-void Completer::pushBack(unsigned, unsigned, int) {
-    // noop
-}
-
-void Completer::setJump() {
-    // noop
-}
-
-void Completer::initJump() {
-    // noop
-}
-
-
-void Completer::pushBackImmed(int) {
-    // noop
-}
-
-void Completer::pushBackImmed(Math3D::Real) {
-    // noop
-}
-
-void Completer::pushBackImmed(const QVariant&) {
-    // noop
 }

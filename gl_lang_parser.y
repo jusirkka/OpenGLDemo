@@ -51,7 +51,7 @@ using Demo::GL::Parser;
 
 %token <v_identifier> ID
 
-%token VECTOR MATRIX TEXT NATURAL SHARED REAL EXECUTE FROM IMPORT
+%token VECTOR MATRIX TEXT NATURAL SHARED REAL EXECUTE FROM IMPORT WHILE ENDWHILE IF ELSE ENDIF
 
 %nonassoc <v_int> '<' '>' EQ NE LE GE
 %left <v_int> '+' '-' OR BOR
@@ -251,6 +251,43 @@ statement:
             parser->setJump();
             parser->setCode("gl_result");
         }
+    |
+    WHILE expression
+        {
+            if ($2 != Symbol::Integer) {
+                HANDLE_ERROR("While", Parser::expectedinteger);
+            }
+            parser->beginWhile();
+        }
+    |
+    ENDWHILE
+        {
+           if (!parser->endWhile()) {
+               HANDLE_ERROR("Endwhile", Parser::roguestatement);
+           }
+        }
+    |
+    IF expression
+        {
+            if ($2 != Symbol::Integer) {
+                HANDLE_ERROR("If", Parser::expectedinteger);
+            }
+            parser->beginIf();
+        }
+    |
+    ELSE
+        {
+            if (!parser->addElse()) {
+                HANDLE_ERROR("Else", Parser::roguestatement);
+            }
+        }
+    |
+    ENDIF
+        {
+           if (!parser->endIf()) {
+               HANDLE_ERROR("Endif", Parser::roguestatement);
+           }
+        }
     ;
 
 
@@ -294,7 +331,7 @@ simple_rhs:
     ;
 
 guard:
-    '|' expression
+    '@' expression
         {
             if ($2 != Symbol::Integer) {
                 HANDLE_ERROR("guard", Parser::expectedinteger);
@@ -534,7 +571,7 @@ literal:
     BEGINSTRING text ENDSTRING
         {
             $$ = Symbol::Text;
-            // qDebug() << "Code: TXT" << *$2;
+            // qDebug() << "Code: TXT" << $2;
             parser->pushBack(Parser::cImmed, 0, 1);
             parser->pushBackImmed($2);
         }

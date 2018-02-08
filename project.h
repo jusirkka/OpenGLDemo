@@ -137,7 +137,7 @@ private:
 
     using NameMap = QMap<QString, QString>;
     using NameIterator = QMapIterator<QString, QString>;
-    using EditorList = QList<Demo::CodeEditor *>;
+    using EditorVector = QVector<Demo::CodeEditor *>;
 
 
 

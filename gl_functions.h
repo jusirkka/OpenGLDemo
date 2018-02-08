@@ -7,7 +7,7 @@
 #include "blob.h"
 #include "texblob.h"
 
-#include <QList>
+#include <QVector>
 
 using Math3D::X;
 using Math3D::Y;
@@ -1431,7 +1431,7 @@ class Functions {
 
 public:
 
-    QList<Demo::Symbol*> contents;
+    QVector<Demo::Symbol*> contents;
 
     Functions(Demo::GLWidget* p) {
         contents.append(new Enable(p));
@@ -1503,7 +1503,7 @@ class Constants {
 
 public:
 
-    QList<Demo::Symbol*> contents;
+    QVector<Demo::Symbol*> contents;
 
     Constants() {
         // enable / disable

@@ -23,9 +23,11 @@
 #define GL_LANG_COMPILER_H
 
 #include "gl_lang_parser_interface.h"
+#include "statement.h"
 
 #include <QVector>
 #include <QMap>
+#include <QStack>
 #include <QtDebug>
 
 
@@ -42,30 +44,22 @@ class Runner;
 class CompileError {
 
 public:
-    CompileError(QString msg, int row, int col, int pos)
+    CompileError(QString msg, int pos)
         : emsg(std::move(msg))
-        , erow(row)
-        , ecol(col)
         , epos(pos)
     {}
 
     CompileError():
         emsg(""),
-        erow(0),
-        ecol(0),
         epos(0)
     {}
 
     const QString msg() const {return emsg;}
-    int row() const {return erow;}
-    int col() const {return ecol;}
     int pos() const {return epos;}
 
 private:
 
     QString emsg;
-    int erow;
-    int ecol;
     int epos;
 
 };
@@ -78,35 +72,12 @@ class Compiler: public QObject, public Parser {
 
 public:
 
-    using CodeStack = QVector<unsigned int>;
-    using ValueStack = QVector<QVariant>;
 
-    class Assignment {
-
-    public:
-
-        Assignment(QString v, CodeStack c, ValueStack i, int p)
-            : var(std::move(v))
-            , code(std::move(c))
-            , immed(std::move(i))
-            , pos(p) {}
-
-        Assignment(const Assignment& a) {
-            var = a.var;
-            code = CodeStack(a.code);
-            immed = ValueStack(a.immed);
-            pos = a.pos;
-        }
-
-        QString var;
-        CodeStack code;
-        ValueStack immed;
-        int pos;
-    };
-
-    using VariableList = QList<Demo::Variable *>;
-    using FunctionList = QList<Demo::Function *>;
-    using AssignmentList = QList<Demo::GL::Compiler::Assignment>;
+    using FunctionVector = QVector<Demo::Function*>;
+    using StatementVector = QVector<Demo::Statement::Statement*>;
+    using CodeStack = Demo::Statement::Statement::CodeStack;
+    using ValueStack = Demo::Statement::Statement::ValueStack;
+    using IndexStack = QStack<int>;
 
 public:
 
@@ -135,6 +106,11 @@ public:
     void addImported(const QString& v, const QString& script) override;
     bool isScript(const QString& name) const override;
     void addSubscript(const QString& name) override;
+    void beginWhile() override;
+    void beginIf() override;
+    bool endWhile() override;
+    bool endIf() override;
+    bool addElse() override;
 
     const QStringList& subscripts() const;
     const VariableMap& exports() const;
@@ -161,15 +137,18 @@ private:
     Compiler &operator=(const Compiler&); // Not implemented
 
     void reset();
+    int checkControls();
 
 private:
 
-    AssignmentList mAssignments;
-    VariableList mVariables;
+    StatementVector mStatements;
+    VariableMap mVariables;
     VariableMap mExports;
     SymbolMap mSymbols;
     CodeStack mCurrent;
     ValueStack mCurrImmed;
+    IndexStack mWhiles;
+    IndexStack mConds;
     int mStackSize;
     int mStackPos;
     int mCodeSize;
