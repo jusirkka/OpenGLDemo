@@ -602,6 +602,7 @@ inline Matrix4 projection3(const Vector4& v) {
 
 #ifdef OSTREAM_MATH3D
 #include <QDataStream>
+#include <QDebug>
 
 inline QDataStream& operator<< (QDataStream& os, const Math3D::Vector4& v) {
     for (int i=0; i<4; ++i) os << v[i];
@@ -618,15 +619,19 @@ inline QDataStream& operator<< (QDataStream& os, const Math3D::Matrix4& m) {
     return os;
 }
 
-inline QDebug operator<< (QDebug dbg, const Math3D::Matrix4& m) {
-    for (int y=0; y<4; ++y) for (int x=0;x<4;++x) dbg << m[x][y];
+inline QDebug operator<< (QDebug dbg, const Math3D::Vector4& v) {
+    dbg << v[0];
+    for (int i = 1; i < 4; ++i) dbg << ", " << v[i];
     return dbg;
 }
 
-inline QDebug operator<< (QDebug dbg, const Math3D::Vector4& v) {
-    for (int i=0; i<4; ++i) dbg << v[i];
+inline QDebug operator<< (QDebug dbg, const Math3D::Matrix4& m) {
+    dbg << '[' <<  Math3D::Vector4(m[0], 4);
+    for (int y = 1; y < 4; ++y)  dbg << "] [" << Math3D::Vector4(m[y], 4);
+    dbg << ']';
     return dbg;
 }
+
 
 #endif  // OSTREAM_MATH3D
 

@@ -1,8 +1,8 @@
-Shared Natural vao = genvertexarray()
+Shared Var vao: Natural = genvertexarray()
 bindvertexarray vao
 
 
-Shared Natural model_array, model_elements
+Shared Var model_array, model_elements: Natural
 
 
 model_array = genbuffer()

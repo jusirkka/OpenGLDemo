@@ -1,7 +1,7 @@
-Shared Natural a_vertex, a_normal, a_tex
-Shared Natural u_t_img, u_m_n, u_m_vm, u_m_pvm, u_v_light
-Shared Natural u_m_material_colors, u_m_light_colors
-Shared Natural u_s_shininess, u_s_scale
+Shared Var a_vertex, a_normal, a_tex: Natural
+Shared Var u_t_img,  u_m_n, u_m_vm, u_m_pvm, u_v_light: Natural
+Shared Var u_m_material_colors,  u_m_light_colors: Natural
+Shared Var u_s_shininess, u_s_scale: Natural
 
 From "create progs" import prog_phong, prog_shadow
 
@@ -20,10 +20,10 @@ a_vertex = getattriblocation(prog_phong, "vertex")
 a_normal = getattriblocation(prog_phong, "normal")
 a_tex = getattriblocation(prog_phong, "tex")
 
-Shared Natural a_vertex_s = getattriblocation(prog_shadow, "vertex")
+Shared Var a_vertex_s: Natural = getattriblocation(prog_shadow, "vertex")
 
-Shared Natural u_m_pv_s = getuniformlocation(prog_shadow, "pv_matrix")
-Shared Natural u_m_m_s = getuniformlocation(prog_shadow, "m_matrix")
-Shared Natural u_v_light_s = getuniformlocation(prog_shadow, "light_direction")
-Shared Natural u_v_n_s = getuniformlocation(prog_shadow, "plane_normal")
-Shared Natural u_v_p_s = getuniformlocation(prog_shadow, "point_in_plane")
+Shared Var u_m_pv_s: Natural = getuniformlocation(prog_shadow, "pv_matrix")
+Shared Var u_m_m_s: Natural = getuniformlocation(prog_shadow, "m_matrix")
+Shared Var u_v_light_s: Natural = getuniformlocation(prog_shadow, "light_direction")
+Shared Var u_v_n_s: Natural = getuniformlocation(prog_shadow, "plane_normal")
+Shared Var u_v_p_s: Natural = getuniformlocation(prog_shadow, "point_in_plane")

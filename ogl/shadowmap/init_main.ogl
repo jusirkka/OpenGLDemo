@@ -1,5 +1,5 @@
 
-Natural vao = genvertexarray()
+Var vao: Natural = genvertexarray()
 bindvertexarray vao
 
 Execute "create progs"
@@ -18,4 +18,4 @@ enable  cull_face
 frontface cw
 cullface back
 
-Shared Matrix bias = 0.5 * translation(vec(1, 1, 1, 1))
+Shared Var bias: Matrix = 0.5 * translation(vec(1, 1, 1, 1))

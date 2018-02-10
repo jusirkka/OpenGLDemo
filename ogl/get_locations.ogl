@@ -1,7 +1,7 @@
-Shared Natural a_vertex, a_normal, a_tex
-Shared Natural u_t_img, u_m_n, u_m_vm, u_m_pvm, u_v_light
-Shared Natural u_m_material_colors, u_m_light_colors
-Shared Natural u_s_shininess, u_s_scale
+Shared Var a_vertex, a_normal, a_tex: Natural
+Shared Var u_t_img,  u_m_n, u_m_vm, u_m_pvm, u_v_light: Natural
+Shared Var u_m_material_colors,  u_m_light_colors: Natural
+Shared Var u_s_shininess, u_s_scale: Natural
 
 From "create prog" import prog
 

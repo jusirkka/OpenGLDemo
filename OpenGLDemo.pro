@@ -25,8 +25,6 @@ SOURCES += main.cpp\
     modelstore.cpp \
     fpscontrol.cpp \
     scope.cpp \
-    symbol.cpp \
-    variable.cpp \
     textfilestore.cpp \
     depthzoom.cpp \
     gl_lang_completer.cpp \
@@ -34,7 +32,9 @@ SOURCES += main.cpp\
     triangleoptimizer.cpp \
     patcher.cpp \
     bezierpatcher.cpp \
-    statement.cpp
+    statement.cpp \
+    value.cpp \
+    type.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -64,7 +64,11 @@ HEADERS  += mainwindow.h \
     triangleoptimizer.h \
     patcher.h \
     bezierpatcher.h \
-    statement.h
+    statement.h \
+    operation.h \
+    type.h \
+    typedef.h \
+    value.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

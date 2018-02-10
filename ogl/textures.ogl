@@ -1,6 +1,6 @@
 Execute "create prog"
 
-Shared Natural vao = genvertexarray()
+Shared Var vao: Natural = genvertexarray()
 bindvertexarray vao
 
 Execute "get locations"

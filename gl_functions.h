@@ -38,10 +38,6 @@ private:
 class GLProc: public Demo::Function {
 public:
 
-    GLProc(const QString& name, int type, Demo::GLWidget* p)
-        : Demo::Function(name, type),
-          mParent(p)
-    {}
 
 #define ALT(item) case item: throw GLError(#item); break
 
@@ -69,6 +65,15 @@ public:
 
 protected:
 
+    GLProc(const QString& name, Type* type, Demo::GLWidget* p)
+        : Demo::Function(name, type),
+          mParent(p)
+    {}
+
+    GLProc(const GLProc& f)
+        : Function(f)
+        , mParent(f.mParent) {}
+
     Demo::GLWidget* mParent;
 
 private:
@@ -77,14 +82,16 @@ private:
 
 };
 
+#define COPY_AND_CLONE(T) T(const T& f): GLProc(f) {} \
+                          T* clone() const override {return new T(*this);}
+
 
 class Enable: public GLProc {
 
 public:
 
-    Enable(Demo::GLWidget* p): GLProc("enable", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    Enable(Demo::GLWidget* p): GLProc("enable", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -94,16 +101,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Enable)
+    COPY_AND_CLONE(Enable)
 };
 
 class Disable: public GLProc {
 
 public:
 
-    Disable(Demo::GLWidget* p): GLProc("disable", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    Disable(Demo::GLWidget* p): GLProc("disable", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -113,17 +119,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Disable)
+    COPY_AND_CLONE(Disable)
 };
 
 class DepthRange: public GLProc {
 
 public:
 
-    DepthRange(Demo::GLWidget* p): GLProc("depthrange", Symbol::Integer, p) {
-        int argt = Symbol::Real;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    DepthRange(Demo::GLWidget* p): GLProc("depthrange", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -135,16 +140,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DepthRange)
+    COPY_AND_CLONE(DepthRange)
 };
 
 class LineWidth: public GLProc {
 
 public:
 
-    LineWidth(Demo::GLWidget* p): GLProc("linewidth", Symbol::Integer, p) {
-        int argt = Symbol::Real;
-        mArgTypes.append(argt);
+    LineWidth(Demo::GLWidget* p): GLProc("linewidth", new Integer_T, p) {
+        mArgTypes.append(new Real_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -155,16 +159,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(LineWidth)
+    COPY_AND_CLONE(LineWidth)
 };
 
 class FrontFace: public GLProc {
 
 public:
 
-    FrontFace(Demo::GLWidget* p): GLProc("frontface", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    FrontFace(Demo::GLWidget* p): GLProc("frontface", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -175,16 +178,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(FrontFace)
+    COPY_AND_CLONE(FrontFace)
 };
 
 class CullFace: public GLProc {
 
 public:
 
-    CullFace(Demo::GLWidget* p): GLProc("cullface", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    CullFace(Demo::GLWidget* p): GLProc("cullface", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -195,19 +197,18 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(CullFace)
+    COPY_AND_CLONE(CullFace)
 };
 
 class ColorMask: public GLProc {
 
 public:
 
-    ColorMask(Demo::GLWidget* p): GLProc("colormask", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    ColorMask(Demo::GLWidget* p): GLProc("colormask", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -221,16 +222,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(ColorMask)
+    COPY_AND_CLONE(ColorMask)
 };
 
 class DepthMask: public GLProc {
 
 public:
 
-    DepthMask(Demo::GLWidget* p): GLProc("depthmask", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DepthMask(Demo::GLWidget* p): GLProc("depthmask", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -241,16 +241,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DepthMask)
+    COPY_AND_CLONE(DepthMask)
 };
 
 class Clear: public GLProc {
 
 public:
 
-    Clear(Demo::GLWidget* p): GLProc("clear", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    Clear(Demo::GLWidget* p): GLProc("clear", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -261,16 +260,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Clear)
+    COPY_AND_CLONE(Clear)
 };
 
 class ClearColor: public GLProc {
 
 public:
 
-    ClearColor(Demo::GLWidget* p): GLProc("clearcolor", Symbol::Integer, p) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
+    ClearColor(Demo::GLWidget* p): GLProc("clearcolor", new Integer_T, p) {
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -281,16 +279,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(ClearColor)
+    COPY_AND_CLONE(ClearColor)
 };
 
 class ClearDepth: public GLProc {
 
 public:
 
-    ClearDepth(Demo::GLWidget* p): GLProc("cleardepth", Symbol::Integer, p) {
-        int argt = Symbol::Real;
-        mArgTypes.append(argt);
+    ClearDepth(Demo::GLWidget* p): GLProc("cleardepth", new Integer_T, p) {
+        mArgTypes.append(new Real_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -301,16 +298,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(ClearDepth)
+    COPY_AND_CLONE(ClearDepth)
 };
 
 class CreateShader: public GLProc {
 
 public:
 
-    CreateShader(Demo::GLWidget* p): GLProc("createshader", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    CreateShader(Demo::GLWidget* p): GLProc("createshader", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -319,18 +315,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(CreateShader)
+    COPY_AND_CLONE(CreateShader)
 };
 
 class CompileShader: public GLProc {
 
 public:
 
-    CompileShader(Demo::GLWidget* p): GLProc("compileshader", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        argt = Symbol::Text;
-        mArgTypes.append(argt);
+    CompileShader(Demo::GLWidget* p): GLProc("compileshader", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Text_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -354,16 +348,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(CompileShader)
+    COPY_AND_CLONE(CompileShader)
 };
 
 class DeleteShader: public GLProc {
 
 public:
 
-    DeleteShader(Demo::GLWidget* p): GLProc("deleteshader", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DeleteShader(Demo::GLWidget* p): GLProc("deleteshader", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -377,7 +370,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DeleteShader)
+    COPY_AND_CLONE(DeleteShader)
 };
 
 
@@ -385,7 +378,7 @@ class CreateProgram: public GLProc {
 
 public:
 
-    CreateProgram(Demo::GLWidget* p): GLProc("createprogram", Symbol::Integer, p) {}
+    CreateProgram(Demo::GLWidget* p): GLProc("createprogram", new Integer_T, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         // qDebug() << "glCreateProgram";
@@ -393,7 +386,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(CreateProgram)
+    COPY_AND_CLONE(CreateProgram)
 };
 
 
@@ -401,10 +394,9 @@ class AttachShader: public GLProc {
 
 public:
 
-    AttachShader(Demo::GLWidget* p): GLProc("attachshader", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    AttachShader(Demo::GLWidget* p): GLProc("attachshader", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -416,7 +408,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(AttachShader)
+    COPY_AND_CLONE(AttachShader)
 };
 
 
@@ -424,10 +416,9 @@ class DetachShader: public GLProc {
 
 public:
 
-    DetachShader(Demo::GLWidget* p): GLProc("detachshader", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    DetachShader(Demo::GLWidget* p): GLProc("detachshader", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -439,7 +430,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DetachShader)
+    COPY_AND_CLONE(DetachShader)
 };
 
 
@@ -447,9 +438,8 @@ class LinkProgram: public GLProc {
 
 public:
 
-    LinkProgram(Demo::GLWidget* p): GLProc("linkprogram", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    LinkProgram(Demo::GLWidget* p): GLProc("linkprogram", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -469,7 +459,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(LinkProgram)
+    COPY_AND_CLONE(LinkProgram)
 };
 
 
@@ -477,9 +467,8 @@ class UseProgram: public GLProc {
 
 public:
 
-    UseProgram(Demo::GLWidget* p): GLProc("useprogram", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    UseProgram(Demo::GLWidget* p): GLProc("useprogram", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -490,7 +479,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(UseProgram)
+    COPY_AND_CLONE(UseProgram)
 };
 
 
@@ -498,9 +487,8 @@ class DeleteProgram: public GLProc {
 
 public:
 
-    DeleteProgram(Demo::GLWidget* p): GLProc("deleteprogram", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DeleteProgram(Demo::GLWidget* p): GLProc("deleteprogram", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -514,18 +502,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DeleteProgram)
+    COPY_AND_CLONE(DeleteProgram)
 };
 
 class GetAttribLocation: public GLProc {
 
 public:
 
-    GetAttribLocation(Demo::GLWidget* p): GLProc("getattriblocation", Symbol::Integer, p) {
-        int t = Symbol::Integer;
-        mArgTypes.append(t);
-        t = Symbol::Text;
-        mArgTypes.append(t);
+    GetAttribLocation(Demo::GLWidget* p): GLProc("getattriblocation", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Text_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -539,7 +525,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(GetAttribLocation)
+    COPY_AND_CLONE(GetAttribLocation)
 };
 
 
@@ -547,11 +533,9 @@ class GetUniformLocation: public GLProc {
 
 public:
 
-    GetUniformLocation(Demo::GLWidget* p): GLProc("getuniformlocation", Symbol::Integer, p) {
-        int t = Symbol::Integer;
-        mArgTypes.append(t);
-        t = Symbol::Text;
-        mArgTypes.append(t);
+    GetUniformLocation(Demo::GLWidget* p): GLProc("getuniformlocation", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Text_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -565,7 +549,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(GetUniformLocation)
+    COPY_AND_CLONE(GetUniformLocation)
 };
 
 
@@ -573,11 +557,9 @@ class Uniform1F: public GLProc {
 
 public:
 
-    Uniform1F(Demo::GLWidget* p): GLProc("uniform1f", Symbol::Integer, p) {
-        int t = Symbol::Integer;
-        mArgTypes.append(t);
-        t = Symbol::Real;
-        mArgTypes.append(t);
+    Uniform1F(Demo::GLWidget* p): GLProc("uniform1f", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Real_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -589,17 +571,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Uniform1F)
+    COPY_AND_CLONE(Uniform1F)
 };
 
 class Uniform1I: public GLProc {
 
 public:
 
-    Uniform1I(Demo::GLWidget* p): GLProc("uniform1i", Symbol::Integer, p) {
-        int t = Symbol::Integer;
-        mArgTypes.append(t);
-        mArgTypes.append(t);
+    Uniform1I(Demo::GLWidget* p): GLProc("uniform1i", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -611,18 +592,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Uniform1I)
+    COPY_AND_CLONE(Uniform1I)
 };
 
 class Uniform4F: public GLProc {
 
 public:
 
-    Uniform4F(Demo::GLWidget* p): GLProc("uniform4f", Symbol::Integer, p) {
-        int t = Symbol::Integer;
-        mArgTypes.append(t);
-        t = Symbol::Vector;
-        mArgTypes.append(t);
+    Uniform4F(Demo::GLWidget* p): GLProc("uniform4f", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -634,7 +613,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Uniform4F)
+    COPY_AND_CLONE(Uniform4F)
 };
 
 
@@ -642,11 +621,9 @@ class UniformMatrix4F: public GLProc {
 
 public:
 
-    UniformMatrix4F(Demo::GLWidget* p): GLProc("uniformmatrix4f", Symbol::Integer, p) {
-        int t = Symbol::Integer;
-        mArgTypes.append(t);
-        t = Symbol::Matrix;
-        mArgTypes.append(t);
+    UniformMatrix4F(Demo::GLWidget* p): GLProc("uniformmatrix4f", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Matrix_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -658,30 +635,29 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(UniformMatrix4F)
+    COPY_AND_CLONE(UniformMatrix4F)
 };
 
 class GenBuffer: public GLProc {
 
 public:
 
-    GenBuffer(Demo::GLWidget* p): GLProc("genbuffer", Symbol::Integer, p) {}
+    GenBuffer(Demo::GLWidget* p): GLProc("genbuffer", new Integer_T, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         mValue.setValue(mParent->resource("buffer"));
         return mValue;
     }
 
-    CLONEMETHOD(GenBuffer)
+    COPY_AND_CLONE(GenBuffer)
 };
 
 class DeleteBuffer: public GLProc {
 
 public:
 
-    DeleteBuffer(Demo::GLWidget* p): GLProc("deletebuffer", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DeleteBuffer(Demo::GLWidget* p): GLProc("deletebuffer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -695,7 +671,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DeleteBuffer)
+    COPY_AND_CLONE(DeleteBuffer)
 };
 
 
@@ -703,10 +679,9 @@ class BindBuffer: public GLProc {
 
 public:
 
-    BindBuffer(Demo::GLWidget* p): GLProc("bindbuffer", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    BindBuffer(Demo::GLWidget* p): GLProc("bindbuffer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -718,18 +693,17 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BindBuffer)
+    COPY_AND_CLONE(BindBuffer)
 };
 
 class BufferData: public GLProc {
 
 public:
 
-    BufferData(Demo::GLWidget* p): GLProc("bufferdata", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    BufferData(Demo::GLWidget* p): GLProc("bufferdata", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -742,19 +716,17 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BufferData)
+    COPY_AND_CLONE(BufferData)
 };
 
 class VertexAttribPointer: public GLProc {
 
 public:
 
-    VertexAttribPointer(Demo::GLWidget* p): GLProc("vertexattribpointer", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        argt = Symbol::Text;
-        mArgTypes.append(argt);
+    VertexAttribPointer(Demo::GLWidget* p): GLProc("vertexattribpointer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Text_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -774,20 +746,17 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(VertexAttribPointer)
+    COPY_AND_CLONE(VertexAttribPointer)
 };
 
 class Draw: public GLProc {
 
 public:
 
-    Draw(Demo::GLWidget* p): GLProc("draw", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        argt = Symbol::Text;
-        mArgTypes.append(argt);
-        argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    Draw(Demo::GLWidget* p): GLProc("draw", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Text_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -800,7 +769,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Draw)
+    COPY_AND_CLONE(Draw)
 };
 
 
@@ -808,9 +777,8 @@ class EnableVertexAttribArray: public GLProc {
 
 public:
 
-    EnableVertexAttribArray(Demo::GLWidget* p): GLProc("enablevertexattribarray", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    EnableVertexAttribArray(Demo::GLWidget* p): GLProc("enablevertexattribarray", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -821,16 +789,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(EnableVertexAttribArray)
+    COPY_AND_CLONE(EnableVertexAttribArray)
 };
 
 class DisableVertexAttribArray: public GLProc {
 
 public:
 
-    DisableVertexAttribArray(Demo::GLWidget* p): GLProc("disablevertexattribarray", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DisableVertexAttribArray(Demo::GLWidget* p): GLProc("disablevertexattribarray", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -841,7 +808,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DisableVertexAttribArray)
+    COPY_AND_CLONE(DisableVertexAttribArray)
 };
 
 
@@ -849,9 +816,8 @@ class ActiveTexture: public GLProc {
 
 public:
 
-    ActiveTexture(Demo::GLWidget* p): GLProc("activetexture", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    ActiveTexture(Demo::GLWidget* p): GLProc("activetexture", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -862,7 +828,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(ActiveTexture)
+    COPY_AND_CLONE(ActiveTexture)
 };
 
 
@@ -870,9 +836,8 @@ class GenerateMipMap: public GLProc {
 
 public:
 
-    GenerateMipMap(Demo::GLWidget* p): GLProc("generatemipmap", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    GenerateMipMap(Demo::GLWidget* p): GLProc("generatemipmap", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -883,17 +848,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(GenerateMipMap)
+    COPY_AND_CLONE(GenerateMipMap)
 };
 
 class BindTexture: public GLProc {
 
 public:
 
-    BindTexture(Demo::GLWidget* p): GLProc("bindtexture", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    BindTexture(Demo::GLWidget* p): GLProc("bindtexture", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -905,30 +869,29 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BindTexture)
+    COPY_AND_CLONE(BindTexture)
 };
 
 class GenTexture: public GLProc {
 
 public:
 
-    GenTexture(Demo::GLWidget* p): GLProc("gentexture", Symbol::Integer, p) {}
+    GenTexture(Demo::GLWidget* p): GLProc("gentexture", new Integer_T, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         mValue.setValue(mParent->resource("texture"));
         return mValue;
     }
 
-    CLONEMETHOD(GenTexture)
+    COPY_AND_CLONE(GenTexture)
 };
 
 class DeleteTexture: public GLProc {
 
 public:
 
-    DeleteTexture(Demo::GLWidget* p): GLProc("deletetexture", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DeleteTexture(Demo::GLWidget* p): GLProc("deletetexture", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -942,7 +905,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DeleteTexture)
+    COPY_AND_CLONE(DeleteTexture)
 };
 
 
@@ -950,11 +913,10 @@ class TexParameter: public GLProc {
 
 public:
 
-    TexParameter(Demo::GLWidget* p): GLProc("texparameter", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    TexParameter(Demo::GLWidget* p): GLProc("texparameter", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -967,7 +929,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(TexParameter)
+    COPY_AND_CLONE(TexParameter)
 };
 
 
@@ -975,14 +937,12 @@ class TexImage2D: public GLProc {
 
 public:
 
-    TexImage2D(Demo::GLWidget* p): GLProc("teximage2d", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        argt = Symbol::Text;
-        mArgTypes.append(argt);
+    TexImage2D(Demo::GLWidget* p): GLProc("teximage2d", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Text_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1000,23 +960,22 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(TexImage2D)
+    COPY_AND_CLONE(TexImage2D)
 };
 
 class TexEmptyImage2D: public GLProc {
 
 public:
 
-    TexEmptyImage2D(Demo::GLWidget* p): GLProc("texemptyimage2d", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt); // target
-        mArgTypes.append(argt); // level
-        mArgTypes.append(argt); // internalFormat
-        mArgTypes.append(argt); // width
-        mArgTypes.append(argt); // height
+    TexEmptyImage2D(Demo::GLWidget* p): GLProc("texemptyimage2d", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // target
+        mArgTypes.append(new Integer_T); // level
+        mArgTypes.append(new Integer_T); // internalFormat
+        mArgTypes.append(new Integer_T); // width
+        mArgTypes.append(new Integer_T); // height
         // skip border: always = 0
-        mArgTypes.append(argt); // format
-        mArgTypes.append(argt); // type
+        mArgTypes.append(new Integer_T); // format
+        mArgTypes.append(new Integer_T); // type
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1032,19 +991,18 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(TexEmptyImage2D)
+    COPY_AND_CLONE(TexEmptyImage2D)
 };
 
 class Viewport: public GLProc {
 
 public:
 
-    Viewport(Demo::GLWidget* p): GLProc("viewport", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt); // x
-        mArgTypes.append(argt); // y
-        mArgTypes.append(argt); // width
-        mArgTypes.append(argt); // height
+    Viewport(Demo::GLWidget* p): GLProc("viewport", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // x
+        mArgTypes.append(new Integer_T); // y
+        mArgTypes.append(new Integer_T); // width
+        mArgTypes.append(new Integer_T); // height
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1057,17 +1015,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Viewport)
+    COPY_AND_CLONE(Viewport)
 };
 
 class BlendFunc: public GLProc {
 
 public:
 
-    BlendFunc(Demo::GLWidget* p): GLProc("blendfunc", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    BlendFunc(Demo::GLWidget* p): GLProc("blendfunc", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1078,7 +1035,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BlendFunc)
+    COPY_AND_CLONE(BlendFunc)
 ;
 };
 
@@ -1087,9 +1044,8 @@ class BlendEquation: public GLProc {
 
 public:
 
-    BlendEquation(Demo::GLWidget* p): GLProc("blendequation", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    BlendEquation(Demo::GLWidget* p): GLProc("blendequation", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1099,16 +1055,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BlendEquation)
+    COPY_AND_CLONE(BlendEquation)
 };
 
 class BlendColor: public GLProc {
 
 public:
 
-    BlendColor(Demo::GLWidget* p): GLProc("blendcolor", Symbol::Integer, p) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
+    BlendColor(Demo::GLWidget* p): GLProc("blendcolor", new Integer_T, p) {
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1118,17 +1073,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BlendColor)
+    COPY_AND_CLONE(BlendColor)
 };
 
 class PolygonOffset: public GLProc {
 
 public:
 
-    PolygonOffset(Demo::GLWidget* p): GLProc("polygonoffset", Symbol::Integer, p) {
-        int argt = Symbol::Real;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    PolygonOffset(Demo::GLWidget* p): GLProc("polygonoffset", new Integer_T, p) {
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1140,16 +1094,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(PolygonOffset)
+    COPY_AND_CLONE(PolygonOffset)
 };
 
 class DepthFunc: public GLProc {
 
 public:
 
-    DepthFunc(Demo::GLWidget* p): GLProc("depthfunc", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DepthFunc(Demo::GLWidget* p): GLProc("depthfunc", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1159,7 +1112,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DepthFunc)
+    COPY_AND_CLONE(DepthFunc)
 };
 
 
@@ -1167,11 +1120,10 @@ class StencilFunc: public GLProc {
 
 public:
 
-    StencilFunc(Demo::GLWidget* p): GLProc("stencilfunc", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    StencilFunc(Demo::GLWidget* p): GLProc("stencilfunc", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1183,18 +1135,17 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(StencilFunc)
+    COPY_AND_CLONE(StencilFunc)
 };
 
 class StencilOp: public GLProc {
 
 public:
 
-    StencilOp(Demo::GLWidget* p): GLProc("stencilop", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    StencilOp(Demo::GLWidget* p): GLProc("stencilop", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1206,14 +1157,14 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(StencilOp)
+    COPY_AND_CLONE(StencilOp)
 };
 
 class GenFrameBuffer: public GLProc {
 
 public:
 
-    GenFrameBuffer(Demo::GLWidget* p): GLProc("genframebuffer", Symbol::Integer, p) {}
+    GenFrameBuffer(Demo::GLWidget* p): GLProc("genframebuffer", new Integer_T, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         GLuint res = mParent->resource("frame_buffer");
@@ -1222,16 +1173,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(GenFrameBuffer)
+    COPY_AND_CLONE(GenFrameBuffer)
 };
 
 class DeleteFrameBuffer: public GLProc {
 
 public:
 
-    DeleteFrameBuffer(Demo::GLWidget* p): GLProc("deleteframebuffer", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DeleteFrameBuffer(Demo::GLWidget* p): GLProc("deleteframebuffer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1245,7 +1195,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DeleteFrameBuffer)
+    COPY_AND_CLONE(DeleteFrameBuffer)
 };
 
 
@@ -1253,10 +1203,9 @@ class BindFrameBuffer: public GLProc {
 
 public:
 
-    BindFrameBuffer(Demo::GLWidget* p): GLProc("bindframebuffer", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    BindFrameBuffer(Demo::GLWidget* p): GLProc("bindframebuffer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1268,7 +1217,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BindFrameBuffer)
+    COPY_AND_CLONE(BindFrameBuffer)
 };
 
 
@@ -1276,13 +1225,12 @@ class FrameBufferTexture2D: public GLProc {
 
 public:
 
-    FrameBufferTexture2D(Demo::GLWidget* p): GLProc("framebuffertexture2d", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    FrameBufferTexture2D(Demo::GLWidget* p): GLProc("framebuffertexture2d", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1297,20 +1245,19 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(FrameBufferTexture2D)
+    COPY_AND_CLONE(FrameBufferTexture2D)
 };
 
 class FrameBufferTextureLayer: public GLProc {
 
 public:
 
-    FrameBufferTextureLayer(Demo::GLWidget* p): GLProc("framebuffertexturelayer", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    FrameBufferTextureLayer(Demo::GLWidget* p): GLProc("framebuffertexturelayer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1325,16 +1272,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(FrameBufferTextureLayer)
+    COPY_AND_CLONE(FrameBufferTextureLayer)
 };
 
 class CheckFrameBufferStatus: public GLProc {
 
 public:
 
-    CheckFrameBufferStatus(Demo::GLWidget* p): GLProc("checkframebufferstatus", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    CheckFrameBufferStatus(Demo::GLWidget* p): GLProc("checkframebufferstatus", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1348,16 +1294,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(CheckFrameBufferStatus)
+    COPY_AND_CLONE(CheckFrameBufferStatus)
 };
 
 class DrawBuffer: public GLProc {
 
 public:
 
-    DrawBuffer(Demo::GLWidget* p): GLProc("drawbuffer", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DrawBuffer(Demo::GLWidget* p): GLProc("drawbuffer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1368,16 +1313,15 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DrawBuffer)
+    COPY_AND_CLONE(DrawBuffer)
 };
 
 class BindVertexArray: public GLProc {
 
 public:
 
-    BindVertexArray(Demo::GLWidget* p): GLProc("bindvertexarray", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    BindVertexArray(Demo::GLWidget* p): GLProc("bindvertexarray", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1387,30 +1331,29 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(BindVertexArray)
+    COPY_AND_CLONE(BindVertexArray)
 };
 
 class GenVertexArray: public GLProc {
 
 public:
 
-    GenVertexArray(Demo::GLWidget* p): GLProc("genvertexarray", Symbol::Integer, p) {}
+    GenVertexArray(Demo::GLWidget* p): GLProc("genvertexarray", new Integer_T, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         mValue.setValue(mParent->resource("vertex_array"));
         return mValue;
     }
 
-    CLONEMETHOD(GenVertexArray)
+    COPY_AND_CLONE(GenVertexArray)
 };
 
 class DeleteVertexArray: public GLProc {
 
 public:
 
-    DeleteVertexArray(Demo::GLWidget* p): GLProc("deletevertexarray", Symbol::Integer, p) {
-        int argt = Symbol::Integer;
-        mArgTypes.append(argt);
+    DeleteVertexArray(Demo::GLWidget* p): GLProc("deletevertexarray", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
@@ -1423,7 +1366,7 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(DeleteVertexArray)
+    COPY_AND_CLONE(DeleteVertexArray)
 };
 
 

@@ -24,6 +24,7 @@
 
 #include "symbol.h"
 #include "math3d.h"
+#include "value.h"
 
 #include <QVariant>
 #include <QSharedData>
@@ -34,8 +35,10 @@ class Variable: public Symbol {
 
 public:
 
-    virtual void setValue(const QVariant& val) = 0;
-    virtual const QVariant& value() const = 0;
+    using Path = QVector<int>;
+
+    virtual void setValue(const QVariant& val, const Path& path = Path()) = 0;
+    virtual QVariant value(const Path& path = Path()) const = 0;
 
     unsigned index() const {return mIndex;}
     void setIndex(unsigned idx) {mIndex = idx;}
@@ -47,7 +50,7 @@ public:
 
 protected:
 
-    Variable(const QString& name): Symbol(name), mIndex(0) {}
+    Variable(QString name, Type* type): Symbol(name, type), mIndex(0) {}
 
 protected:
 
@@ -55,60 +58,55 @@ protected:
 
 };
 
-template <typename T> class LocalVar: public Variable {
+class LocalVar: public Variable {
 public:
-    LocalVar(const QString& name): Variable(name), mValue() {}
-    const QVariant& value() const override {return mValue;}
-    void setValue(const QVariant& val) override {mValue.setValue(val.value<T>());}
-    int type() const override {return qMetaTypeId<T>();}
+    LocalVar(QString name, Type* type)
+        : Variable(name, type)
+        , mValue(Value::Create(type)) {}
+    LocalVar(const LocalVar& v)
+        : Variable(v.name(), v.type()->clone())
+        , mValue(v.mValue->clone()) {}
+
+    QVariant value(const Path& p = Path()) const override {return mValue->get(p);}
+    void setValue(const QVariant& val, const Path& p = Path()) override {mValue->set(val, p);}
+
     LocalVar* clone() const override {return new LocalVar(*this);}
+
     bool shared() const override {return false;}
+
 protected:
-    QVariant mValue;
+
+    Value* mValue;
 };
 
 
 class SharedData: public QSharedData {
 public:
-    SharedData() = default;
-public:
-    QVariant value;
+    Value* value;
+    SharedData(Type* t): value(Value::Create(t)) {}
+    SharedData(const SharedData& other): value(other.value->clone()) {}
+    ~SharedData() {delete value;}
 };
 
-template <typename T> class SharedVar: public Variable {
+class SharedVar: public Variable {
 public:
-    SharedVar(const QString& name): Variable(name) {d = new SharedData;}
-    const QVariant& value() const override {return d->value;}
-    void setValue(const QVariant& val) override {d->value.setValue(val.value<T>());}
-    int type() const override {return qMetaTypeId<T>();}
-    bool shared() const override {return true;}
+    SharedVar(QString name, Type* type)
+        : Variable(name, type) {d = new SharedData(type);}
+    SharedVar(const SharedVar& v)
+        : Variable(v.name(), v.type()->clone())
+        , d(v.d) {}
+
+    QVariant value(const Path& p = Path()) const override {return d->value->get(p);}
+    void setValue(const QVariant& val, const Path& p = Path()) override {d->value->set(val, p);}
+
     SharedVar* clone() const override {return new SharedVar(*this);}
+
+    bool shared() const override {return true;}
+
 protected:
     QExplicitlySharedDataPointer<SharedData> d;
 };
 
-
-namespace Var {
-
-namespace Local {
-using Natural = LocalVar<Math3D::Integer>;
-using Real = LocalVar<Math3D::Real>;
-using Matrix = LocalVar<Math3D::Matrix4>;
-using Vector = LocalVar<Math3D::Vector4>;
-using Text = LocalVar<QString>;
-}
-
-namespace Shared {
-using Natural = SharedVar<Math3D::Integer>;
-using Real = SharedVar<Math3D::Real>;
-using Matrix = SharedVar<Math3D::Matrix4>;
-using Vector = SharedVar<Math3D::Vector4>;
-using Text = SharedVar<QString>;
-}
-
-Variable* Create(int kind, const QString& name, bool shared);
-
-} // namespace Var
 
 using VariableMap = QMap<QString, Variable*>;
 

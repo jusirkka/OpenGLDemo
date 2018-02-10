@@ -62,16 +62,12 @@ class Assignment: public Statement {
 
 public:
 
-    Assignment(int index, CodeStack c, ValueStack i, unsigned stackSize, int p)
-        : Statement(c, i, stackSize, p)
-        , mVarIndex(index) {}
+    Assignment(CodeStack c, ValueStack i, unsigned stackSize, int p)
+        : Statement(c, i, stackSize, p) {}
 
     int exec_and_jump(VariableIndexMap& vars, const FunctionVector& funcs) override;
     Assignment* clone() const override {return new Assignment(*this);}
 
-private:
-
-    int mVarIndex;
 };
 
 class BaseJump: public Statement {

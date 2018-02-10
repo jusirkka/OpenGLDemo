@@ -2,11 +2,11 @@ From "get locations" import  u_v_light, u_m_light_colors
 
 From "" import projection, camera
 
-Vector pos
-Matrix colors, model
+Var pos: Vector
+Var colors, model: Matrix
 
 pos = vec(25, 25, 25, 0)
-colors = mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
+colors = matcol(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
 model = translation(pos)
 
 uniform4f u_v_light, camera*pos

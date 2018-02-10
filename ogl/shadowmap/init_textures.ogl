@@ -6,7 +6,7 @@ useprogram prog_phong
 activetexture texture0
 uniform1i u_t_img, 0
 
-Shared Natural tex_checker = gentexture()
+Shared Var tex_checker: Natural = gentexture()
 bindtexture texture_2d, tex_checker
 teximage2d texture_2d, 0, rgba, imagestore, "checker"
 generatemipmap texture_2d
@@ -14,11 +14,11 @@ generatemipmap texture_2d
 activetexture texture0 + 1
 uniform1i u_t_shadow, 1
 
-Shared Natural fbo_shadow = genframebuffer()
+Shared Var fbo_shadow: Natural = genframebuffer()
 bindframebuffer framebuffer, fbo_shadow
 drawbuffer none
 
-Shared Natural tex_shadow = gentexture()
+Shared Var tex_shadow: Natural = gentexture()
 bindtexture texture_2d, tex_shadow
 From "" import width, height
 texemptyimage2d texture_2d, 0, depth_component24, \

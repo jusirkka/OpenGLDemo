@@ -59,27 +59,31 @@ public:
 
     // grammar interface
     bool createCompletion(const IdentifierType& id, unsigned completionMask) override;
-    void addVariable(Variable* v) override;
+    void addSymbol(Symbol* s) override;
     bool hasSymbol(const QString& sym) const override;
     Symbol* symbol(const QString& sym) const override;
     bool isImported(const Variable* var) const override;
     bool isExported(const QString& v, const QString& script) const override;
     void addImported(const QString& v, const QString& script) override;
     bool isScript(const QString& name) const override;
-    void createError(const QString&, Error) override {}
+    void createError(const QString&, QString) override {}
     void addSubscript(const QString&) override {}
-    void setCode(const QString&) override {}
+    void binit(const Type*) override {}
+    void assignment() override {}
     void pushBack(unsigned, unsigned, int) override {}
     void setJump() override {}
     void initJump() override {}
     void pushBackImmed(int) override {}
     void pushBackImmed(Math3D::Real) override {}
     void pushBackImmed(const QVariant&) override {}
+    void setImmed(int, int) override {}
+    int getImmed() const override {return 0;}
     void beginWhile() override {}
     void beginIf() override {}
     bool endWhile() override {return true;}
     bool endIf() override {return true;}
     bool addElse() override {return true;}
+    bool addElsif() override {return true;}
 
 
     ~Completer() override;
@@ -92,7 +96,6 @@ private:
 
 private:
 
-    VariableVector mVariables;
     VariableMap mExports;
     SymbolMap mSymbols;
     QStringList mReserved;

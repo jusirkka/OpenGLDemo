@@ -34,7 +34,7 @@ public:
     bool subscriptRelation(const QString& top, const QString& sub);
     void dispatch(const QString& other) const;
     const EditorVector& editors() const;
-    void appendEditor(CodeEditor* ed, const QString& script, const QString& file);
+    void appendEditor(CodeEditor* ed, const QString& file);
     void removeEditor(int index);
     CodeEditor* editor(const QString& name) const;
     CodeEditor* editor(int index) const;

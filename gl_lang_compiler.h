@@ -73,11 +73,11 @@ class Compiler: public QObject, public Parser {
 public:
 
 
-    using FunctionVector = QVector<Demo::Function*>;
+    using FunctionVector = QVector<Function*>;
     using StatementVector = QVector<Demo::Statement::Statement*>;
     using CodeStack = Demo::Statement::Statement::CodeStack;
     using ValueStack = Demo::Statement::Statement::ValueStack;
-    using IndexStack = QStack<int>;
+    using TypeList = Type::List;
 
 public:
 
@@ -89,16 +89,18 @@ public:
     void run();
 
     // grammar interface
-    void setCode(const QString& name) override;
+    void assignment() override;
     void pushBack(unsigned op, unsigned lrtype, int inc) override;
     void setJump() override;
     void initJump() override;
     void pushBackImmed(int constVal) override;
     void pushBackImmed(Math3D::Real constVal) override;
     void pushBackImmed(const QVariant& constVal) override;
-    void createError(const QString& item, Error err) override;
+    void setImmed(int index, int val) override;
+    int getImmed() const override;
+    void createError(const QString& item, QString detail) override;
     bool createCompletion(const IdentifierType& id, unsigned completionMask) override;
-    void addVariable(Variable* v) override;
+    void addSymbol(Symbol* s) override;
     bool hasSymbol(const QString& sym) const override;
     Symbol* symbol(const QString& sym) const override;
     bool isImported(const Variable* var) const override;
@@ -106,11 +108,13 @@ public:
     void addImported(const QString& v, const QString& script) override;
     bool isScript(const QString& name) const override;
     void addSubscript(const QString& name) override;
+    void binit(const Type* t) override;
     void beginWhile() override;
     void beginIf() override;
     bool endWhile() override;
     bool endIf() override;
     bool addElse() override;
+    bool addElsif() override;
 
     const QStringList& subscripts() const;
     const VariableMap& exports() const;
@@ -139,6 +143,19 @@ private:
     void reset();
     int checkControls();
 
+    class PendingJump {
+    public:
+        PendingJump(int c = -1, int j = -1): cond(c), jump(j) {}
+        PendingJump(const PendingJump& p): cond(p.cond), jump(p.jump) {}
+        bool hasElse () const {return jump != -1;}
+        int cond;
+        int jump;
+    };
+
+    using IndexStack = QStack<int>;
+    using PendingJumpStack = QStack<PendingJump>;
+    using PendingIfStack = QStack<PendingJumpStack>;
+
 private:
 
     StatementVector mStatements;
@@ -148,11 +165,11 @@ private:
     CodeStack mCurrent;
     ValueStack mCurrImmed;
     IndexStack mWhiles;
-    IndexStack mConds;
+    PendingIfStack mConds;
     int mStackSize;
     int mStackPos;
-    int mCodeSize;
-    int mImmedSize;
+    int mCodeAddr;
+    int mImmedAddr;
     yyscan_t mScanner;
     CompileError mError;
     Runner* mRunner;
@@ -162,6 +179,7 @@ private:
     Scope* mGlobalScope;
     QStringList mImportScripts;
     QStringList mSubscripts;
+    TypeList mTmpTypes;
 };
 
 

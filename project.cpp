@@ -74,10 +74,10 @@ Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals,
     connect(this, SIGNAL(drawChanged()), mTarget, SLOT(drawChanged()));
     connect(mWatcher, SIGNAL(fileChanged(const QString&)), this, SLOT(fileChanged(const QString&)));
 
-    CodeEditor* ed = new CodeEditor(mInitName, mGlobals, this);
-    mGlobals->appendEditor(ed, "clearcolor vec(.1,.2,.2,1)\n", "");
-    ed = new CodeEditor(mDrawName, mGlobals, this);
-    mGlobals->appendEditor(ed, "clear color_buffer_bit\n", "");
+    CodeEditor* ed = new CodeEditor(mInitName, mGlobals, this, "clearcolor vec(.1,.2,.2,1)\n");
+    mGlobals->appendEditor(ed, "");
+    ed = new CodeEditor(mDrawName, mGlobals, this, "clear color_buffer_bit\n");
+    mGlobals->appendEditor(ed, "");
 
     mInit = mGlobals->editor(mInitName);
     connect(mTarget, SIGNAL(init()), mInit, SLOT(run()));
@@ -185,8 +185,8 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
         QString fname = info.canonicalFilePath();
 
         if (value.isEmpty()) {
-            CodeEditor* ed = new CodeEditor(uniqueName(key, mGlobals->itemSample()), mGlobals, this);
-            mGlobals->appendEditor(ed, QString("// Not bound to a file\n"), value);
+            CodeEditor* ed = new CodeEditor(uniqueName(key, mGlobals->itemSample()), mGlobals, this, "// Not bound to a file\n");
+            mGlobals->appendEditor(ed, value);
 
         } else {
             if (!info.exists()) throw BadProject(QString(R"(Script file "%1" does not exist)").arg(value));
@@ -194,8 +194,8 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
 
             QFile file(fname);
             file.open(QFile::ReadOnly);
-            CodeEditor* ed = new CodeEditor(uniqueName(key, mGlobals->itemSample()), mGlobals, this);
-            mGlobals->appendEditor(ed, QString(file.readAll()), value);
+            CodeEditor* ed = new CodeEditor(uniqueName(key, mGlobals->itemSample()), mGlobals, this, QString(file.readAll()));
+            mGlobals->appendEditor(ed, value);
 
             file.close();
         }
@@ -724,8 +724,8 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
     if (parent == itemParent(ScriptItems)) {
 
         beginInsertRows(parent, row, row);
-        CodeEditor* ed = new CodeEditor(uniqueName(name, mGlobals->itemSample()), mGlobals, this);
-        mGlobals->appendEditor(ed, "// new commands here\n", file);
+        CodeEditor* ed = new CodeEditor(uniqueName(name, mGlobals->itemSample()), mGlobals, this, "// new commands here\n");
+        mGlobals->appendEditor(ed, file);
         endInsertRows();
 
     } else if (parent == itemParent(ModelItems)) {

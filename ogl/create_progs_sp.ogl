@@ -1,10 +1,10 @@
-Natural f_shader = createshader(fragment_shader)
+Var f_shader: Natural = createshader(fragment_shader)
 compileshader f_shader, source("phong frag")
 
-Natural v_shader = createshader(vertex_shader)
+Var v_shader: Natural = createshader(vertex_shader)
 compileshader v_shader, source("phong vert")
 
-Shared Natural prog_phong = createprogram()
+Shared Var prog_phong: Natural = createprogram()
 attachshader prog_phong, v_shader
 attachshader prog_phong, f_shader
 linkprogram prog_phong
@@ -16,7 +16,7 @@ compileshader f_shader, source("shadow frag")
 v_shader = createshader(vertex_shader)
 compileshader v_shader, source("shadow vert")
 
-Shared Natural prog_shadow = createprogram()
+Shared Var prog_shadow: Natural = createprogram()
 attachshader prog_shadow, v_shader
 attachshader prog_shadow, f_shader
 linkprogram prog_shadow

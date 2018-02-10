@@ -17,6 +17,7 @@
 
 #include "scope.h"
 #include "constant.h"
+#include "typedef.h"
 #include "codeeditor.h"
 #include "gl_lang_compiler.h"
 
@@ -35,9 +36,11 @@ Completer::Completer(Scope* globalScope, CodeEditor *parent):
     mCompleter(new QCompleter(parent)),
     mCompletionPos(-1) {
 
-    mReserved << "Real" << "Matrix" << "Vector" << "Natural" <<
-                 "Text" << "Shared" << "Execute" << "From" << "import" <<
-                 "While" << "Endwhile" << "If" << "Else" << "Endif";
+    gl_lang_lex_init(&mScanner);
+
+    mReserved << "Shared" << "Execute" << "From" << "import" <<
+                 "While" << "Endwhile" << "If" << "Else" << "Elsif" << "Endif" <<
+                 "Array" << "of" << "Type" << "Var" << "Record";
 
     mCompleter->setWidget(parent);
     mCompleter->setWrapAround(false);
@@ -53,23 +56,23 @@ void Completer::complete(const QString& script, int completionPos) {
 
     qDeleteAll(mSymbols);
     mSymbols.clear();
-    mVariables.clear();
-    addVariable(new Var::Local::Natural("gl_result"));
+    mExports.clear();
+    addSymbol(new LocalVar("gl_result", new Integer_T));
 
     mCompletions = CompleterException();
 
-    gl_lang_lex_init(&mScanner);
     mCompletionPos = completionPos;
-    QString source = script;
     // ensure that the source ends with newlines
-    YY_BUFFER_STATE buf = gl_lang__scan_string(source.append("\n\n").toUtf8().data(), mScanner);
+    QString source = "\n" + script + "\n\n";
+    YY_BUFFER_STATE buf = gl_lang__scan_string(source.toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
     if (err && mCompletions.completions().isEmpty()) {
         IdentifierType id;
         id.pos = gl_lang_get_lloc(mScanner)->pos;
         id.name = QString(gl_lang_get_text(mScanner));
-        createCompletion(id, CompleteReserved);
+        createCompletion(id, CR);
     }
+
     gl_lang__delete_buffer(buf, mScanner);
     if (err && !mCompletions.completions().isEmpty()) throw mCompletions;
 }
@@ -121,16 +124,18 @@ bool Completer::createCompletion(const IdentifierType &id, unsigned mask) {
     for (auto& it: its) {
         while (it.hasNext()) {
             it.next();
-            if (dynamic_cast<Variable*>(it.value()) && (mask & CompleteVariables)) {
+            if (dynamic_cast<Variable*>(it.value()) && (mask & CR)) {
                 addCompletion(completions, it.value()->name(), id.name);
-            } else if (dynamic_cast<Function*>(it.value()) && (mask & CompleteFunctions)) {
+            } else if (dynamic_cast<Function*>(it.value()) && (mask & CF)) {
                 addCompletion(completions, it.value()->name(), id.name);
-            } else if (dynamic_cast<Constant*>(it.value()) && (mask & CompleteConstants)) {
+            } else if (dynamic_cast<Constant*>(it.value()) && (mask & CC)) {
+                addCompletion(completions, it.value()->name(), id.name);
+            } else if (dynamic_cast<Typedef*>(it.value()) && (mask & CT)) {
                 addCompletion(completions, it.value()->name(), id.name);
             }
         }
     }
-    if (mask & CompleteReserved) {
+    if (mask & CR) {
         for (const QString& word: mReserved) {
             addCompletion(completions, word, id.name);
         }
@@ -145,19 +150,17 @@ bool Completer::createCompletion(const IdentifierType &id, unsigned mask) {
 
 Completer::~Completer() {
     qDeleteAll(mSymbols);
+    gl_lang_lex_destroy(mScanner);
 }
 
 
 
-void Completer::addVariable(Variable* v) {
-    // qDebug() << "adding" << objectName() << v->name();
-    v->setIndex(mVariables.size() + Scope::VariableOffset);
-    mVariables.append(v);
-    mSymbols[v->name()] = v;
-    if (v->shared()) {
-        // qDebug() << "exporting" << objectName() << v->name();
+void Completer::addSymbol(Symbol* s) {
+    auto v = dynamic_cast<Variable*>(s);
+    if (v && v->shared()) {
         mExports[v->name()] = v;
     }
+    mSymbols[s->name()] = s;
 }
 
 bool Completer::hasSymbol(const QString& sym) const {
@@ -195,9 +198,6 @@ void Completer::addImported(const QString& name, const QString& script) {
     } else {
         v = mGlobalScope->compiler(script)->exports().value(name)->clone();
     }
-
-    v->setIndex(mVariables.size() + Scope::VariableOffset);
-    mVariables.append(v);
     mSymbols[v->name()] = v;
 
 }

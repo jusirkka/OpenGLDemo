@@ -13,6 +13,7 @@ using yyscan_t = void *;
 
 
 class QTextDocument;
+class QTimer;
 
 namespace Demo {
 namespace GL {
@@ -44,6 +45,7 @@ private:
     QTextCharFormat mFunction;
     QTextCharFormat mConstant;
     QTextCharFormat mVariable;
+    QTextCharFormat mType;
     QTextCharFormat mText;
     FormatMap mFormats;
     yyscan_t mScanner;

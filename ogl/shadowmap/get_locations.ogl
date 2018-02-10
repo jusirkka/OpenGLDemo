@@ -1,22 +1,22 @@
 From "create progs" import prog_phong, prog_depth 
 
 
-Shared Natural u_m_n = getuniformlocation(prog_phong, "n_matrix")
-Shared Natural u_m_vm = getuniformlocation(prog_phong, "vm_matrix")
-Shared Natural u_m_pvm = getuniformlocation(prog_phong, "pvm_matrix")
-Shared Natural u_v_light = getuniformlocation(prog_phong, "light")
-Shared Natural u_m_material_colors = getuniformlocation(prog_phong, "material_colors")
-Shared Natural u_m_light_colors = getuniformlocation(prog_phong, "light_colors")
-Shared Natural u_s_shininess = getuniformlocation(prog_phong, "shininess")
-Shared Natural u_t_img = getuniformlocation(prog_phong, "img")
-Shared Natural u_s_scale = getuniformlocation(prog_phong, "scale")
+Shared Var u_m_n: Natural = getuniformlocation(prog_phong, "n_matrix")
+Shared Var u_m_vm: Natural = getuniformlocation(prog_phong, "vm_matrix")
+Shared Var u_m_pvm: Natural = getuniformlocation(prog_phong, "pvm_matrix")
+Shared Var u_v_light: Natural = getuniformlocation(prog_phong, "light")
+Shared Var u_m_material_colors: Natural = getuniformlocation(prog_phong, "material_colors")
+Shared Var u_m_light_colors: Natural = getuniformlocation(prog_phong, "light_colors")
+Shared Var u_s_shininess: Natural = getuniformlocation(prog_phong, "shininess")
+Shared Var u_t_img: Natural = getuniformlocation(prog_phong, "img")
+Shared Var u_s_scale: Natural = getuniformlocation(prog_phong, "scale")
 
-Shared Natural a_vertex = getattriblocation(prog_phong, "vertex")
-Shared Natural a_normal = getattriblocation(prog_phong, "normal")
-Shared Natural a_tex = getattriblocation(prog_phong, "tex")
+Shared Var a_vertex: Natural = getattriblocation(prog_phong, "vertex")
+Shared Var a_normal: Natural = getattriblocation(prog_phong, "normal")
+Shared Var a_tex: Natural = getattriblocation(prog_phong, "tex")
 
-Shared Natural u_t_shadow = getuniformlocation(prog_phong, "shadowmap")
-Shared Natural u_m_bpvm = getuniformlocation(prog_phong, "bpvm_matrix")
+Shared Var u_t_shadow: Natural = getuniformlocation(prog_phong, "shadowmap")
+Shared Var u_m_bpvm: Natural = getuniformlocation(prog_phong, "bpvm_matrix")
 
-Shared Natural u_m_pvm_d = getuniformlocation(prog_depth, "pvm_matrix")
-Shared Natural a_vertex_d = getattriblocation(prog_depth, "vertex")
+Shared Var u_m_pvm_d: Natural = getuniformlocation(prog_depth, "pvm_matrix")
+Shared Var a_vertex_d: Natural = getattriblocation(prog_depth, "vertex")

@@ -1,5 +1,5 @@
 %{
-#include "gl_lang_compiler.h"
+#include "gl_lang_parser_interface.h"
 #include "gl_lang_parser.h"
 #ifndef YYSTYPE
 #define YYSTYPE GL_LANG_STYPE
@@ -38,24 +38,10 @@ float           {float_1}|{float_2}|{float_3}
 hex             [0-9a-fA-F]
 numh            0x{hex}+
 
-singlechar      [\*\/+\-\^=<>\!,\(\)\[\]@]
+singlechar      [\*\/+\-\^=<>\!,\(\)\[\]@\{\}\.:]
 
 id              [A-Za-z_][A-Za-z0-9_]*
 
-real            Real
-matrix          Matrix
-vector          Vector
-natural         Natural
-text            Text
-shared          Shared
-execute         Execute
-from            From
-import          import
-while           While
-endwhile        Endwhile
-if              If
-else            Else
-endif           Endif
 
 %x INSTRING
 
@@ -76,20 +62,21 @@ endif           Endif
 "&"             yylval->v_int = BAND; return BAND;
 
 
-{real}          return REAL;
-{vector}        return VECTOR;
-{matrix}        return MATRIX;
-{natural}       return NATURAL;
-{text}          return TEXT;
-{shared}        return SHARED;
-{execute}       return EXECUTE;
-{from}          return FROM;
-{import}        return IMPORT;
-{while}         return WHILE;
-{endwhile}      return ENDWHILE;
-{if}            return IF;
-{else}          return ELSE;
-{endif}         return ENDIF;
+"Shared"        return SHARED;
+"Execute"       return EXECUTE;
+"From"          return FROM;
+"import"        return IMPORT;
+"While"         return WHILE;
+"Endwhile"      return ENDWHILE;
+"If"            return IF;
+"Else"          return ELSE;
+"Endif"         return ENDIF;
+"Elsif"         return ELSIF;
+"Array"         return ARRAY;
+"of"            return OF;
+"Record"        return RECORD;
+"Type"          return TYPE;
+"Var"           return VAR;
 
 {id}            {
                     yylval->v_identifier.name = yytext;

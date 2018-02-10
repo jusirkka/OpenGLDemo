@@ -34,17 +34,22 @@ using Math3D::Matrix4;
 
 
 
+
 namespace Demo {
 
+using Real_T = BaseType<Math3D::Real>;
+using Integer_T = BaseType<Math3D::Integer>;
+using Vector_T = BaseType<Vector4>;
+using Matrix_T = BaseType<Matrix4>;
+using Text_T = BaseType<QString>;
 
 class Function: public Symbol {
 
     public:
 
-        using TypeVector = Symbol::TypeVector;
+        using TypeList = Type::List;
 
-        int type() const override {return mRetType;}
-        const TypeVector& argTypes() const {return mArgTypes;}
+        const TypeList& argTypes() const {return mArgTypes;}
 
         unsigned index() const {return mIndex;}
         void setIndex(unsigned idx) {mIndex = idx;}
@@ -53,17 +58,29 @@ class Function: public Symbol {
 
     protected:
 
-        Function(const QString& name, int type):
-            Symbol(name), mArgTypes(), mValue(), mRetType(type), mIndex(0) {}
+        Function(const QString& name, Type* type):
+            Symbol(name, type), mArgTypes(), mValue(), mIndex(0) {}
+
+        Function(const Function& f)
+            : Symbol(f)
+            , mValue()
+            , mIndex(f.index()) {
+            for (auto t: f.argTypes()) {
+                mArgTypes << t->clone();
+            }
+        }
+
+        ~Function() {qDeleteAll(mArgTypes);}
+
+
 
     protected:
 
-        TypeVector mArgTypes;
+        TypeList mArgTypes;
         QVariant mValue;
 
     private:
 
-        int mRetType;
         unsigned  mIndex;
 };
 
@@ -73,9 +90,8 @@ class StdFunction: public Function {
 
     public:
 
-        StdFunction(const QString& name, stdfun fun): Function(name, Symbol::Real), mFun(fun) {
-            int argt = Symbol::Real;
-            mArgTypes.append(argt);
+        StdFunction(const QString& name, stdfun fun): Function(name, new Real_T), mFun(fun) {
+            mArgTypes.append(new Real_T);
         }
 
         const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -83,7 +99,11 @@ class StdFunction: public Function {
             return mValue;
         }
 
-        CLONEMETHOD(StdFunction)
+        StdFunction(const StdFunction& f)
+            : Function(f)
+            , mFun(f.mFun) {}
+
+        CLONE(StdFunction)
 
     private:
 
@@ -91,16 +111,18 @@ class StdFunction: public Function {
 
 };
 
+#define COPY(T) T(const T& f): Function(f) {}
+
+
 class Vecx: public Function {
 
 public:
 
-    Vecx(): Function("vec", Symbol::Vector) {
-        int argt = Symbol::Real;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    Vecx(): Function("vec", new Vector_T) {
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -108,58 +130,85 @@ public:
                   vals[start+1].value<Math3D::Real>(),
                   vals[start+2].value<Math3D::Real>(),
                   vals[start+3].value<Math3D::Real>());
-        // qDebug() << "Vec";
 
         mValue.setValue(v);
         return mValue;
     }
 
-    CLONEMETHOD(Vecx)
+    COPY(Vecx)
+    CLONE(Vecx)
 
 };
 
 
-class Mat: public Function {
+class MatRow: public Function {
 
 public:
 
-    Mat(): Function("mat", Symbol::Matrix) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    MatRow(): Function("matrow", new Matrix_T) {
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
-        Math3D::Real values[16];
-        for (int i = 0; i < 4; i++) {
-            Vector4 v = vals[start + i].value<Math3D::Vector4>();
-            for (int j = 0; j < 4; j++) {
-                values[4 * i + j] = v.readArray()[j];
+        Matrix4 m;
+
+        for (int r = 0; r < 4; r++) {
+            Vector4 v = vals[start + r].value<Math3D::Vector4>();
+            for (int c = 0; c < 4; c++) {
+                m(c)[r] = v.readArray()[c];
             }
         }
-        Matrix4 m(values);
-        // qDebug() << "Mat";
-
 
         mValue.setValue(m);
         return mValue;
     }
 
-    CLONEMETHOD(Mat)
+    COPY(MatRow)
+    CLONE(MatRow)
 
 };
+
+class MatCol: public Function {
+
+public:
+
+    MatCol(): Function("matcol", new Matrix_T) {
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        Matrix4 m;
+
+        for (int c = 0; c < 4; c++) {
+            Vector4 v = vals[start + c].value<Math3D::Vector4>();
+            for (int r = 0; r < 4; r++) {
+                m(c)[r] = v.readArray()[r];
+            }
+        }
+
+        mValue.setValue(m);
+        return mValue;
+    }
+
+    COPY(MatCol)
+    CLONE(MatCol)
+
+};
+
 
 class Rot: public Function {
 
 public:
 
-    Rot(): Function("rotation", Symbol::Matrix) {
-        int argt = Symbol::Real;
-        mArgTypes.append(argt);
-        argt = Symbol::Vector;
-        mArgTypes.append(argt);
+    Rot(): Function("rotation", new Matrix_T) {
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -172,16 +221,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Rot)
+    COPY(Rot)
+    CLONE(Rot)
 };
 
 class Tr: public Function {
 
 public:
 
-    Tr(): Function("translation", Symbol::Matrix) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
+    Tr(): Function("translation", new Matrix_T) {
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -193,18 +242,19 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Tr)
+    COPY(Tr)
+    CLONE(Tr)
+
 };
 
 class Sc: public Function {
 
 public:
 
-    Sc(): Function("scaling", Symbol::Matrix) {
-        int argt = Symbol::Real;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    Sc(): Function("scaling", new Matrix_T) {
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -218,16 +268,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Sc)
+    COPY(Sc)
+    CLONE(Sc)
 };
 
 class Norm: public Function {
 
 public:
 
-    Norm(): Function("normalize", Symbol::Vector) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
+    Norm(): Function("normalize", new Vector_T) {
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -238,16 +288,17 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Norm)
+    COPY(Norm)
+    CLONE(Norm)
+
 };
 
 class NormalT: public Function {
 
 public:
 
-    NormalT(): Function("normal_transform", Symbol::Matrix) {
-        int argt = Symbol::Matrix;
-        mArgTypes.append(argt);
+    NormalT(): Function("normal_transform", new Matrix_T) {
+        mArgTypes.append(new Matrix_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -258,16 +309,16 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(NormalT)
+    COPY(NormalT)
+    CLONE(NormalT)
 };
 
 class Inverse: public Function {
 
 public:
 
-    Inverse(): Function("affine_inverse", Symbol::Matrix) {
-        int argt = Symbol::Matrix;
-        mArgTypes.append(argt);
+    Inverse(): Function("affine_inverse", new Matrix_T) {
+        mArgTypes.append(new Matrix_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -276,17 +327,17 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Inverse)
+    COPY(Inverse)
+    CLONE(Inverse)
 };
 
 class Refl: public Function {
 
 public:
 
-    Refl(): Function("reflection", Symbol::Matrix) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    Refl(): Function("reflection", new Matrix_T) {
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -303,7 +354,8 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Refl)
+    COPY(Refl)
+    CLONE(Refl)
 };
 
 
@@ -311,9 +363,8 @@ class Length: public Function {
 
 public:
 
-    Length(): Function("length", Symbol::Real) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
+    Length(): Function("length", new Real_T) {
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -322,7 +373,8 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(Length)
+    COPY(Length)
+    CLONE(Length)
 };
 
 
@@ -330,11 +382,10 @@ class LookAt: public Function {
 
 public:
 
-    LookAt(): Function("lookat", Symbol::Matrix) {
-        int argt = Symbol::Vector;
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
-        mArgTypes.append(argt);
+    LookAt(): Function("lookat", new Matrix_T) {
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
+        mArgTypes.append(new Vector_T);
     }
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
@@ -354,8 +405,10 @@ public:
         return mValue;
     }
 
-    CLONEMETHOD(LookAt)
+    COPY(LookAt)
+    CLONE(LookAt)
 };
+
 
 class Functions {
 
@@ -367,7 +420,8 @@ public:
 
     Functions() {
         contents.append(new Vecx());
-        contents.append(new Mat());
+        contents.append(new MatRow());
+        contents.append(new MatCol());
         contents.append(new Rot());
         contents.append(new Tr());
         contents.append(new Sc());
@@ -375,8 +429,8 @@ public:
         contents.append(new NormalT());
         contents.append(new Inverse());
         contents.append(new Refl());
-        contents.append(new LookAt());
         contents.append(new Length());
+        contents.append(new LookAt());
         FUN(sin);
         FUN(cos);
         FUN(tan);
@@ -400,6 +454,8 @@ public:
 };
 
 using FunctionVector = QVector<Demo::Function*>;
+
+#undef COPY
 
 } // namespace DEMO
 #endif // DEMO_FUNCTION_H

@@ -29,6 +29,7 @@ ModelStore::ModelStore()
     , mPatchState()
 {
     setObjectName("modelstore");
+    wavefront_lex_init(&mScanner);
     mData[GL_ARRAY_BUFFER] = Data();
     mData[GL_ELEMENT_ARRAY_BUFFER] = Data();
 }
@@ -334,7 +335,6 @@ void ModelStore::parseModelData(const QString& path) {
         file.close();
     }
 
-    wavefront_lex_init(&mScanner);
     YY_BUFFER_STATE buf = wavefront__scan_string(inp.toUtf8().data(), mScanner);
     int err = wavefront_parse(this, mScanner);
     wavefront__delete_buffer(buf, mScanner);

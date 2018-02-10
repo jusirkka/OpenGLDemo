@@ -1,7 +1,7 @@
 // Program
-Shared Natural prog_ex1 = createprogram()
+Shared Var prog_ex1: Natural = createprogram()
 
-Natural shader_handle
+Var shader_handle: Natural
 
 shader_handle = createshader(vertex_shader)
 compileshader shader_handle, source("vert main")
@@ -22,27 +22,27 @@ attachshader prog_ex1, shader_handle
 linkprogram prog_ex1
 
 
-Shared Natural u_v_resolution = getuniformlocation(prog_ex1, "iResolution")
-Shared Natural u_s_time = getuniformlocation(prog_ex1, "iTime")
+Shared Var u_v_resolution: Natural = getuniformlocation(prog_ex1, "iResolution")
+Shared Var u_s_time: Natural = getuniformlocation(prog_ex1, "iTime")
 
-Shared Natural u_m_invcam = getuniformlocation(prog_ex1, "iViewToWorld")
-Shared Natural u_m_invproj = getuniformlocation(prog_ex1, "iWindowToView")
+Shared Var u_m_invcam: Natural = getuniformlocation(prog_ex1, "iViewToWorld")
+Shared Var u_m_invproj: Natural = getuniformlocation(prog_ex1, "iWindowToView")
 
-Shared Natural u_m_model = getuniformlocation(prog_ex1, "model_matrix")
-Shared Natural a_vertex = getattriblocation(prog_ex1, "vertex")
+Shared Var u_m_model: Natural = getuniformlocation(prog_ex1, "model_matrix")
+Shared Var a_vertex: Natural = getattriblocation(prog_ex1, "vertex")
 
-Shared Natural u_s_radius = getuniformlocation(prog_ex1, "iEarthRadius")
+Shared Var u_s_radius: Natural = getuniformlocation(prog_ex1, "iEarthRadius")
 
 // Model buffers
 useprogram prog_ex1
-Natural vao = genvertexarray()
+Var vao: Natural = genvertexarray()
 bindvertexarray vao
 
-Shared Natural model_array = genbuffer()
+Shared Var model_array: Natural = genbuffer()
 bindbuffer array_buffer, model_array
 bufferdata array_buffer, modelstore, static_draw
 
-Shared Natural model_elements = genbuffer()
+Shared Var model_elements: Natural = genbuffer()
 bindbuffer element_array_buffer, model_elements
 bufferdata element_array_buffer, modelstore, static_draw
 

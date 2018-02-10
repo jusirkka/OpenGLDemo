@@ -18,50 +18,50 @@
 //   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // -----------------------------------------------------------------------
 
-#ifndef DEMO_SYMBOL_H
-#define DEMO_SYMBOL_H
 
-#include <QString>
-#include <QMap>
-#include "type.h"
+#ifndef DEMO_TYPEDEF_H
+#define DEMO_TYPEDEF_H
+
+#include "symbol.h"
+#include "math3d.h"
+
 
 namespace Demo {
 
-
-class Symbol {
-
-    public:
-
-        const QString& name() const {return mName;}
-        const Type* type() const {return mType;}
-
-        virtual Symbol* clone() const = 0;
-
-        virtual ~Symbol() {delete mType;}
-
-    protected:
-
-        Symbol(QString name, Type* type)
-            : mName(std::move(name))
-            , mType(std::move(type)) {}
-
-        Symbol(const Symbol& s)
-            : mName(s.name())
-            , mType(s.type()->clone()) {}
+using Real_T = BaseType<Math3D::Real>;
+using Integer_T = BaseType<Math3D::Integer>;
+using Vector_T = BaseType<Math3D::Vector4>;
+using Matrix_T = BaseType<Math3D::Matrix4>;
+using Text_T = BaseType<QString>;
 
 
-    protected:
+class Typedef: public Symbol {
 
-        QString mName;
-        Type* mType;
+public:
+
+    Typedef(QString name, Type* type): Symbol(name, type) {}
+    ~Typedef() = default;
+
+    Typedef(const Typedef& t): Symbol(t) {}
+    CLONE(Typedef)
+
 };
 
-using SymbolMap = QMap<QString, Symbol*>;
-using SymbolIterator = QMapIterator<QString, Symbol*>;
 
+class Basetypes {
 
-} // namespace Demo
+public:
 
-#define CLONE(T) T* clone() const override {return new T(*this);}
+    QVector<Demo::Symbol*> contents;
 
-#endif // DEMO_SYMBOL_H
+    Basetypes() {
+        contents.append(new Typedef("Real", new Real_T));
+        contents.append(new Typedef("Natural", new Integer_T));
+        contents.append(new Typedef("Vector", new Vector_T));
+        contents.append(new Typedef("Matrix", new Matrix_T));
+        contents.append(new Typedef("Text", new Text_T));
+    }
+};
+
+} // namespace DEMO
+#endif

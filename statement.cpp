@@ -163,15 +163,37 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
     bool jumpFlag = false;
     bool stopFlag = false;
 
+
     for (int ic = 0; ic < mCode.size(); ++ic) {
 
         int lrType = LRType(codes[ic]);
+
+        int index, numItems;
+        Function* fun;
+        QList<QVariant> list;
+        QVector<int> indices;
+        Variable* v;
 
         switch (Code(codes[ic])) {
 
         case Compiler::cImmed:
             mStack[++sPos] = mImmed[dPos++];
             break;
+
+        case Compiler::cImmedPath:
+            numItems = codes[++ic];
+            sPos -= numItems - 1;
+            index = mStack[sPos].toInt();
+            if (index < 0 || index > 3) throw RunError("Out of range error", mPos);
+            mStack[sPos] = mImmed[dPos++];
+            take_f(mStack[sPos], index, lrType);
+            if (numItems == 2) {
+                index = mStack[sPos + 1].toInt();
+                if (index < 0 || index > 3) throw RunError("Out of range error", mPos);
+                take_f(mStack[sPos], index, Compiler::cVI);
+            }
+            break;
+
 
         case Compiler::cNeg:
             neg_f(mStack[sPos], lrType);
@@ -242,30 +264,57 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
             break;
 
         case Compiler::cFun:
-        {
-            Function* fun = funcs[codes[++ic] - Scope::FunctionOffset];
+            fun = funcs[codes[++ic] - Scope::FunctionOffset];
             sPos -= fun->argTypes().size() - 1;
             mStack[sPos] = fun->execute(mStack, sPos);
-        }
             break;
 
         case Compiler::cVar:
             mStack[++sPos] = vars[codes[++ic]]->value();
             break;
 
-        case Compiler::cTake:
-        {
-            int index = mStack[sPos].value<int>();
-            if (index < 0 || index > 3) {
-                throw RunError("Out of range error", mPos);
+        case Compiler::cVarPath:
+            index = codes[++ic];
+            numItems = codes[++ic];
+            sPos -= numItems - 1;
+            indices.clear();
+            for (int k = 0; k < numItems; k++) {
+                indices << mStack[sPos + k].toInt();
             }
-            take_f(mStack[sPos-1], index, lrType);
-            --sPos;
-        }
+            mStack[sPos] = vars[index]->value(indices);
+            break;
+
+        case Compiler::cAss:
+            v = vars[codes[++ic]];
+            v->setValue(mStack[sPos]);
+            qDebug() <<"ass" << v->name() << "=" << v->value();
+            break;
+
+        case Compiler::cAssPath:
+            index = codes[++ic];
+            numItems = codes[++ic];
+            indices.clear();
+            for (int k = 0; k < numItems; k++) {
+                indices << mStack[sPos - numItems + k].toInt();
+            }
+            v = vars[index];
+            v->setValue(mStack[sPos], indices);
+            qDebug() << "asspath" << v->name() << "=" << v->value();
+            mStack[sPos - numItems] = mStack[sPos];
+            sPos -= numItems;
+            break;
+
+        case Compiler::cList:
+            numItems = codes[++ic];
+            sPos -= numItems - 1;
+            list.clear();
+            for (int k = 0; k < numItems; k++) {
+                list << mStack[sPos + k];
+            }
+            mStack[sPos] = QVariant::fromValue(list);
             break;
 
         case Compiler::cGuard:
-        {
             if (stopFlag) return mStack[sPos - 1];
 
             jumpFlag = !mStack[sPos].value<int>();
@@ -277,10 +326,7 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
                 ic += 2;
             }
             --sPos;
-        }
             break;
-
-
 
         default:
             Q_ASSERT(false);
@@ -297,10 +343,8 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
 
 
 int Assignment::exec_and_jump(VariableIndexMap& vars, const FunctionVector& funcs) {
-    Variable* v = vars[mVarIndex];
-    v->setValue(evalCode(vars, funcs));
+    evalCode(vars, funcs);
     return 1; // jump to the next statement
-    // qDebug() << v->name() << "=" << v->value();
 }
 
 

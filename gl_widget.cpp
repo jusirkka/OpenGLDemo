@@ -32,11 +32,10 @@ private:
 
 
 CameraConstraint::CameraConstraint(GLWidget* p)
-    : Function("cameraconstraint", Symbol::Integer)
+    : Function("cameraconstraint", new Integer_T)
     , mParent(p)
 {
-    int argt = Symbol::Integer;
-    mArgTypes.append(argt);
+    mArgTypes.append(new Integer_T);
 }
 
 const QVariant& CameraConstraint::execute(const QVector<QVariant>& vals, int start) {
@@ -64,7 +63,7 @@ private:
 
 
 DefaultFrameBuffer::DefaultFrameBuffer(GLWidget* p)
-    : Function("defaultframebuffer", Symbol::Integer)
+    : Function("defaultframebuffer", new Integer_T)
     , mParent(p)
 {
 }
@@ -123,14 +122,14 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
 
 
     // shared matrices
-    exports["camera"] = new Var::Shared::Matrix("camera");
-    exports["projection"] = new Var::Shared::Matrix("projection");
-    exports["inverse_projection"] = new Var::Shared::Matrix("inverse_projection");
+    exports["camera"] = new SharedVar("camera", new Matrix_T);
+    exports["projection"] = new SharedVar("projection", new Matrix_T);
+    exports["inverse_projection"] = new SharedVar("inverse_projection", new Matrix_T);
     // shared time variable
-    exports["time"] = new Var::Shared::Natural("time");
+    exports["time"] = new SharedVar("time", new Integer_T);
     // shared dimensions
-    exports["width"] = new Var::Shared::Natural("width");
-    exports["height"] = new Var::Shared::Natural("height");
+    exports["width"] = new SharedVar("width", new Integer_T);
+    exports["height"] = new SharedVar("height", new Integer_T);
 
     mCameraVar = exports["camera"]->clone();
     mCameraVar->setValue(QVariant::fromValue(mCamera->trans()));

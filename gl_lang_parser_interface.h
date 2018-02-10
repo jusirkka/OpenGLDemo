@@ -5,6 +5,7 @@
 #include "symbol.h"
 #include "variable.h"
 #include "function.h"
+#include "operation.h"
 
 #include "math3d.h"
 
@@ -29,6 +30,13 @@ class Widget;
 
 class LocationType {
 public:
+    LocationType()
+        : row(0)
+        , col(0)
+        , pos(0)
+        , prev_col(0)
+        , prev_pos(0) {}
+
     int row;
     int col;
     int pos;
@@ -42,6 +50,33 @@ public:
     int pos; // for autocompletion
 };
 
+
+class NamedTypeList {
+public:
+    QStringList names;
+    QVector<Type*> types;
+};
+
+class ArrayItemType {
+public:
+    int size;
+    const Type* type;
+};
+
+class RefPathType {
+public:
+    QVector<const Type*> types;
+    QVector<const Operation*> operations;
+    QVector<int> immeds;
+};
+
+class RefPathItemType {
+public:
+    const Type* type;
+    const Operation* operation;
+    int immed;
+};
+
 class ValueType {
 public:
     bool v_bool;
@@ -51,7 +86,14 @@ public:
     QString v_string;
     IdentifierType v_identifier;
     QStringList v_string_list;
-    Symbol::TypeVector v_int_list;
+    const Type* v_type;
+    Type* v_new_type;
+    const Operation* v_oper;
+    Type::List v_type_list;
+    NamedTypeList v_named_type_list;
+    ArrayItemType v_array_item;
+    RefPathItemType v_ref_path_item;
+    RefPathType v_ref_path;
 };
 
 
@@ -62,34 +104,24 @@ class Parser {
 
 public:
 
-    enum Error {
-        declared, notdeclared, notvariable, assincompatible, incompatibletypes,
-        expectedinteger, expectedintegerorreal, notfunction, wrongargs, incompatibleargs,
-        notvarorconst, expectedmatrix, expectedvectorormatrix, wrongcomps, duplicate,
-        notavariable, notasharedvariable, notarealvariable, notavectorvariable,
-        notamatrixvariable, notatextvariable, notaintegervariable, expectedarithmetictype,
-        nottext, assimported, notimported, scriptnotfound, expectedtextadd, roguestatement,
-        numerrors
-    };
+    static const unsigned CF = 0x01;
+    static const unsigned CV = 0x02;
+    static const unsigned CC = 0x04;
+    static const unsigned CR = 0x08;
+    static const unsigned CT = 0x10;
 
-    static const unsigned CompleteFunctions = 0x01;
-    static const unsigned CompleteVariables = 0x02;
-    static const unsigned CompleteConstants = 0x04;
-    static const unsigned CompleteReserved  = 0x08;
-    static const unsigned CompleteAll =       0x0f;
-    static const unsigned CompleteFVC =       0x07;
-    static const unsigned CompleteFVR =       0x0b;
-
-    virtual void setCode(const QString& name) = 0;
+    virtual void assignment() = 0;
     virtual void pushBack(unsigned op, unsigned lrtype, int inc) = 0;
     virtual void setJump() = 0;
     virtual void initJump() = 0;
     virtual void pushBackImmed(int constVal) = 0;
     virtual void pushBackImmed(Math3D::Real constVal) = 0;
     virtual void pushBackImmed(const QVariant& constVal) = 0;
-    virtual void createError(const QString& item, Error err) = 0;
+    virtual void setImmed(int index, int val) = 0;
+    virtual int getImmed() const = 0;
+    virtual void createError(const QString& item, QString detail) = 0;
     virtual bool createCompletion(const IdentifierType& id, unsigned completionMask) = 0;
-    virtual void addVariable(Variable* v) = 0;
+    virtual void addSymbol(Symbol* s) = 0;
     virtual bool hasSymbol(const QString& sym) const = 0;
     virtual Symbol* symbol(const QString& sym) const = 0;
     virtual bool isImported(const Variable* var) const = 0;
@@ -97,18 +129,20 @@ public:
     virtual void addImported(const QString& v, const QString& script) = 0;
     virtual bool isScript(const QString& name) const = 0;
     virtual void addSubscript(const QString& name) = 0;
+    virtual void binit(const Type* t) = 0;
     virtual void beginWhile() = 0;
     virtual void beginIf() = 0;
     virtual bool endWhile() = 0;
     virtual bool endIf() = 0;
     virtual bool addElse() = 0;
+    virtual bool addElsif() = 0;
 
 
     // codes
     enum Codes {
         cImmed, cAdd, cSub, cMul, cDiv, cEqual, cNEqual, cLess, cLessOrEq,
-        cGreater, cGreaterOrEq, cAnd, cOr, cNot, cFun, cVar, cTake, cNeg,
-        cGuard, cBOr, cBAnd
+        cGreater, cGreaterOrEq, cAnd, cOr, cNot, cFun, cVar, cNeg,
+        cGuard, cBOr, cBAnd, cList, cVarPath, cImmedPath, cAss, cAssPath
     };
 
     // LR types
@@ -119,11 +153,24 @@ public:
         cMI, cMS, cMV, cMM, cMT,
         cTI, cTS, cTV, cTM, cTT
     };
+
+
+    static int LRType(const Type* left, const Type* right);
+    static const Operation* Op(int token);
+    static const Type* Integer();
+    static const Type* Real();
+    static const Type* Text();
+    static const Type* Vector();
+    static const Type* Matrix();
 };
 
 
 }} // namespace Demo::GL
 
+// extra tokens
+#define TOKEN_MINUS -1
+#define TOKEN_PLUS -2
+#define TOKEN_TAKE -3
 
 #define YYLLOC_DEFAULT(Current, Rhs, N) do if (N) {\
     (Current).row = YYRHSLOC (Rhs, 1).row;\

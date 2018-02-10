@@ -2,8 +2,8 @@ From "get locations" import  u_v_light, u_m_light_colors
 From "" import projection, camera
 From "draw main" import light_direction
 
-Matrix colors = mat(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
-Matrix model = translation(light_direction)
+Var colors: Matrix = matcol(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
+Var model: Matrix = translation(light_direction)
 
 uniform4f u_v_light, camera*light_direction
 uniformmatrix4f u_m_light_colors, colors

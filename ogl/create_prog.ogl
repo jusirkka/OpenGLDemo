@@ -1,6 +1,6 @@
-Shared Natural prog
+Shared Var prog: Natural
 
-Natural f_shader, v_shader
+Var f_shader, v_shader: Natural
 
 f_shader = createshader(fragment_shader)
 compileshader f_shader, source("lightmodel frag")

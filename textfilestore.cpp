@@ -15,10 +15,9 @@ private:
 
 
 TextSource::TextSource(TextFileStore* p):
-    Function("source", Symbol::Text),
+    Function("source", new Text_T),
     mParent(p) {
-    int argt = Symbol::Text;
-    mArgTypes.append(argt);
+    mArgTypes.append(new Text_T);
 }
 
 const QVariant& TextSource::execute(const QVector<QVariant>& vals, int start) {

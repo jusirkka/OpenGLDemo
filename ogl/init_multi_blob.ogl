@@ -1,6 +1,6 @@
 Execute "create prog"
 
-Natural vao = genvertexarray()
+Var vao: Natural = genvertexarray()
 bindvertexarray vao
 
 Execute "get locations"

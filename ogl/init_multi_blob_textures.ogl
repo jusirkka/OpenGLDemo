@@ -4,7 +4,7 @@ activetexture texture0
 uniform1i u_t_img, 0
 
 
-Shared Natural tex_french, tex_plaid, tex_checker
+Shared Var tex_french, tex_plaid, tex_checker: Natural
 
 tex_plaid = gentexture()
 bindtexture texture_2d, tex_plaid

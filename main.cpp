@@ -50,6 +50,8 @@ int main(int argc, char *argv[]) {
 
     qRegisterMetaType<Math3D::Vector4>();
     qRegisterMetaType<Math3D::Matrix4>();
+    QMetaType::registerDebugStreamOperator<Math3D::Matrix4>();
+    QMetaType::registerDebugStreamOperator<Math3D::Vector4>();
 
     QSurfaceFormat format;
     format.setVersion(4, 5);

@@ -3,18 +3,41 @@
 
 #include "gl_lang_parser_interface.h"
 #include "constant.h"
+#include "typedef.h"
+#include "operation.h"
 
 int gl_lang_lex(Demo::GL::ValueType*, Demo::GL::LocationType*, yyscan_t);
 
-const char* opname(int);
-unsigned int operation(int);
-unsigned int lrtype(int, int);
 
 using namespace Demo;
 using Demo::GL::Parser;
 
-#define HANDLE_ERROR(item, errnum) {parser->createError(item, errnum); YYERROR;}
+#define CF Parser::CF
+#define CV Parser::CV
+#define CC Parser::CC
+#define CT Parser::CT
+#define CR Parser::CR
+
+#define HANDLE_ERROR(item, detail) {parser->createError(item, detail); YYERROR;}
 #define HANDLE_COMPLETION(var, mask) {if (parser->createCompletion(var, mask)) YYERROR;}
+
+#define DECLARED_MSG QStringLiteral("%1 has been already declared.")
+#define NOT_DECLARED_MSG QStringLiteral("%1 has not been declared.")
+#define NOT_IMPORTED_MSG QStringLiteral("variable %1 has not been exported.")
+#define NOT_TYPE_MSG QStringLiteral("%1 is not a type.")
+#define DUPLICATE_MSG QStringLiteral("duplicate declaration of %1.")
+#define NOT_VARIABLE_MSG QStringLiteral("%1 is not a variable.")
+#define ASS_IMPORTED_MSG QStringLiteral("cannot assign to imported variable %1.")
+#define ASS_INCOMPATIBLE_MSG QStringLiteral("incompatible types in assignment to %1.")
+#define NOT_FUNCTION_MSG QStringLiteral("%1 is not a function.")
+#define WRONG_ARGS_MSG QStringLiteral("wrong number of arguments in %1.")
+#define INCOMPATIBLE_ARGS_MSG QStringLiteral("incompatible arguments in %1.")
+#define SCRIPT_NOT_FOUND_MSG QStringLiteral(R"(script "%1" not found)")
+#define NOT_INTEGER_MSG QStringLiteral("expected integer in %1 expression.")
+#define ROGUE_STATEMENT_MSG QStringLiteral("unmatching %1")
+#define INCOMPATIBLE_TYPES_MSG QStringLiteral("incompatible types in %1 expression.")
+#define NOT_VAR_CONST_MSG QStringLiteral("%1 is not a variable or constant.")
+#define TOO_MANY_VARS_MSG QStringLiteral("too many variables in %1.")
 
 %}
 
@@ -30,19 +53,20 @@ using Demo::GL::Parser;
 %lex-param {yyscan_t scanner}
 
 
-%type <v_string_list> variables
+%type <v_string_list> symbols variables memberseq
 
-%type <v_int_list> parameters arglist
+%type <v_type_list> parameters arglist recorditems
 
 %type <v_string> text chars
 
-%type <v_int> rhs simple_rhs cond_rhs cond_rhs_seq guard
-%type <v_int> expression terms factors factor statement
-%type <v_int> rel_op eq_op add_op sign and_op or_op
-%type <v_int> literal paren_or_variable paren_or_variable_comp function_call
-%type <v_bool> shared
-%type <v_int> typename
-
+%type <v_type> rhs simple_rhs cond_rhs cond_rhs_seq guard
+%type <v_type> expression terms factors factor statement
+%type <v_oper> comp_op add_op mul_op unary_op member_op
+%type <v_new_type> typedef membertype typespec
+%type <v_named_type_list> member members
+%type <v_array_item> arrayitems arrayseq
+%type <v_ref_path> refpath
+%type <v_ref_path_item> refpathitem
 
 
 %token <v_int> INT
@@ -51,728 +75,648 @@ using Demo::GL::Parser;
 
 %token <v_identifier> ID
 
-%token VECTOR MATRIX TEXT NATURAL SHARED REAL EXECUTE FROM IMPORT WHILE ENDWHILE IF ELSE ENDIF
+%token SHARED EXECUTE FROM IMPORT WHILE ENDWHILE IF ELSE ELSIF ENDIF ARRAY OF
+%token UNK BEGINSTRING ENDSTRING SEP TYPE VAR RECORD
 
-%nonassoc <v_int> '<' '>' EQ NE LE GE
-%left <v_int> '+' '-' OR BOR
-%left <v_int> '*' '/' AND BAND
-%left <v_int> NEG '!'
-
-%token UNK BEGINSTRING ENDSTRING SEP
-
-// Grammar follows
-
+%token <v_int> '.'
+%token <v_int> '<' '>' EQ NE LE GE
+%token <v_int> '+' '-' OR BOR
+%token <v_int> '*' '/' AND BAND
+%token <v_int> NEG '!'
 
 %%
 
-input:
-    elements
-    ;
+input: elements;
 
-elements:
-    element
-    |
-    elements element
-    ;
+elements: element | elements element;
 
-element:
-    SEP
-    |
-    import_from SEP
-    |
-    declaration SEP
-    |
-    assignment SEP
-    |
-    declaration_and_assignment SEP
-    |
-    statement SEP
-    ;
+element: SEP | import_from SEP | typedecl SEP | declaration SEP | assignment SEP;
+element: declaration_and_assignment SEP | statement SEP;
 
 
-import_from:
-    FROM BEGINSTRING text ENDSTRING IMPORT variables
-        {
-            for (auto& name: $6) {
-                if (parser->isExported(name, $3)) {
-                    parser->addImported(name, $3);
-                } else {
-                    HANDLE_ERROR(name, Parser::notimported);
-                }
-            }
-        }
-    ;
+import_from: FROM BEGINSTRING text ENDSTRING symbols {
+  for (auto& name: $5) {
+    if (parser->isExported(name, $3)) {
+      parser->addImported(name, $3);
+    } else {
+      HANDLE_ERROR(name, NOT_IMPORTED_MSG);
+    }
+  }
+};
 
 
-declaration:
-    shared typename variables
-        {
-            for (auto& name: $3) {
-                parser->addVariable(Var::Create($2, name, $1));
-            }
-        }
-    ;
+symbols: IMPORT ID {
+  if (parser->hasSymbol($2.name)) {
+    HANDLE_ERROR($2.name, DECLARED_MSG);
+  }
+  $$.clear();
+  $$.append($2.name);
+};
 
-shared:
-    /* empty */
-        {$$ = false;}
-    |
-    SHARED
-        {$$ = true;}
-    ;
+symbols: symbols ',' ID {
+  if (parser->hasSymbol($3.name)) {
+    HANDLE_ERROR($3.name, DECLARED_MSG);
+  }
+  if ($$.contains($3.name)) {
+    HANDLE_ERROR($3.name, DUPLICATE_MSG);
+  }
+  $$.append($3.name);
+};
 
-typename:
-    NATURAL
-       {$$ = Symbol::Integer;}
-    |
-    REAL
-        {$$ = Symbol::Real;}
-    |
-    VECTOR
-        {$$ = Symbol::Vector;}
-    |
-    MATRIX
-        {$$ = Symbol::Matrix;}
-    |
-    TEXT
-        {$$ = Symbol::Text;}
-    ;
+typedecl: TYPE ID '=' typedef {
+  if (parser->hasSymbol($2.name)) {
+    delete $4;
+    HANDLE_ERROR($2.name, DECLARED_MSG);
+  }
+  parser->addSymbol(new Typedef($2.name, $4));
+};
 
-variables:
-    ID
-        {
-            if (parser->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Parser::declared);
-            }
-            $$.clear();
-            $$.append($1.name);
-        }
-    |
-    variables ',' ID
-        {
-            if (parser->hasSymbol($3.name)) {
-                HANDLE_ERROR($3.name, Parser::declared);
-            }
-            if ($$.contains($3.name)) {
-                HANDLE_ERROR($3.name, Parser::duplicate);
-            }
-            $$.append($3.name);
-        }
-    ;
+typedef: ARRAY OF typedef {
+  $$ = new ArrayType($3);
+};
 
+typedef: RECORD '(' members ')' {
+  $$ = new RecordType($3.names, $3.types);
+};
 
+typedef: ID {
+  HANDLE_COMPLETION($1, CR | CT);
+  if (!parser->hasSymbol($1.name)) {
+    HANDLE_ERROR($1.name, NOT_DECLARED_MSG);
+  }
+  auto typ = dynamic_cast<Typedef*>(parser->symbol($1.name));
+  if (!typ) {
+    HANDLE_ERROR($1.name, NOT_TYPE_MSG);
+  }
+  $$ = typ->type()->clone();
+};
 
-assignment:
-    ID rhs
-        {
-            HANDLE_COMPLETION($1, Parser::CompleteVariables);
-            if (!parser->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Parser::notdeclared);
-            }
-            Variable* var = dynamic_cast<Variable*>(parser->symbol($1.name));
-            if (!var) {
-                HANDLE_ERROR($1.name, Parser::notvariable);
-            }
-            if (parser->isImported(var)) {
-                HANDLE_ERROR($1.name, Parser::assimported);
-            }
-            if (var->type() == $2 || (var->type() == Symbol::Real && $2 == Symbol::Integer)) {
-                parser->setCode(var->name());
-            } else {
-                HANDLE_ERROR($1.name, Parser::assincompatible);
-            }
-        }
-    ;
+members: member {$$ = $1;};
 
-declaration_and_assignment:
-    shared typename ID rhs
-        {
-            if (parser->hasSymbol($3.name)) {
-                HANDLE_ERROR($3.name, Parser::declared);
-            }
-            Variable* var = Var::Create($2, $3.name, $1);
-            if (var->type() == $4 || (var->type() == Symbol::Real && $4 == Symbol::Integer)) {
-                parser->addVariable(var);
-                parser->setCode(var->name());
-            } else {
-                HANDLE_ERROR($3.name, Parser::assincompatible);
-            }
-        }
-    ;
+members: members ',' member {
+  for (auto name: $3.names) {
+    if ($$.names.contains(name)) {
+      qDeleteAll($$.types);
+      qDeleteAll($3.types);
+      HANDLE_ERROR(name, DUPLICATE_MSG);
+    }
+  }
+  $$.names += $3.names;
+  $$.types += $3.types;
+};
 
-statement:
-    ID parameters
-        {
-            if ($2.isEmpty()) {
-                HANDLE_COMPLETION($1, Parser::CompleteFVR);
-            } else {
-                HANDLE_COMPLETION($1, Parser::CompleteFunctions);
-            }
-            if (!parser->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Parser::notdeclared);
-            }
-            Function* fun = dynamic_cast<Function*>(parser->symbol($1.name));
-            if (!fun) {
-                HANDLE_ERROR($1.name, Parser::notfunction);
-            }
-            $$ = fun->type();
-            if (fun->argTypes().size() != $2.size()) {
-                HANDLE_ERROR($1.name, Parser::wrongargs);
-            }
-            // check the argument types
-            for (int i = 0; i < fun->argTypes().size(); ++i) {
-                int te = $2[i]; int ta = fun->argTypes()[i];
-                if (ta == te) continue;
-                if (ta == Symbol::Real && te == Symbol::Integer) continue;
-                HANDLE_ERROR($1.name, Parser::incompatibleargs);
-            }
-            // qDebug() << "Code:" << opname(Parser::cFun) << fun->name() << fun->index();
-            parser->pushBack(Parser::cFun, 0, 1 - $2.size());
-            parser->pushBack(fun->index(), 0, 0);
+member: memberseq membertype {
+  $$.names.clear();
+  $$.types.clear();
+  for (auto name: $1) {
+    $$.names << name;
+    $$.types << $2->clone();
+  }
+  delete $2;
+};
 
-            parser->setJump();
-            parser->setCode("gl_result");
-        }
-    |
-    EXECUTE BEGINSTRING text ENDSTRING
-        {
-            if (parser->isScript($3)) {
-                parser->addSubscript($3);
-            } else {
-                HANDLE_ERROR($3, Parser::scriptnotfound);
-            }
-            parser->pushBack(Parser::cImmed, 0, 1);
-            parser->pushBackImmed($3);
+memberseq: ID {
+  $$.clear();
+  $$.append($1.name);
+};
 
-            Function* dispatcher = dynamic_cast<Function*>(parser->symbol("dispatch"));
-            parser->pushBack(Parser::cFun, 0, 0);
-            parser->pushBack(dispatcher->index(), 0, 0);
+memberseq: memberseq ',' ID {
+  if ($$.contains($3.name)) {
+    HANDLE_ERROR($3.name, DUPLICATE_MSG);
+  }
+  $$.append($3.name);
+};
 
-            parser->setJump();
-            parser->setCode("gl_result");
-        }
-    |
-    WHILE expression
-        {
-            if ($2 != Symbol::Integer) {
-                HANDLE_ERROR("While", Parser::expectedinteger);
-            }
-            parser->beginWhile();
-        }
-    |
-    ENDWHILE
-        {
-           if (!parser->endWhile()) {
-               HANDLE_ERROR("Endwhile", Parser::roguestatement);
-           }
-        }
-    |
-    IF expression
-        {
-            if ($2 != Symbol::Integer) {
-                HANDLE_ERROR("If", Parser::expectedinteger);
-            }
-            parser->beginIf();
-        }
-    |
-    ELSE
-        {
-            if (!parser->addElse()) {
-                HANDLE_ERROR("Else", Parser::roguestatement);
-            }
-        }
-    |
-    ENDIF
-        {
-           if (!parser->endIf()) {
-               HANDLE_ERROR("Endif", Parser::roguestatement);
-           }
-        }
-    ;
+membertype: ':' typedef {$$ = $2;};
 
 
+declaration: variables typespec {
+  for (auto name: $1) {
+      parser->addSymbol(new LocalVar(name, $2->clone()));
+  }
+  delete $2;
+};
 
-rhs: simple_rhs
-;
-
-rhs: cond_rhs_seq
-;
-
-cond_rhs_seq:
-    cond_rhs
-        {$$ = $1;}
-    |
-    cond_rhs_seq cond_rhs
-        {
-            if (($1 != $2) &&
-                ($1 != Symbol::Integer || $2 != Symbol::Real) &&
-                ($1 != Symbol::Real || $2 != Symbol::Integer)) {
-                HANDLE_ERROR("assignment", Parser::incompatibletypes);
-            }
-            if ($2 == Symbol::Real) {
-                $$ = $2;
-            } else {
-                $$ = $1;
-            }
-        }
-    ;
-
-cond_rhs:
-    guard simple_rhs
-        {$$ = $2;}
-    ;
-
-simple_rhs:
-    '=' expression
-        {
-            $$ = $2;
-            parser->setJump();
-        }
-    ;
-
-guard:
-    '@' expression
-        {
-            if ($2 != Symbol::Integer) {
-                HANDLE_ERROR("guard", Parser::expectedinteger);
-            }
-            $$ = $2;
-            // qDebug() << "Code: GUARD";
-            parser->pushBack(Parser::cGuard, 0, 0);
-            // reserve space for code and immed jumps
-            parser->pushBack(0, 0, 0);
-            parser->pushBack(0, 0, 0);
-            parser->initJump();
-        }
-    ;
+declaration: SHARED variables typespec {
+  for (auto name: $2) {
+      parser->addSymbol(new SharedVar(name, $3->clone()));
+  }
+  delete $3;
+};
 
 
+variables: VAR ID {
+  if (parser->hasSymbol($2.name)) {
+    HANDLE_ERROR($2.name, DECLARED_MSG);
+  }
+  $$.clear();
+  $$.append($2.name);
+};
+
+variables: variables ',' ID {
+  if (parser->hasSymbol($3.name)) {
+    HANDLE_ERROR($3.name, DECLARED_MSG);
+  }
+  if ($$.contains($3.name)) {
+    HANDLE_ERROR($3.name, DUPLICATE_MSG);
+  }
+  $$.append($3.name);
+};
+
+typespec: ':' typedef {$$ = $2;};
+
+assignment: ID rhs {
+  if (!parser->hasSymbol($1.name)) {
+    HANDLE_ERROR($1.name, NOT_DECLARED_MSG);
+  }
+  auto var = dynamic_cast<Variable*>(parser->symbol($1.name));
+  if (!var) {
+    HANDLE_ERROR($1.name, NOT_VARIABLE_MSG);
+  }
+  if (parser->isImported(var)) {
+    HANDLE_ERROR($1.name, ASS_IMPORTED_MSG);
+  }
+  if (var->type()->assignable($2)) {
+    parser->pushBack(Parser::cAss, 0, 0);
+    parser->pushBack(var->index(), 0, 0);
+    parser->assignment();
+  } else {
+    HANDLE_ERROR($1.name, ASS_INCOMPATIBLE_MSG);
+  }
+};
+
+assignment: ID refpath rhs {
+  if (!parser->hasSymbol($1.name)) {
+    HANDLE_ERROR($1.name, NOT_DECLARED_MSG);
+  }
+  auto var = dynamic_cast<Variable*>(parser->symbol($1.name));
+  if (!var) {
+    HANDLE_ERROR($1.name, NOT_VARIABLE_MSG);
+  }
+  if (parser->isImported(var)) {
+    HANDLE_ERROR($1.name, ASS_IMPORTED_MSG);
+  }
+
+  const Type* left = var->type();
+  int pathSize = $2.types.size();
+  do {
+    const Type* right = $2.types.takeFirst();
+    const Operation* op = $2.operations.takeFirst();
+    try {
+      op->check(left, right);
+      auto rec = dynamic_cast<const RecordType*>(left);
+      auto sel = dynamic_cast<const Selector*>(right);
+      if (rec && sel) parser->setImmed($2.immeds.takeFirst(), rec->index(sel->name()));
+      left = op->type(left, right);
+    } catch (OpError e) {
+      HANDLE_ERROR(op->name(), e.msg());
+    }
+  } while (!$2.types.isEmpty());
+
+  if (left->assignable($3)) {
+    parser->pushBack(Parser::cAssPath, 0, - pathSize);
+    parser->pushBack(var->index(), 0, 0);
+    parser->pushBack(pathSize, 0, 0);
+    parser->assignment();
+  } else {
+    HANDLE_ERROR($1.name, ASS_INCOMPATIBLE_MSG);
+  }
+};
+
+declaration_and_assignment: variables typespec rhs {
+  if ($1.size() != 1) {
+    HANDLE_ERROR("assignment", TOO_MANY_VARS_MSG);
+  }
+  QString name = $1.first();
+  if ($2->assignable($3)) {
+    parser->addSymbol(new LocalVar(name, $2));
+    auto v = dynamic_cast<Variable*>(parser->symbol(name));
+    parser->pushBack(Parser::cAss, 0, 0);
+    parser->pushBack(v->index(), 0, 0);
+    parser->assignment();
+  } else {
+    HANDLE_ERROR(name, ASS_INCOMPATIBLE_MSG);
+  }
+};
+
+declaration_and_assignment: SHARED variables typespec rhs {
+  if ($2.size() != 1) {
+    HANDLE_ERROR("assignment", TOO_MANY_VARS_MSG);
+  }
+  QString name = $2.first();
+  if ($3->assignable($4)) {
+    parser->addSymbol(new SharedVar(name, $3));
+    auto v = dynamic_cast<Variable*>(parser->symbol(name));
+    parser->pushBack(Parser::cAss, 0, 0);
+    parser->pushBack(v->index(), 0, 0);
+    parser->assignment();
+  } else {
+    HANDLE_ERROR(name, ASS_INCOMPATIBLE_MSG);
+  }
+};
+
+statement: ID parameters {
+  if ($2.isEmpty()) {
+    HANDLE_COMPLETION($1, CR|CV|CF);
+  } else {
+    HANDLE_COMPLETION($1, CF);
+  }
+  if (!parser->hasSymbol($1.name)) {
+    HANDLE_ERROR($1.name, NOT_DECLARED_MSG);
+  }
+  auto fun = dynamic_cast<Function*>(parser->symbol($1.name));
+  if (!fun) {
+    HANDLE_ERROR($1.name, NOT_FUNCTION_MSG);
+  }
+  $$ = fun->type();
+  if (fun->argTypes().size() != $2.size()) {
+    HANDLE_ERROR($1.name, WRONG_ARGS_MSG);
+  }
+  // check the argument types
+  for (int i = 0; i < fun->argTypes().size(); ++i) {
+    if (fun->argTypes()[i]->assignable($2[i])) continue;
+    HANDLE_ERROR($1.name, INCOMPATIBLE_ARGS_MSG);
+  }
+  // qDebug() << "Code:" << opname(Parser::cFun) << fun->name() << fun->index();
+  parser->pushBack(Parser::cFun, 0, 1 - $2.size());
+  parser->pushBack(fun->index(), 0, 0);
+  auto v = dynamic_cast<Variable*>(parser->symbol("gl_result"));
+  parser->pushBack(Parser::cAss, 0, 0);
+  parser->pushBack(v->index(), 0, 0);
+  parser->assignment();
+};
+
+statement: EXECUTE BEGINSTRING text ENDSTRING {
+  if (parser->isScript($3)) {
+    parser->addSubscript($3);
+  } else {
+    HANDLE_ERROR($3, SCRIPT_NOT_FOUND_MSG);
+  }
+  parser->pushBack(Parser::cImmed, 0, 1);
+  parser->pushBackImmed($3);
+
+  auto dispatcher = dynamic_cast<Function*>(parser->symbol("dispatch"));
+  parser->pushBack(Parser::cFun, 0, 0);
+  parser->pushBack(dispatcher->index(), 0, 0);
+
+  auto v = dynamic_cast<Variable*>(parser->symbol("gl_result"));
+  parser->pushBack(Parser::cAss, 0, 0);
+  parser->pushBack(v->index(), 0, 0);
+  parser->assignment();
+};
 
 
+statement: WHILE expression {
+  if ($2->id() != Type::Integer) {
+    HANDLE_ERROR("While", NOT_INTEGER_MSG);
+  }
+  parser->beginWhile();
+};
+
+statement: ENDWHILE {
+  if (!parser->endWhile()) {
+    HANDLE_ERROR("Endwhile", ROGUE_STATEMENT_MSG);
+  }
+};
+
+statement: IF expression {
+  if ($2->id() != Type::Integer) {
+    HANDLE_ERROR("If", NOT_INTEGER_MSG);
+  }
+  parser->beginIf();
+};
+
+statement: ELSE {
+  if (!parser->addElse()) {
+    HANDLE_ERROR("Else", ROGUE_STATEMENT_MSG);
+  }
+};
+
+statement: ELSIF expression {
+  if ($2->id() != Type::Integer) {
+    HANDLE_ERROR("Elsif", NOT_INTEGER_MSG);
+  }
+  if (!parser->addElsif()) {
+    HANDLE_ERROR("Elsif", ROGUE_STATEMENT_MSG);
+  }
+};
+
+statement: ENDIF {
+  if (!parser->endIf()) {
+    HANDLE_ERROR("Endif", ROGUE_STATEMENT_MSG);
+  }
+};
+
+rhs: simple_rhs;
+rhs: cond_rhs_seq;
+
+cond_rhs_seq: cond_rhs {$$ = $1;};
+cond_rhs_seq: cond_rhs_seq cond_rhs {
+  if (!$1->assignable($2) && !$2->assignable($1)) {
+    HANDLE_ERROR("assignment", INCOMPATIBLE_TYPES_MSG);
+  }
+  if ($1->assignable($2)) {
+    $$ = $1;
+  } else {
+    $$ = $2;
+  }
+};
+
+cond_rhs: guard simple_rhs {$$ = $2;};
+
+simple_rhs: '=' expression {
+  $$ = $2;
+  parser->setJump();
+};
+
+guard: '@' expression {
+  if ($2->id() != Type::Integer) {
+    HANDLE_ERROR("guard", NOT_INTEGER_MSG);
+  }
+  $$ = $2;
+  // qDebug() << "Code: GUARD";
+  parser->pushBack(Parser::cGuard, 0, 0);
+  // reserve space for code and immed jumps
+  parser->pushBack(0, 0, 0);
+  parser->pushBack(0, 0, 0);
+  parser->initJump();
+};
 
 
-expression:
-    terms
-        {$$ = $1;}
-    |
-    terms rel_op terms
-        {
-            if (($1 == Symbol::Text || $3 == Symbol::Text)) {
-                HANDLE_ERROR(opname($2), Parser::expectedintegerorreal);
-            }
-            if (($1 != Symbol::Integer || $3 != Symbol::Integer) &&
-                ($1 != Symbol::Real || $3 != Symbol::Integer) &&
-                ($1 != Symbol::Integer || $3 != Symbol::Real) &&
-                ($1 != Symbol::Real || $3 != Symbol::Real)) {
-                HANDLE_ERROR(opname($2), Parser::expectedintegerorreal);
-            }
-            $$ = Symbol::Integer;
-            // qDebug() << "Code:" << opname($2);
-            parser->pushBack(operation($2), lrtype($1, $3), -1);
-        }
-    |
-    terms eq_op terms
-        {
-            if (($1 != $3) &&
-                ($1 != Symbol::Integer || $3 != Symbol::Real) &&
-                ($1 != Symbol::Real || $3 != Symbol::Integer)) {
-                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
-            }
-            $$ = Symbol::Integer;
-            // qDebug() << "Code:" << opname($2);
-            parser->pushBack(operation($2), lrtype($1, $3), -1);
-        }
-    ;
+expression: terms {$$ = $1;};
+
+expression: terms comp_op terms {
+  try {
+    $2->check($1, $3);
+    // qDebug() << "Code:" << $2->name();
+    parser->pushBack($2->code(), Parser::LRType($1, $3), -1);
+    $$ = $2->type($1, $3);
+  } catch (OpError e) {
+    HANDLE_ERROR($2->name(), e.msg());
+  }
+};
 
 
-rel_op: '>' | GE | '<' | LE
-;
-
-eq_op: EQ | NE
-;
-
-
-terms:
-    factors
-        {$$ = $1;}
-    |
-    terms or_op factors
-        {
-            if ($1 != Symbol::Integer || $3 != Symbol::Integer) {
-                HANDLE_ERROR(opname($2), Parser::expectedinteger);
-            }
-            $$ = Symbol::Integer;
-            // qDebug() << "Code:" << opname($2);
-            parser->pushBack(operation($2), lrtype($1, $3), -1);
-        }
-    |
-    terms add_op factors
-        {
-            if ($1 == Symbol::Text && $3 == Symbol::Text) {
-                if ($2 != '+') {
-                    HANDLE_ERROR(opname($2), Parser::expectedtextadd);
-                }
-            } else if ($1 == Symbol::Text || $3 == Symbol::Text) {
-                HANDLE_ERROR(opname($2), Parser::expectedarithmetictype);
-            }
-            if (($1 != $3) &&
-                ($1 != Symbol::Integer || $3 != Symbol::Real) &&
-                ($1 != Symbol::Real || $3 != Symbol::Integer)) {
-                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
-            }
-            if ($1 == Symbol::Real || $3 == Symbol::Real) {
-                $$ = Symbol::Real;
-            } else {
-                $$ = $1;
-            }
-            // qDebug() << "Code:" << opname($2);
-            parser->pushBack(operation($2), lrtype($1, $3), -1);
-        }
-    ;
+comp_op: '>' {$$ = Parser::Op($1);};
+comp_op: '<' {$$ = Parser::Op($1);};
+comp_op: GE {$$ = Parser::Op($1);};
+comp_op: LE {$$ = Parser::Op($1);};
+comp_op: EQ {$$ = Parser::Op($1);};
+comp_op: NE {$$ = Parser::Op($1);};
 
 
-or_op: BOR | OR
-;
+terms: factors {$$ = $1;};
 
-add_op: '+' | '-'
-;
-
-
-factors:
-    factor
-        {$$ = $1;}
-    |
-    factors and_op factor
-        {
-            if ($1 != Symbol::Integer || $3 != Symbol::Integer) {
-                HANDLE_ERROR(opname($2), Parser::expectedinteger);
-            }
-            $$ = Symbol::Integer;
-            // qDebug() << "Code:" << opname($2);
-            parser->pushBack(operation($2), lrtype($1, $3), -1);
-        }
-    |
-    factors '*' factor
-        {
-            if (($1 == Symbol::Text || $3 == Symbol::Text)) {
-                HANDLE_ERROR(opname($2), Parser::expectedarithmetictype);
-            }
-            if (($1 == Symbol::Vector && $3 == Symbol::Vector) ||
-                ($1 == Symbol::Vector && $3 == Symbol::Matrix)) {
-                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
-            }
-            if ($1 == Symbol::Vector || $3 == Symbol::Vector) {
-                $$ = Symbol::Vector;
-            } else if ($1 == Symbol::Matrix || $3 == Symbol::Matrix) {
-                $$ = Symbol::Matrix;
-            } else if ($1 == Symbol::Real || $3 == Symbol::Real) {
-                $$ = Symbol::Real;
-            } else {
-                $$ = Symbol::Integer;
-            }
-            // qDebug() << "Code:" << opname($2);
-            parser->pushBack(operation($2), lrtype($1, $3), -1);
-        }
-    |
-    factors '/' factor
-        {
-            if (($1 == Symbol::Text || $3 == Symbol::Text)) {
-                HANDLE_ERROR(opname($2), Parser::expectedarithmetictype);
-            }
-            if ($1 == Symbol::Vector || $3 == Symbol::Vector ||
-                $1 == Symbol::Matrix || $3 == Symbol::Matrix) {
-                HANDLE_ERROR(opname($2), Parser::incompatibletypes);
-            }
-            if ($1 == Symbol::Real || $3 == Symbol::Real) {
-                $$ = Symbol::Real;
-            } else {
-                $$ = Symbol::Integer;
-            }
-            // qDebug() << "Code:" << opname($2);
-            parser->pushBack(operation($2), lrtype($1, $3), -1);
-        }
-    ;
-
-and_op: BAND | AND
-;
+terms: terms add_op factors {
+try {
+  $2->check($1, $3);
+  // qDebug() << "Code:" << $2->name();
+  parser->pushBack($2->code(), Parser::LRType($1, $3), -1);
+  $$ = $2->type($1, $3);
+} catch (OpError e) {
+  HANDLE_ERROR($2->name(), e.msg());
+}};
 
 
-factor:
-    '!' factor
-        {
-            if ($2 != Symbol::Integer) {
-                HANDLE_ERROR(opname($1), Parser::expectedinteger);
-            }
-            $$ = Symbol::Integer;
-            // qDebug() << "Code:" << opname($1);
-            parser->pushBack(operation($1), 0, 0);
-        }
-    |
-    sign factor
-        {
-            $$ = $2;
-            // qDebug() << "Code: (unary)" << opname($1);
-            if ($1 == '-') {
-                parser->pushBack(Parser::cNeg, lrtype(Symbol::Integer, $2), 0);
-            }
-        }
-    ;
-
-sign: '+' | '-' %prec NEG
-;
-
-factor: paren_or_variable_comp
-;
-
-
-paren_or_variable_comp:
-    paren_or_variable
-    |
-    paren_or_variable_comp  '[' expression ']'
-        {
-            if ($3 != Symbol::Integer) {
-                HANDLE_ERROR("[]", Parser::expectedinteger);
-            }
-            if ($1 != Symbol::Matrix && $1 != Symbol::Vector) {
-                HANDLE_ERROR("expression", Parser::expectedvectorormatrix);
-            }
-            // qDebug() << "Code: TAKE";
-            parser->pushBack(Parser::cTake, lrtype($1, Symbol::Integer), -1);
-            if ($1 == Symbol::Matrix) {
-                $$ = Symbol::Vector;
-            } else {
-                $$ = Symbol::Real;
-            }
-        }
-    ;
+add_op: '+' {$$ = Parser::Op($1);};
+add_op: '-' {$$ = Parser::Op($1);};
+add_op: BOR {$$ = Parser::Op($1);};
+add_op: OR {$$ = Parser::Op($1);};
 
 
 
-factor: literal | function_call
-;
+factors: factor {$$ = $1;};
 
-literal:
-    INT
-        {
-            $$ = Symbol::Integer;
-            // qDebug() << "Code: INT" << $1;
-            parser->pushBack(Parser::cImmed, 0, 1);
-            parser->pushBackImmed($1);
-        }
-    |
-    FLOAT
-        {
-            $$ = Symbol::Real;
-            // qDebug() << "Code: SCA" << $1;
-            parser->pushBack(Parser::cImmed, 0, 1);
-            parser->pushBackImmed($1);
-        }
-    |
-    BEGINSTRING text ENDSTRING
-        {
-            $$ = Symbol::Text;
-            // qDebug() << "Code: TXT" << $2;
-            parser->pushBack(Parser::cImmed, 0, 1);
-            parser->pushBackImmed($2);
-        }
-    ;
+factors: factors mul_op factor {
+try {
+  $2->check($1, $3);
+  // qDebug() << "Code:" << $2->name();
+  parser->pushBack($2->code(), Parser::LRType($1, $3), -1);
+  $$ = $2->type($1, $3);
+} catch (OpError e) {
+  HANDLE_ERROR($2->name(), e.msg());
+}};
 
 
-text:
-    /* empty */
-        {$$ = QString("");}
-    |
-    chars
-        {$$ = $1;}
-    ;
-
-chars:
-    CHAR
-        {
-            $$ = QString($1);
-        }
-    |
-    chars CHAR
-        {$$.append($2);}
-    ;
+mul_op: '*' {$$ = Parser::Op($1);};
+mul_op: '/' {$$ = Parser::Op($1);};
+mul_op: BAND {$$ = Parser::Op($1);};
+mul_op: AND {$$ = Parser::Op($1);};
 
 
-
-paren_or_variable:
-    '(' expression ')'
-        {
-            $$ = $2;
-        }
-    |
-    ID
-        {
-            HANDLE_COMPLETION($1, Parser::CompleteFVC);
-            if (!parser->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Parser::notdeclared);
-            }
-            Symbol* sym = parser->symbol($1.name);
-            Variable* var = dynamic_cast<Variable*>(sym);
-            if (var) {
-                // qDebug() << "Code:" << opname(Parser::cVar) << sym->name();
-                parser->pushBack(Parser::cVar, 0, 1);
-                parser->pushBack(var->index(), 0, 0);
-            } else { // constant
-                Constant* con = dynamic_cast<Constant*>(sym);
-                if (con) {
-                    // qDebug() << "Code:" << opname(Parser::cImmed) << sym->name();
-                    parser->pushBack(Parser::cImmed, 0, 1);
-                    parser->pushBackImmed(con->value());
-                } else {
-                    HANDLE_ERROR($1.name, Parser::notvarorconst);
-                }
-            }
-            $$ = sym->type();
-        }
-    ;
-
-function_call:
-    ID '(' parameters ')'
-        {
-            HANDLE_COMPLETION($1, Parser::CompleteFunctions);
-            if (!parser->hasSymbol($1.name)) {
-                HANDLE_ERROR($1.name, Parser::notdeclared);
-            }
-            Function* fun = dynamic_cast<Function*>(parser->symbol($1.name));
-            if (!fun) {
-                HANDLE_ERROR($1.name, Parser::notfunction);
-            }
-            $$ = fun->type();
-            if (fun->argTypes().size() != $3.size()) {
-                HANDLE_ERROR($1.name, Parser::wrongargs);
-            }
-            // check the argument types
-            for (int i = 0; i < fun->argTypes().size(); ++i) {
-                int te = $3[i]; int ta = fun->argTypes()[i];
-                if (ta == te) continue;
-                if (ta == Symbol::Real && te == Symbol::Integer) continue;
-                HANDLE_ERROR($1.name, Parser::incompatibleargs);
-            }
-            // qDebug() << "Code:" << opname(Parser::cFun) << fun->name();
-            parser->pushBack(Parser::cFun, 0, 1 - $3.size());
-            parser->pushBack(fun->index(), 0, 0);
-        }
-    ;
+factor: unary_op factor {
+try {
+  $1->check($2);
+  // qDebug() << "Code:" << $1->name();
+  if ($1->name() != "+") parser->pushBack($1->code(), Parser::LRType(Parser::Integer(), $2), 0);
+  $$ = $1->type($2);
+} catch (OpError e) {
+  HANDLE_ERROR($1->name(), e.msg());
+}};
 
 
-parameters:
-    /* empty */
-        {$$.clear();}
-    |
-    arglist
-        {$$ = $1;}
-    ;
+unary_op: '!' {$$ = Parser::Op($1);};
+unary_op: '+' {$$ = Parser::Op(TOKEN_PLUS);};
+unary_op: '-' {$$ = Parser::Op(TOKEN_MINUS);} %prec NEG;
 
-arglist:
-    expression
-        {
-            $$.clear();
-            $$.append($1);
-        }
-    |
-    arglist ',' expression
-        {$$.append($3);}
-    ;
+factor: '(' expression ')' {$$ = $2;};
+
+factor: ID '(' parameters ')' {
+  HANDLE_COMPLETION($1, CF | CR);
+  if (!parser->hasSymbol($1.name)) {
+    HANDLE_ERROR($1.name, NOT_DECLARED_MSG);
+  }
+  Function* fun = dynamic_cast<Function*>(parser->symbol($1.name));
+  if (!fun) {
+    HANDLE_ERROR($1.name, NOT_FUNCTION_MSG);
+  }
+  $$ = fun->type();
+  if (fun->argTypes().size() != $3.size()) {
+    HANDLE_ERROR($1.name, WRONG_ARGS_MSG);
+  }
+  // check the argument types
+  for (int i = 0; i < fun->argTypes().size(); ++i) {
+      if (fun->argTypes()[i]->assignable($3[i])) continue;
+      HANDLE_ERROR($1.name, INCOMPATIBLE_ARGS_MSG);
+  }
+  // qDebug() << "Code:" << opname(Parser::cFun) << fun->name();
+  parser->pushBack(Parser::cFun, 0, 1 - $3.size());
+  parser->pushBack(fun->index(), 0, 0);
+};
+
+
+factor: ID {
+  HANDLE_COMPLETION($1, CF | CR | CC | CV);
+  if (!parser->hasSymbol($1.name)) {
+    HANDLE_ERROR($1.name, NOT_DECLARED_MSG);
+  }
+  Symbol* sym = parser->symbol($1.name);
+  Variable* var = dynamic_cast<Variable*>(sym);
+  if (var) {
+     parser->pushBack(Parser::cVar, 0, 1);
+     parser->pushBack(var->index(), 0, 0);
+  } else { // constant
+    Constant* con = dynamic_cast<Constant*>(sym);
+    if (con) {
+      parser->pushBack(Parser::cImmed, 0, 1);
+      parser->pushBackImmed(con->value());
+    } else {
+      HANDLE_ERROR($1.name, NOT_VAR_CONST_MSG);
+    }
+  }
+  $$ = sym->type();
+};
+
+factor: ID refpath {
+  HANDLE_COMPLETION($1, CV | CC);
+  if (!parser->hasSymbol($1.name)) {
+    HANDLE_ERROR($1.name, NOT_DECLARED_MSG);
+  }
+  Symbol* sym = parser->symbol($1.name);
+
+  const Type* left = sym->type();
+  int pathSize = $2.types.size();
+  do {
+    const Type* right = $2.types.takeFirst();
+    const Operation* op = $2.operations.takeFirst();
+    try {
+      op->check(left, right);
+      auto rec = dynamic_cast<const RecordType*>(left);
+      auto sel = dynamic_cast<const Selector*>(right);
+      if (rec && sel) parser->setImmed($2.immeds.takeFirst(), rec->index(sel->name()));
+      left = op->type(left, right);
+    } catch (OpError e) {
+      HANDLE_ERROR(op->name(), e.msg());
+    }
+  } while (!$2.types.isEmpty());
+
+  $$ = left;
+
+  Variable* var = dynamic_cast<Variable*>(sym);
+  if (var) {
+     parser->pushBack(Parser::cVarPath, 0, 1 - pathSize);
+     parser->pushBack(var->index(), 0, 0);
+     parser->pushBack(pathSize, 0, 0);
+  } else { // constant
+    Constant* con = dynamic_cast<Constant*>(sym);
+    if (con) {
+      parser->pushBack(Parser::cImmedPath, Parser::LRType(sym->type(), Parser::Integer()), 1 - pathSize);
+      parser->pushBackImmed(con->value());
+      parser->pushBack(pathSize, 0, 0);
+    } else {
+      HANDLE_ERROR($1.name, NOT_VAR_CONST_MSG);
+    }
+  }
+};
+
+
+refpath: refpathitem {
+  $$.types.clear();
+  $$.operations.clear();
+  $$.immeds.clear();
+  $$.types << $1.type;
+  $$.operations << $1.operation;
+  if ($1.immed >= 0) $$.immeds << $1.immed;
+};
+
+refpath: refpath refpathitem {
+  $$.types << $2.type;
+  $$.operations << $2.operation;
+  if ($2.immed >= 0) $$.immeds << $2.immed;
+};
+
+refpathitem: '[' expression ']' {
+  $$.immed = -1;
+  $$.type = $2;
+  $$.operation = Parser::Op(TOKEN_TAKE);
+};
+
+refpathitem: member_op ID {
+  parser->pushBack(Parser::cImmed, 0, 1);
+  parser->pushBackImmed(0);
+  $$.immed = parser->getImmed();
+  $$.type = new Selector($2.name);
+  parser->binit($$.type);
+  $$.operation = $1;
+};
+
+member_op: '.' {$$ = Parser::Op($1);};
+
+factor: INT {
+  parser->pushBack(Parser::cImmed, 0, 1);
+  parser->pushBackImmed($1);
+  $$ = Parser::Integer();
+};
+
+factor: FLOAT {
+  // qDebug() << "Code: SCA" << $1;
+  parser->pushBack(Parser::cImmed, 0, 1);
+  parser->pushBackImmed($1);
+  $$ = Parser::Real();
+};
+
+
+factor: BEGINSTRING text ENDSTRING {
+  // qDebug() << "Code: TXT" << $2;
+  parser->pushBack(Parser::cImmed, 0, 1);
+  parser->pushBackImmed($2);
+  $$ = Parser::Text();
+};
+
+factor: ARRAY '(' arrayitems ')' {
+  parser->pushBack(Parser::cList, 0, 1 - $3.size);
+  parser->pushBack($3.size, 0, 0);
+  $$ = new ArrayType($3.type->clone());
+  parser->binit($$); // to be deleted later
+};
+
+arrayitems: %empty {
+  $$.size = 0;
+  $$.type = new NullType;
+  parser->binit($$.type);
+};
+
+arrayitems: arrayseq {$$ = $1;};
+
+arrayseq: expression {
+  $$.size = 1;
+  $$.type = $1;
+};
+
+arrayseq: arrayseq ',' expression {
+  if (!$$.type->assignable($3) && !$3->assignable($$.type)) {
+    HANDLE_ERROR("array", INCOMPATIBLE_TYPES_MSG);
+  }
+  if ($3->assignable($$.type)) {
+    $$.type = $3;
+  }
+  $$.size += 1;
+};
+
+factor: RECORD '(' recorditems ')' {
+  parser->pushBack(Parser::cList, 0, 1 - $3.size());
+  parser->pushBack($3.size(), 0, 0);
+  $$ = new RecordType($3);
+  parser->binit($$); // to be deleted later
+};
+
+recorditems: expression {$$.clear(); $$ << $1;};
+recorditems: recorditems ',' expression {$$ << $3;};
+
+
+text: %empty {$$ = QString("");};
+text: chars {$$ = $1;};
+
+chars: CHAR {$$ = QString($1);};
+chars: chars CHAR {$$.append($2);};
+
+
+parameters: %empty {$$.clear();};
+parameters: arglist {$$ = $1;};
+
+arglist: expression {$$.clear(); $$.append($1);};
+arglist: arglist ',' expression {$$.append($3);};
 
 %%
 
 
-const char* opname(int op) {
-
-    struct {int op; const char* name;} names[] = {
-        {'<', "\"<\""},
-        {'>', "\">\""},
-        {'+', "\"+\""},
-        {'-', "\"-\""},
-        {'*', "\"*\""},
-        {'/', "\"/\""},
-        {'!', "\"!\""},
-        {BOR, "\"|\""},
-        {BAND, "\"&\""},
-        {EQ, "\"==\""},
-        {NE, "\"!=\""},
-        {LE, "\"<=\""},
-        {GE, "\">=\""},
-        {OR, "\"||\""},
-        {AND, "\"&&\""},
-        {Parser::cVar, "VAR"},
-        {Parser::cImmed, "CON"},
-        {Parser::cFun, "FUN"},
-        {-1, ""}
-    };
-    for (int i = 0; names[i].op != -1; i++) {
-        if (names[i].op == op) return names[i].name;
-    }
-    Q_ASSERT(0);
-    return 0;
-}
-
-
-unsigned int operation(int op) {
-
-    struct {int op; unsigned int parserOp;} ops[] = {
-        {'<', Parser::cLess},
-        {'>', Parser::cGreater},
-        {'+', Parser::cAdd},
-        {'-', Parser::cSub},
-        {'*', Parser::cMul},
-        {'/', Parser::cDiv},
-        {'!', Parser::cNot},
-        {BOR, Parser::cBOr},
-        {BAND, Parser::cBAnd},
-        {EQ, Parser::cEqual},
-        {NE, Parser::cNEqual},
-        {LE, Parser::cLessOrEq},
-        {GE, Parser::cGreaterOrEq},
-        {OR, Parser::cOr},
-        {AND, Parser::cAnd},
-        {0, 0}
-    };
-    for (int i = 0; ops[i].op != 0; i++) {
-        if (ops[i].op == op) return ops[i].parserOp;
-    }
-    Q_ASSERT(0);
-    return 0;
-}
-
-
-unsigned int lrtype(int l, int r) {
-
-    struct {int l; int r; unsigned int lr;} ops[] = {
-        {Symbol::Integer, Symbol::Integer, Parser::cII},
-        {Symbol::Integer, Symbol::Real, Parser::cIS},
-        {Symbol::Integer, Symbol::Vector, Parser::cIV},
-        {Symbol::Integer, Symbol::Matrix, Parser::cIM},
-        {Symbol::Integer, Symbol::Text, Parser::cIT},
-        {Symbol::Real, Symbol::Integer, Parser::cSI},
-        {Symbol::Real, Symbol::Real, Parser::cSS},
-        {Symbol::Real, Symbol::Vector, Parser::cSV},
-        {Symbol::Real, Symbol::Matrix, Parser::cSM},
-        {Symbol::Real, Symbol::Text, Parser::cST},
-        {Symbol::Vector, Symbol::Integer, Parser::cVI},
-        {Symbol::Vector, Symbol::Real, Parser::cVS},
-        {Symbol::Vector, Symbol::Vector, Parser::cVV},
-        {Symbol::Vector, Symbol::Matrix, Parser::cVM},
-        {Symbol::Vector, Symbol::Text, Parser::cVT},
-        {Symbol::Matrix, Symbol::Integer, Parser::cMI},
-        {Symbol::Matrix, Symbol::Real, Parser::cMS},
-        {Symbol::Matrix, Symbol::Vector, Parser::cMV},
-        {Symbol::Matrix, Symbol::Matrix, Parser::cMM},
-        {Symbol::Matrix, Symbol::Text, Parser::cMT},
-        {Symbol::Text, Symbol::Integer, Parser::cTI},
-        {Symbol::Text, Symbol::Real, Parser::cTS},
-        {Symbol::Text, Symbol::Vector, Parser::cTV},
-        {Symbol::Text, Symbol::Matrix, Parser::cTM},
-        {Symbol::Text, Symbol::Text, Parser::cTT},
-        {-1, -1, 0}
-    };
-    for (int i = 0; ops[i].l != -1; ++i) {
-        if (ops[i].l == l && ops[i].r == r) return ops[i].lr;
-    }
-    Q_ASSERT(0);
-    return 0;
-}

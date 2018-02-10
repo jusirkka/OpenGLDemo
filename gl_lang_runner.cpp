@@ -1,6 +1,7 @@
 #include "gl_lang_runner.h"
 #include "gl_functions.h"
 #include "scope.h"
+#include "value.h"
 
 using Math3D::Real;
 using Math3D::Vector4;
@@ -44,7 +45,9 @@ void Runner::run() {
             index += s->exec_and_jump(mVariables, mFunctions);
         } catch (RunError& e) {
             throw RunError(e.msg(), s->pos());
-        }  catch (GL::GLError& e) {
+        } catch (GL::GLError& e) {
+            throw RunError(e.msg(), s->pos());
+        } catch (ValueError& e) {
             throw RunError(e.msg(), s->pos());
         }
     }

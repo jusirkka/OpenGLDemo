@@ -5,10 +5,10 @@ enable cull_face
 
 Execute "draw lights"
 
-Shared Text model_name
-Shared Matrix model_matrix, model_colors
-Shared Natural model_tex
-Shared Real model_tex_scale, model_spec_exp
+Shared Var model_name: Text
+Shared Var model_matrix, model_colors: Matrix
+Shared Var model_tex: Natural
+Shared Var model_tex_scale, model_spec_exp: Real
 
 From "init models" import model_array, model_elements
 bindbuffer array_buffer, model_array
@@ -20,7 +20,7 @@ From "init textures" import tex_plaid, tex_french, tex_checker
 model_name = "dodeca"
 model_matrix = scaling(2, 2, 2) * translation(vec(0, 0, 0, 1))
 // ambient, diffuse, specular, unused
-model_colors = mat(vec(.3, .1, .1, 0),vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_colors = matcol(vec(.3, .1, .1, 0),vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = tex_french
 model_tex_scale = 4
 model_spec_exp = 5
@@ -28,7 +28,7 @@ Execute "draw model"
 
 model_name = "teddy"
 model_matrix = translation(vec(0, 0, -10, 1)) * scaling(.3, .3, .3)
-model_colors = mat(vec(.3, .1, .1, 0), vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_colors = matcol(vec(.3, .1, .1, 0), vec(.1, .1, .5, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = 0
 model_tex_scale = 0.2
 model_spec_exp = 1
@@ -39,25 +39,25 @@ disable cull_face
 
 // blendfunc dst_alpha, one_minus_dst_alpha
 
-Real sc = 50
+Var sc: Real = 50
 model_name = "square"
 
-Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
+Var c: Matrix = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
 
 model_matrix =  c * translation(vec(1, 1, -1, 1))
-model_colors = mat(vec(.1, .1, .1, 0), vec(.0, .0, .7, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
+model_colors = matcol(vec(.1, .1, .1, 0), vec(.0, .0, .7, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
 model_tex = tex_checker
 model_tex_scale = sc / 10
 model_spec_exp = 30
 Execute "draw model"
 
-Matrix flip = rotation(180, vec(1, 1, 0, 0))
+Var flip: Matrix = rotation(180, vec(1, 1, 0, 0))
 model_matrix = c * rotation(90, vec(1, 0, 0, 0))*flip*translation(vec(1, 1, -1, 1))
-model_colors = mat(vec(.1, .1, .1, 0), vec(.7, .0, .0, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
+model_colors = matcol(vec(.1, .1, .1, 0), vec(.7, .0, .0, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
 Execute "draw model"
 
 model_matrix = c * rotation(-90, vec(0, 1, 0, 0))*flip*translation(vec(1, 1, -1, 1))
-model_colors = mat(vec(.1, .1, .1, 0), vec(.0, .7, .0, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
+model_colors = matcol(vec(.1, .1, .1, 0), vec(.0, .7, .0, 0), vec(.5, .5, .5, 0), vec(0, 0, 0, 0))
 Execute "draw model"
 
 enable cull_face
@@ -65,7 +65,7 @@ enable cull_face
 
 model_name = "teapot"
 model_matrix = translation(vec(10, 0, 0, 1)) * scaling(3, 3, 3)
-model_colors = mat(vec(.3, .1, .1, 0), vec(.5, .6, .0, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+model_colors = matcol(vec(.3, .1, .1, 0), vec(.5, .6, .0, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
 model_tex = tex_plaid
 model_tex_scale = 2
 model_spec_exp = 3

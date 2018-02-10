@@ -6,32 +6,32 @@ From "" import time
 
 useprogram prog_phong
 
-Real z_light = 20 + 15*sin(0.1*time)
-Real r_light = 20
-Real phi_light = 0.01 * time
-Shared Vector light_direction = vec(r_light * cos(phi_light), r_light * sin(phi_light), z_light, 0)
+Var z_light: Real = 20 + 15*sin(0.1*time)
+Var r_light: Real = 20
+Var phi_light: Real = 0.01 * time
+Shared Var light_direction: Vector = vec(r_light * cos(phi_light), r_light * sin(phi_light), z_light, 0)
 
 Execute "draw lights"
 
-Real x_d = 2*cos(0.1*time)
-Real y_d = 2*sin(0.1*time)
-Matrix model_dodeca = scaling(2, 2, 2) * translation(vec(x_d, y_d, 0, 1))
-Real sc = 50
-Matrix c = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
-Matrix model_square =  c * translation(vec(1, 1, -0.25, 1))
-Shared Vector plane_normal = normal_transform(model_square) * vec(0, 0, 1, 1)
-Shared Vector point_in_plane = model_square * vec(0, 0, 1, 1)
-Matrix reflect = reflection(plane_normal, point_in_plane)
+Var x_d: Real = 2*cos(0.1*time)
+Var y_d: Real = 2*sin(0.1*time)
+Var model_dodeca: Matrix = scaling(2, 2, 2) * translation(vec(x_d, y_d, 0, 1))
+Var sc: Real = 50
+Var c: Matrix = scaling(sc, sc, sc) * translation(vec(-1, -1, -1, 1))
+Var model_square: Matrix =  c * translation(vec(1, 1, -0.25, 1))
+Shared Var plane_normal: Vector = normal_transform(model_square) * vec(0, 0, 1, 1)
+Shared Var point_in_plane: Vector = model_square * vec(0, 0, 1, 1)
+Var reflect: Matrix = reflection(plane_normal, point_in_plane)
 // ambient, diffuse, specular, unused
-Matrix dodeca_colors = mat(vec(.3, .1, .1, 0),vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
-Natural dodeca_tex = tex_french
-Real dodeca_tex_scale = 4
-Real dodeca_spec_exp = 5
+Var dodeca_colors: Matrix = matcol(vec(.3, .1, .1, 0),vec(.1, .5, .1, 0), vec(.6, .4, .1, 0), vec(0, 0, 0, 0))
+Var dodeca_tex: Natural = tex_french
+Var dodeca_tex_scale: Real = 4
+Var dodeca_spec_exp: Real = 5
 
-Shared Matrix model_matrix, model_colors
-Shared Text model_name
-Shared Natural model_tex
-Shared Real model_tex_scale, model_spec_exp
+Shared Var model_matrix, model_colors: Matrix
+Shared Var model_name: Text
+Shared Var model_tex: Natural
+Shared Var model_tex_scale, model_spec_exp: Real
 
 
 // set stencil = 1 where plane is
@@ -82,7 +82,7 @@ blendcolor vec(0, 0, 0, 0.7)
 
 model_name = "square"
 model_matrix = model_square
-model_colors = mat(vec(.1, .1, .1, 0), vec(.0, .0, .7, 0), vec(.2, .2, .2, 0), vec(0, 0, 0, 0))
+model_colors = matcol(vec(.1, .1, .1, 0), vec(.0, .0, .7, 0), vec(.2, .2, .2, 0), vec(0, 0, 0, 0))
 model_tex = tex_checker
 model_tex_scale = sc / 10
 model_spec_exp = 25

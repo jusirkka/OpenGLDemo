@@ -1,5 +1,6 @@
 #include <QTextDocument>
 #include <QTextCharFormat>
+#include <QTimer>
 
 #include "highlight.h"
 #include "gl_lang_compiler.h"
@@ -14,6 +15,7 @@
 
 #include "constant.h"
 #include "variable.h"
+#include "typedef.h"
 
 using Demo::GL::Compiler;
 using Demo::Symbol;
@@ -23,29 +25,29 @@ using Demo::GL::LocationType;
 using Demo::GL::ValueType;
 using Demo::GL::Compiler;
 using Demo::Variable;
+using Demo::Typedef;
 
 Highlight::Highlight(Compiler* c, QTextDocument* parent):
     QSyntaxHighlighter(parent),
     mCompiler(c),
     mCommentExp("//[^\n]*")
 {
+
+    gl_lang_lex_init(&mScanner);
+
     mComment.setForeground(Qt::gray);
-    mReserved.setForeground(Qt::blue);
-    mNumeric.setForeground(Qt::darkRed);
+    mReserved.setForeground(QColor("#808000"));
+    mNumeric.setForeground(QColor("#000080"));
     // a hack
     QFont font("DejaVu Sans Mono", 14, QFont::Bold);
     mFunction.setFont(font);
     mFunction.setFontWeight(QFont::Bold);
-    mConstant.setForeground(Qt::darkMagenta);
+    mConstant.setForeground(QColor("#800080"));
     mVariable.setFontItalic(true);
-    mText.setForeground(Qt::darkGreen);
+    mType.setForeground(QColor("#800080"));
+    mText.setForeground(QColor("#008000"));
 
-    mFormats[VECTOR] = mReserved;
-    mFormats[MATRIX] = mReserved;
-    mFormats[TEXT] = mReserved;
-    mFormats[NATURAL] = mReserved;
     mFormats[SHARED] = mReserved;
-    mFormats[REAL] = mReserved;
     mFormats[EXECUTE] = mReserved;
     mFormats[FROM] = mReserved;
     mFormats[IMPORT] = mReserved;
@@ -54,9 +56,15 @@ Highlight::Highlight(Compiler* c, QTextDocument* parent):
     mFormats[IF] = mReserved;
     mFormats[ELSE] = mReserved;
     mFormats[ENDIF] = mReserved;
+    mFormats[ELSIF] = mReserved;
+    mFormats[ARRAY] = mReserved;
+    mFormats[RECORD] = mReserved;
+    mFormats[OF] = mReserved;
+    mFormats[TYPE] = mReserved;
+    mFormats[VAR] = mReserved;
+
     mFormats[INT] = mNumeric;
     mFormats[FLOAT] = mNumeric;
-
 }
 
 void Highlight::highlightBlock(const QString &text) {
@@ -69,7 +77,7 @@ void Highlight::highlightBlock(const QString &text) {
     }
     setCurrentBlockState(0);
 
-    gl_lang_lex_init(&mScanner);
+
     YY_BUFFER_STATE buf = gl_lang__scan_string(parsed.toUtf8().data(), mScanner);
 
     int text_start = 0;
@@ -102,18 +110,23 @@ void Highlight::highlightBlock(const QString &text) {
                 if (mFormats.contains(token)) {
                     setFormat(loc.pos + pshift, token_len, mFormats[token]);
                 } else if (token == ID && mCompiler->hasSymbol(token_text)) {
-                    const Symbol* sym = mCompiler->symbol(token_text);
-                    const Function* fun = dynamic_cast<const Function*>(sym);
+                    auto sym = mCompiler->symbol(token_text);
+                    auto fun = dynamic_cast<const Function*>(sym);
                     if (fun) {
                         setFormat(loc.pos + pshift, token_len, mFunction);
                     } else {
-                        const Constant* con = dynamic_cast<const Constant*>(sym);
+                        auto con = dynamic_cast<const Constant*>(sym);
                         if (con) {
                             setFormat(loc.pos + pshift, token_len, mConstant);
                         } else {
-                            const Variable* var = dynamic_cast<const Variable*>(sym);
+                            auto var = dynamic_cast<const Variable*>(sym);
                             if (var) {
                                 setFormat(loc.pos + pshift, token_len, mVariable);
+                            } else {
+                                auto typ = dynamic_cast<const Typedef*>(sym);
+                                if (typ) {
+                                    setFormat(loc.pos + pshift, token_len, mType);
+                                }
                             }
                         }
                     }

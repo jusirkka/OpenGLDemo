@@ -29,28 +29,35 @@
 
 namespace Demo {
 
+using Real_T = BaseType<Math3D::Real>;
+using Integer_T = BaseType<Math3D::Integer>;
+using Vector_T = BaseType<Math3D::Vector4>;
+using Matrix_T = BaseType<Math3D::Matrix4>;
 
 class Constant: public Symbol {
 
     public:
 
         Constant(const QString& name, Math3D::Integer val):
-            Symbol(name), mType(Symbol::Integer), mValue(val) {}
+            Symbol(name, new Integer_T), mValue(val) {}
         Constant(const QString& name, Math3D::Real val):
-            Symbol(name), mType(Symbol::Real), mValue(val) {}
+            Symbol(name, new Real_T), mValue(val) {}
         Constant(const QString& name, const Math3D::Vector4& val):
-            Symbol(name), mType(Symbol::Vector), mValue(QVariant::fromValue(val)) {}
+            Symbol(name, new Vector_T), mValue(QVariant::fromValue(val)) {}
         Constant(const QString& name, const Math3D::Matrix4& val):
-            Symbol(name), mType(Symbol::Matrix), mValue(QVariant::fromValue(val)) {}
+            Symbol(name, new Matrix_T), mValue(QVariant::fromValue(val)) {}
 
-        int type() const  override {return mType;}
+        Constant(const Constant& c)
+            : Symbol(c)
+            , mValue(c.value()) {}
+
+
         const QVariant& value() const {return mValue;}
 
-        CLONEMETHOD(Constant)
+        CLONE(Constant)
 
     private:
 
-        int mType;
         QVariant mValue;
 };
 

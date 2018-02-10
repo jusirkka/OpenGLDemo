@@ -1,4 +1,4 @@
-Shared Natural tex_plaid, tex_french
+Shared Var tex_plaid, tex_french: Natural
 
 From "get locations" import u_t_img, u_s_scale
 

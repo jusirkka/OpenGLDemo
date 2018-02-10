@@ -1,8 +1,8 @@
-Shared Natural model_array = genbuffer()
+Shared Var model_array: Natural = genbuffer()
 bindbuffer array_buffer, model_array
 bufferdata array_buffer, modelstore, static_draw
 
-Shared Natural model_elements = genbuffer()
+Shared Var model_elements: Natural = genbuffer()
 bindbuffer element_array_buffer, model_elements
 bufferdata element_array_buffer, modelstore, static_draw
 

@@ -4,6 +4,7 @@
 #include "gl_lang_runner.h"
 #include "codeeditor.h"
 #include "statement.h"
+#include "typedef.h"
 
 using namespace Demo;
 
@@ -18,11 +19,10 @@ private:
 
 
 Dispatcher::Dispatcher(Scope* p)
-    : Function("dispatch", Symbol::Integer)
+    : Function("dispatch", new Integer_T)
     , mParent(p)
 {
-    int argt = Symbol::Text;
-    mArgTypes.append(argt);
+    mArgTypes.append(new Text_T);
 }
 
 const QVariant& Dispatcher::execute(const QVector<QVariant>& vals, int start) {
@@ -49,6 +49,10 @@ Scope::Scope(GLWidget* glContext, QObject *parent)
     // functions
     Functions funcs;
     for (auto sym: qAsConst(funcs.contents)) mSymbols[sym->name()] = sym;
+
+    // types
+    Basetypes types;
+    for (auto sym: qAsConst(types.contents)) mSymbols[sym->name()] = sym;
 
     Function* dispatcher = new Dispatcher(this);
     mSymbols[dispatcher->name()] = dispatcher;
@@ -134,8 +138,7 @@ const Scope::EditorVector& Scope::editors() const {
     return mEditors;
 }
 
-void Scope::appendEditor(CodeEditor* editor, const QString& script, const QString& file) {
-    editor->setPlainText(script);
+void Scope::appendEditor(CodeEditor* editor, const QString& file) {
     editor->setFileName(file);
     mEditorIndices[editor->objectName()] = mEditors.size();
     mEditors.append(editor);
