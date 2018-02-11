@@ -67,18 +67,30 @@ Highlight::Highlight(Compiler* c, QTextDocument* parent):
     mFormats[FLOAT] = mNumeric;
 }
 
+/* static const char *const tokens[] =
+{
+  "$end", "error", "$undefined", "INT", "FLOAT", "CHAR", "ID", "SHARED",
+  "EXECUTE", "FROM", "IMPORT", "WHILE", "ENDWHILE", "IF", "ELSE", "ELSIF",
+  "ENDIF", "ARRAY", "OF", "UNK", "BEGINSTRING", "ENDSTRING", "SEP", "TYPE",
+  "VAR", "RECORD", "'.'", "'<'", "'>'", "EQ", "NE", "LE", "GE", "'+'",
+  "'-'", "OR", "BOR", "'*'", "'/'", "AND", "BAND", "NEG", "'!'", "','",
+  "'='", "'('", "')'", "':'", "'@'", "'['", "']'", "$accept", "input",
+  "elements", "element", "import_from", "symbols", "typedecl", "typedef",
+  "members", "member", "memberseq", "membertype", "declaration",
+  "variables", "typespec", "assignment", "declaration_and_assignment",
+  "statement", "rhs", "cond_rhs_seq", "cond_rhs", "simple_rhs", "guard",
+  "expression", "comp_op", "terms", "add_op", "factors", "mul_op",
+  "factor", "unary_op", "refpath", "refpathitem", "member_op",
+  "arrayitems", "arrayseq", "recorditems", "text", "chars", "parameters",
+  "arglist"
+}; */
+
 void Highlight::highlightBlock(const QString &text) {
 
-    QString parsed = text;
-    int pshift = 0;
-    if (previousBlockState() == 1) {
-        parsed = R"(")" + text;
-        pshift = -1;
-    }
-    setCurrentBlockState(0);
+    setCurrentBlockState(previousBlockState());
 
 
-    YY_BUFFER_STATE buf = gl_lang__scan_string(parsed.toUtf8().data(), mScanner);
+    YY_BUFFER_STATE buf = gl_lang__scan_string(text.toUtf8().data(), mScanner);
 
     int text_start = 0;
     int text_length = 0;
@@ -87,53 +99,64 @@ void Highlight::highlightBlock(const QString &text) {
     gl_lang_set_lloc(&loc, mScanner);
     ValueType val;
     gl_lang_set_lval(&val, mScanner);
-    int token = gl_lang_lex(&val, &loc, mScanner);
-    while (token > 0) {
+
+    for (int token = gl_lang_lex(&val, &loc, mScanner);
+         token > 0;
+         token = gl_lang_lex(&val, &loc, mScanner)) {
+
         int token_len = gl_lang_get_leng(mScanner);
         QString token_text(gl_lang_get_text(mScanner));
+
+        // if (token >= 255) {
+        //     qDebug() << tokens[token - 255] << token_text;
+        // } else {
+        //     qDebug() << token_text;
+        //}
+
+
         if (currentBlockState() == 1) {
             text_length += token_len;
             if (token == ENDSTRING) {
                 setCurrentBlockState(0);
                 setFormat(text_start, text_length, mText);
             }
-        } else {
-            if (token == BEGINSTRING) {
-                setCurrentBlockState(1);
-                text_start = loc.pos  + pshift;
-                text_length = token_len;
-                if (text_start < 0) {
-                    text_start = 0;
-                    text_length = 0;
-                }
-            } else {
-                if (mFormats.contains(token)) {
-                    setFormat(loc.pos + pshift, token_len, mFormats[token]);
-                } else if (token == ID && mCompiler->hasSymbol(token_text)) {
-                    auto sym = mCompiler->symbol(token_text);
-                    auto fun = dynamic_cast<const Function*>(sym);
-                    if (fun) {
-                        setFormat(loc.pos + pshift, token_len, mFunction);
-                    } else {
-                        auto con = dynamic_cast<const Constant*>(sym);
-                        if (con) {
-                            setFormat(loc.pos + pshift, token_len, mConstant);
-                        } else {
-                            auto var = dynamic_cast<const Variable*>(sym);
-                            if (var) {
-                                setFormat(loc.pos + pshift, token_len, mVariable);
-                            } else {
-                                auto typ = dynamic_cast<const Typedef*>(sym);
-                                if (typ) {
-                                    setFormat(loc.pos + pshift, token_len, mType);
-                                }
-                            }
-                        }
-                    }
-                }
+            continue;
+        }
+
+        if (token == BEGINSTRING) {
+            setCurrentBlockState(1);
+            text_start = loc.pos;
+            text_length = token_len;
+            if (text_start < 0) {
+                text_start = 0;
+                text_length = 0;
+            }
+            continue;
+        }
+
+        if (mFormats.contains(token)) {
+            setFormat(loc.pos, token_len, mFormats[token]);
+            continue;
+        }
+
+        if (token == ID && mCompiler->hasSymbol(token_text)) {
+            auto sym = mCompiler->symbol(token_text);
+            if (dynamic_cast<const Function*>(sym)) {
+                setFormat(loc.pos, token_len, mFunction);
+                continue;
+            }
+            if (dynamic_cast<const Constant*>(sym)) {
+                setFormat(loc.pos, token_len, mConstant);
+                continue;
+            }
+            if (dynamic_cast<const Variable*>(sym)) {
+                setFormat(loc.pos, token_len, mVariable);
+            }
+            if (dynamic_cast<const Typedef*>(sym)) {
+                setFormat(loc.pos, token_len, mType);
+                continue;
             }
         }
-        token = gl_lang_lex(&val, &loc, mScanner);
     }
 
     gl_lang__delete_buffer(buf, mScanner);
