@@ -73,6 +73,7 @@ void Completer::complete(const QString& script, int completionPos) {
         createCompletion(id, CR);
     }
 
+    gl_lang__flush_buffer(buf, mScanner);
     gl_lang__delete_buffer(buf, mScanner);
     if (err && !mCompletions.completions().isEmpty()) throw mCompletions;
 }

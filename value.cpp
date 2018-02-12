@@ -46,7 +46,7 @@ void ListValue::set(const QVariant& v, Path p) {
         return;
     }
     QList<QVariant> list = v.toList();
-    while (kids.size() <= list.size()) {
+    while (kids.size() < list.size()) {
         kids << kids.first()->tmpl();
     }
     for (auto kid: kids) {

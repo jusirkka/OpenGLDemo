@@ -772,6 +772,27 @@ public:
     COPY_AND_CLONE(Draw)
 };
 
+class DrawArrays: public GLProc {
+
+public:
+
+    DrawArrays(Demo::GLWidget* p): GLProc("drawarrays", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum mode = vals[start].value<int>();
+        GLint first = vals[start + 1].value<int>();
+        GLsizei count = vals[start + 2].value<int>();
+        mParent->glDrawArrays(mode, first, count);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(DrawArrays)
+};
 
 class EnableVertexAttribArray: public GLProc {
 
@@ -933,11 +954,11 @@ public:
 };
 
 
-class TexImage2D: public GLProc {
+class TexExtImage2D: public GLProc {
 
 public:
 
-    TexImage2D(Demo::GLWidget* p): GLProc("teximage2d", new Integer_T, p) {
+    TexExtImage2D(Demo::GLWidget* p): GLProc("texextimage2d", new Integer_T, p) {
         mArgTypes.append(new Integer_T);
         mArgTypes.append(new Integer_T);
         mArgTypes.append(new Integer_T);
@@ -946,9 +967,9 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
-        GLuint target = vals[start].value<int>();
-        GLuint level = vals[start + 1].value<int>();
-        GLuint iformat = vals[start + 2].value<int>();
+        GLenum target = vals[start].value<int>();
+        GLint level = vals[start + 1].value<int>();
+        GLint iformat = vals[start + 2].value<int>();
         const TexBlob& blob = mParent->texBlob(vals[start + 3].value<int>());
         QString attr = vals[start + 4].toString();
         // qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
@@ -960,7 +981,7 @@ public:
         return mValue;
     }
 
-    COPY_AND_CLONE(TexImage2D)
+    COPY_AND_CLONE(TexExtImage2D)
 };
 
 class TexEmptyImage2D: public GLProc {
@@ -992,6 +1013,172 @@ public:
     }
 
     COPY_AND_CLONE(TexEmptyImage2D)
+};
+
+class TexImage2D: public GLProc {
+
+public:
+
+    TexImage2D(Demo::GLWidget* p): GLProc("teximage2d", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // target
+        mArgTypes.append(new Integer_T); // level
+        mArgTypes.append(new Integer_T); // internalFormat
+        mArgTypes.append(new Integer_T); // width
+        mArgTypes.append(new Integer_T); // height
+        // skip border: always = 0
+        mArgTypes.append(new Integer_T); // format
+        mArgTypes.append(new Integer_T); // type
+        mArgTypes.append(new ArrayType(new Real_T)); // data
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum target = vals[start].toInt();
+        GLint level = vals[start + 1].toInt();
+        GLint iformat = vals[start + 2].toInt();
+        GLsizei w = vals[start + 3].toInt();
+        GLsizei h = vals[start + 4].toInt();
+        GLenum format = vals[start + 5].toInt();
+        GLenum type = vals[start + 6].toInt();
+        QVariantList list = vals[start + 7].toList();
+        QVector<Math3D::Real> data;
+        for (auto v: list) {
+            data << v.value<Math3D::Real>();
+        }
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+        {
+            GLubyte bytes[data.size()];
+            for (int i = 0; i < data.size(); i++) bytes[i] = static_cast<GLubyte>(data[i]);
+            mParent->glTexImage2D(target, level, iformat, w, h, 0, format, type, (const GLvoid*) bytes);
+            break;
+        }
+        case GL_UNSIGNED_SHORT_5_6_5:
+        case GL_UNSIGNED_SHORT_4_4_4_4:
+        case GL_UNSIGNED_SHORT_5_5_5_1:
+        case GL_UNSIGNED_SHORT:
+        {
+            GLushort shorts[data.size()];
+            for (int i = 0; i < data.size(); i++) shorts[i] = static_cast<GLushort>(data[i]);
+            mParent->glTexImage2D(target, level, iformat, w, h, 0, format, type, (const GLvoid*) shorts);
+            break;
+        }
+        case GL_UNSIGNED_INT:
+        case GL_UNSIGNED_INT_24_8:
+        {
+            GLuint ints[data.size()];
+            for (int i = 0; i < data.size(); i++) ints[i] = static_cast<GLuint>(data[i]);
+            mParent->glTexImage2D(target, level, iformat, w, h, 0, format, type, (const GLvoid*) ints);
+            break;
+        }
+        case GL_FLOAT:
+        {
+            GLfloat floats[data.size()];
+            for (int i = 0; i < data.size(); i++) floats[i] = static_cast<GLfloat>(data[i]);
+            mParent->glTexImage2D(target, level, iformat, w, h, 0, format, type, (const GLvoid*) floats);
+            break;
+        }
+        default:
+            throw GLError("Unsupported image data type");
+        }
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(TexImage2D)
+};
+
+
+class TexSubImage1D: public GLProc {
+
+public:
+
+    TexSubImage1D(Demo::GLWidget* p): GLProc("texsubimage1d", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // target
+        mArgTypes.append(new Integer_T); // level
+        mArgTypes.append(new Integer_T); // xoffset
+        mArgTypes.append(new Integer_T); // width
+        mArgTypes.append(new Integer_T); // format
+        mArgTypes.append(new Integer_T); // type
+        mArgTypes.append(new ArrayType(new Real_T)); // pixels
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum target = vals[start].toInt();
+        GLint level = vals[start + 1].toInt();
+        GLint xoffset = vals[start + 2].toInt();
+        GLsizei w = vals[start + 3].toInt();
+        GLenum format = vals[start + 4].toInt();
+        GLenum type = vals[start + 5].toInt();
+        QVariantList list = vals[start + 6].toList();
+        QVector<Math3D::Real> data;
+        for (auto v: list) {
+            data << v.value<Math3D::Real>();
+        }
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+        {
+            GLubyte bytes[data.size()];
+            for (int i = 0; i < data.size(); i++) bytes[i] = static_cast<GLubyte>(data[i]);
+            mParent->glTexSubImage1D(target, level, xoffset, w, format, type, (const GLvoid*) bytes);
+            break;
+        }
+        case GL_UNSIGNED_SHORT_5_6_5:
+        case GL_UNSIGNED_SHORT_4_4_4_4:
+        case GL_UNSIGNED_SHORT_5_5_5_1:
+        case GL_UNSIGNED_SHORT:
+        {
+            GLushort shorts[data.size()];
+            for (int i = 0; i < data.size(); i++) shorts[i] = static_cast<GLushort>(data[i]);
+            mParent->glTexSubImage1D(target, level, xoffset, w, format, type, (const GLvoid*) shorts);
+            break;
+        }
+        case GL_UNSIGNED_INT:
+        case GL_UNSIGNED_INT_24_8:
+        {
+            GLuint ints[data.size()];
+            for (int i = 0; i < data.size(); i++) ints[i] = static_cast<GLuint>(data[i]);
+            mParent->glTexSubImage1D(target, level, xoffset, w, format, type, (const GLvoid*) ints);
+            break;
+        }
+        case GL_FLOAT:
+        {
+            GLfloat floats[data.size()];
+            for (int i = 0; i < data.size(); i++) floats[i] = static_cast<GLfloat>(data[i]);
+            mParent->glTexSubImage1D(target, level, xoffset, w, format, type, (const GLvoid*) floats);
+            break;
+        }
+        default:
+            throw GLError("Unsupported image data type");
+        }
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(TexSubImage1D)
+};
+
+class TexStorage1D: public GLProc {
+
+public:
+
+    TexStorage1D(Demo::GLWidget* p): GLProc("texstorage1d", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // target
+        mArgTypes.append(new Integer_T); // levels
+        mArgTypes.append(new Integer_T); // internal format
+        mArgTypes.append(new Integer_T); // width
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum target = vals[start].toInt();
+        GLsizei levels = vals[start + 1].toInt();
+        GLenum iformat = vals[start + 2].toInt();
+        GLsizei w = vals[start + 3].toInt();
+        mParent->glTexStorage1D(target, levels, iformat, w);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(TexStorage1D)
 };
 
 class Viewport: public GLProc {
@@ -1409,6 +1596,7 @@ public:
         contents.append(new BufferData(p));
         contents.append(new VertexAttribPointer(p));
         contents.append(new Draw(p));
+        contents.append(new DrawArrays(p));
         contents.append(new EnableVertexAttribArray(p));
         contents.append(new DisableVertexAttribArray(p));
         contents.append(new ActiveTexture(p));
@@ -1419,6 +1607,9 @@ public:
         contents.append(new TexParameter(p));
         contents.append(new TexImage2D(p));
         contents.append(new TexEmptyImage2D(p));
+        contents.append(new TexExtImage2D(p));
+        contents.append(new TexSubImage1D(p));
+        contents.append(new TexStorage1D(p));
         contents.append(new Viewport(p));
         contents.append(new BlendFunc(p));
         contents.append(new BlendEquation(p));
@@ -1480,13 +1671,18 @@ public:
         CONST(STATIC_DRAW);
         CONST(STREAM_DRAW);
         CONST(DYNAMIC_DRAW);
-        // draw
+        // draw & draw arrays
         CONST(POINTS);
         CONST(LINES);
         CONST(TRIANGLES);
+        CONST(LINE_STRIP);
+        CONST(LINE_LOOP);
+        CONST(TRIANGLE_STRIP);
+        CONST(TRIANGLE_FAN);
         // active texture
         CONST(TEXTURE0);
         // texture targets
+        CONST(TEXTURE_1D);
         CONST(TEXTURE_2D);
         CONST(TEXTURE_2D_MULTISAMPLE);
         CONST(TEXTURE_CUBE_MAP);
@@ -1586,6 +1782,60 @@ public:
         CONST(DEPTH_STENCIL_ATTACHMENT);
         // drawbuffer
         CONST(NONE);
+        // Image data internal formats
+        CONST(R8);
+        CONST(R16);
+        CONST(RG8);
+        CONST(RG16);
+        CONST(R3_G3_B2);
+        CONST(RGB4);
+        CONST(RGB5);
+        CONST(RGB8);
+        CONST(RGB10);
+        CONST(RGB12);
+        CONST(RGBA2);
+        CONST(RGBA4);
+        CONST(RGB5_A1);
+        CONST(RGBA8);
+        CONST(RGB10_A2);
+        CONST(RGBA12);
+        CONST(RGBA16);
+        CONST(SRGB8);
+        CONST(SRGB8_ALPHA8);
+        CONST(R16F);
+        CONST(RG16F);
+        CONST(RGB16F);
+        CONST(RGBA16F);
+        CONST(R32F);
+        CONST(RG32F);
+        CONST(RGB32F);
+        CONST(RGBA32F);
+        CONST(R11F_G11F_B10F);
+        CONST(RGB9_E5);
+        CONST(R8I);
+        CONST(R8UI);
+        CONST(R16I);
+        CONST(R16UI);
+        CONST(R32I);
+        CONST(R32UI);
+        CONST(RG8I);
+        CONST(RG8UI);
+        CONST(RG16I);
+        CONST(RG16UI);
+        CONST(RG32I);
+        CONST(RG32UI);
+        CONST(RGB8I);
+        CONST(RGB8UI);
+        CONST(RGB16I);
+        CONST(RGB16UI);
+        CONST(RGB32I);
+        CONST(RGB32UI);
+        CONST(RGBA8I);
+        CONST(RGBA8UI);
+        CONST(RGBA16I);
+        CONST(RGBA16UI);
+        CONST(RGBA32I);
+        CONST(RGBA32UI);
     }
 
 

@@ -8,7 +8,7 @@ uniform1i u_t_img, 0
 
 Shared Var tex_checker: Natural = gentexture()
 bindtexture texture_2d, tex_checker
-teximage2d texture_2d, 0, rgba, imagestore, "checker"
+texextimage2d texture_2d, 0, rgba, imagestore, "checker"
 generatemipmap texture_2d
 
 activetexture texture0 + 1

@@ -76,6 +76,7 @@ void Compiler::compile(const QString& script) {
 
     if (!err) err = checkControls();
 
+    gl_lang__flush_buffer(buf, mScanner);
     gl_lang__delete_buffer(buf, mScanner);
 
     if (err) throw mError;

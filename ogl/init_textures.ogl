@@ -11,11 +11,11 @@ uniform1f u_s_scale, 4
 tex_plaid = gentexture()
 
 bindtexture texture_2d, tex_plaid
-teximage2d texture_2d, 0, rgba, imagestore, "plaid"
+texextimage2d texture_2d, 0, rgba, imagestore, "plaid"
 generatemipmap texture_2d
 
 tex_french = gentexture()
 
 bindtexture texture_2d, tex_french
-teximage2d texture_2d, 0, rgba, imagestore, "french"
+texextimage2d texture_2d, 0, rgba, imagestore, "french"
 generatemipmap texture_2d
