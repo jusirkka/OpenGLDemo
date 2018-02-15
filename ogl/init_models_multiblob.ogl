@@ -3,9 +3,9 @@ Shared Var model_array, model_elements: Natural
 
 model_array = genbuffer()
 bindbuffer array_buffer, model_array
-bufferdata array_buffer, modelstore, static_draw
+bufferextdata array_buffer, modelstore, static_draw
 
 model_elements = genbuffer()
 bindbuffer element_array_buffer, model_elements
-bufferdata element_array_buffer, modelstore, static_draw
+bufferextdata element_array_buffer, modelstore, static_draw
 

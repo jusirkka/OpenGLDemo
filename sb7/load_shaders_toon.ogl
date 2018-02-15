@@ -1,0 +1,22 @@
+
+Var f_shader: Natural = createshader(fragment_shader)
+compileshader f_shader, source("toon frag")
+
+Var v_shader: Natural = createshader(vertex_shader)
+compileshader v_shader, source("toon vert")
+
+Shared Var prog_toon: Natural = createprogram()
+attachshader prog_toon, v_shader
+attachshader prog_toon, f_shader
+linkprogram prog_toon
+
+detachshader prog_toon, f_shader
+detachshader prog_toon, v_shader
+deleteshader f_shader
+deleteshader v_shader
+
+useprogram prog_toon
+
+Shared Var u_mv: Natural = getuniformlocation(prog_toon, "mv_matrix")
+Shared Var u_proj: Natural = getuniformlocation(prog_toon, "proj_matrix")
+

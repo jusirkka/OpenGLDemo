@@ -33,7 +33,7 @@ class CodeEditor : public QPlainTextEdit
 
 public:
 
-    using EditorVector = QVector<Demo::CodeEditor *>;
+    using EditorVector = QVector<Demo::CodeEditor*>;
 
 public:
     CodeEditor(const QString& name, Scope* globals, Project* owner, const QString& text);
@@ -114,5 +114,13 @@ private:
 };
 
 } // namespace Demo
+
+#define INIT_NAME QStringLiteral("init main")
+#define DRAW_NAME QStringLiteral("draw main")
+#define INIT_CODE QStringLiteral("clearcolor vec(.1,.2,.2,1)\n")
+#define DRAW_CODE QStringLiteral("clear color_buffer_bit\n")
+#define DEFAULT_CODE QStringLiteral("// new commands here\n")
+#define ERR_CODE QStringLiteral("// Not bound to a file\n")
+
 
 #endif

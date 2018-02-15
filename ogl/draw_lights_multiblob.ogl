@@ -22,9 +22,9 @@ enablevertexattribarray a_vertex
 enablevertexattribarray a_normal
 enablevertexattribarray a_tex
 
-vertexattribpointer a_vertex, modelstore, "dodeca:vertex"
-vertexattribpointer a_normal, modelstore, "dodeca:normal"
-vertexattribpointer a_tex, modelstore, "dodeca:tex"
+vertexattribextpointer a_vertex, modelstore, "dodeca:vertex"
+vertexattribextpointer a_normal, modelstore, "dodeca:normal"
+vertexattribextpointer a_tex, modelstore, "dodeca:tex"
 
 From "get locations" import u_s_scale
 bindtexture texture_2d, 0

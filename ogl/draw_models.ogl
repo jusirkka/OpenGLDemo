@@ -6,9 +6,9 @@ enablevertexattribarray a_vertex
 enablevertexattribarray a_normal
 enablevertexattribarray a_tex
 
-vertexattribpointer a_vertex, modelstore, "square:vertex"
-vertexattribpointer a_normal, modelstore, "square:normal"
-vertexattribpointer a_tex, modelstore, "square:tex"
+vertexattribextpointer a_vertex, modelstore, "square:vertex"
+vertexattribextpointer a_normal, modelstore, "square:normal"
+vertexattribextpointer a_tex, modelstore, "square:tex"
 
 From "init textures" import tex_plaid
 

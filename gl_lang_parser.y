@@ -334,6 +334,7 @@ statement: ID parameters {
   }
   // check the argument types
   for (int i = 0; i < fun->argTypes().size(); ++i) {
+    if (fun->argTypes()[i]->id() == 0 && $2[i]->id() != 0) continue; // NullType: accept all types
     if (fun->argTypes()[i]->assignable($2[i])) continue;
     HANDLE_ERROR($1.name, INCOMPATIBLE_ARGS_MSG);
   }
@@ -536,6 +537,7 @@ factor: ID '(' parameters ')' {
   }
   // check the argument types
   for (int i = 0; i < fun->argTypes().size(); ++i) {
+      if (fun->argTypes()[i]->id() == 0 && $3[i]->id() != 0) continue; // NullType: accept all types
       if (fun->argTypes()[i]->assignable($3[i])) continue;
       HANDLE_ERROR($1.name, INCOMPATIBLE_ARGS_MSG);
   }

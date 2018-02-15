@@ -36,8 +36,6 @@ Completer::Completer(Scope* globalScope, CodeEditor *parent):
     mCompleter(new QCompleter(parent)),
     mCompletionPos(-1) {
 
-    gl_lang_lex_init(&mScanner);
-
     mReserved << "Shared" << "Execute" << "From" << "import" <<
                  "While" << "Endwhile" << "If" << "Else" << "Elsif" << "Endif" <<
                  "Array" << "of" << "Type" << "Var" << "Record";
@@ -62,9 +60,12 @@ void Completer::complete(const QString& script, int completionPos) {
     mCompletions = CompleterException();
 
     mCompletionPos = completionPos;
+
+    gl_lang_lex_init(&mScanner);
+
     // ensure that the source ends with newlines
     QString source = "\n" + script + "\n\n";
-    YY_BUFFER_STATE buf = gl_lang__scan_string(source.toUtf8().data(), mScanner);
+    gl_lang__scan_string(source.toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
     if (err && mCompletions.completions().isEmpty()) {
         IdentifierType id;
@@ -73,8 +74,7 @@ void Completer::complete(const QString& script, int completionPos) {
         createCompletion(id, CR);
     }
 
-    gl_lang__flush_buffer(buf, mScanner);
-    gl_lang__delete_buffer(buf, mScanner);
+    gl_lang_lex_destroy(mScanner);
     if (err && !mCompletions.completions().isEmpty()) throw mCompletions;
 }
 
@@ -151,7 +151,6 @@ bool Completer::createCompletion(const IdentifierType &id, unsigned mask) {
 
 Completer::~Completer() {
     qDeleteAll(mSymbols);
-    gl_lang_lex_destroy(mScanner);
 }
 
 

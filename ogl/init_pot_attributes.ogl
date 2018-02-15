@@ -1,8 +1,8 @@
 From "get locations" import a_vertex, a_normal, a_tex
 
-vertexattribpointer a_vertex, modelstore, "teapot:vertex"
-vertexattribpointer a_normal, modelstore, "teapot:normal"
-vertexattribpointer a_tex, modelstore, "teapot:tex"
+vertexattribextpointer a_vertex, modelstore, "teapot:vertex"
+vertexattribextpointer a_normal, modelstore, "teapot:normal"
+vertexattribextpointer a_tex, modelstore, "teapot:tex"
 
 
 enablevertexattribarray a_vertex

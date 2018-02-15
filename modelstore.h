@@ -9,6 +9,7 @@
 #include "blob.h"
 #include "math3d.h"
 #include "patcher.h"
+#include "projectfolder.h"
 
 #define WAVEFRONT_LTYPE Demo::WF::LocationType
 #define WAVEFRONT_STYPE Demo::WF::ValueType
@@ -101,7 +102,7 @@ class GLWidget;
 namespace GL {
 
 
-class ModelStore : public QObject, public Blob
+class ModelStore : public ProjectFolder, public Blob
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "net.kvanttiapina.OpenGLDemos.Blob/1.0")
@@ -114,14 +115,15 @@ public:
 
 
     // project interface
-    void rename(const QString& from, const QString& to);
-    void remove(int index);
-    void setModel(const QString& key, const QString& path = QString());
+    void rename(const QString& from, const QString& to) override;
+    void remove(int index) override;
+    int size() const override;
+    QString fileName(int) const override;
+    QString itemName(int) const override;
+    QStringList items() const override;
+    void setItem(const QString& key, const QString& path = QString()) override;
+
     void clean();
-    int size();
-    const QString& fileName(int);
-    const QString& modelName(int);
-    QStringList itemSample(const QString& except = QString()) const;
 
     // grammar interface
     void appendVertex(float x, float y, float z, float w = 1);

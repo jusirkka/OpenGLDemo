@@ -1,0 +1,25 @@
+From "init main" import render_prog, offset, mvp, textures
+From "" import time, projection, camera
+
+clear color_buffer_bit
+
+useprogram render_prog
+
+uniform1f offset, time * 0.002
+
+
+Var i: Natural = 0
+Var mv: Matrix
+
+While i < 4
+  mv = rotation(90 * i, vec(0, 0, 1, 1)) * \
+       translation(vec(-.5, 0, -10, 1)) * \
+       rotation(90, vec(0, 1, 0, 1)) * \
+       scaling(30 , 1, 1)
+  uniformmatrix4f mvp, projection * camera * mv
+  bindtexture texture_2d, textures[i]
+  drawarrays triangle_strip, 0, 4
+  i = i + 1
+Endwhile
+
+

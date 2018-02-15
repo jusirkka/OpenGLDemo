@@ -6,12 +6,14 @@
 #include <QMap>
 #include <QStringList>
 
+#include "projectfolder.h"
+
 
 namespace Demo {
 
 class Scope;
 
-class TextFileStore : public QObject {
+class TextFileStore : public ProjectFolder {
 
     Q_OBJECT
 
@@ -21,14 +23,15 @@ public:
     TextFileStore(const QString& name, Scope* globals, QObject* parent = nullptr);
 
 
-    void rename(const QString& from, const QString& to);
-    void remove(int index);
-    void setText(const QString& key, const QString& path = QString(""));
-    int size();
-    const QString& fileName(int);
-    const QString& itemName(int);
+    void rename(const QString& from, const QString& to) override;
+    void remove(int index) override;
+    void setItem(const QString& key, const QString& path = QString("")) override;
+    int size() const override;
+    QString fileName(int) const override;
+    QString itemName(int) const override;
+    QStringList items() const override;
+
     QString text(const QString& key) const;
-    QStringList itemSample(const QString& except = QString()) const;
 
 private:
 

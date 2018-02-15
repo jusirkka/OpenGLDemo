@@ -218,7 +218,7 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     } else if (item.parent() == mProject->itemParent(Project::ModelItems)) {
         title = "Open a model file to create vertex data";
         filter = "Model files ( *.obj)";
-    } else if (item.parent() == mProject->itemParent(Project::TextureItems)) {
+    } else if (item.parent() == mProject->itemParent(Project::ImageItems)) {
         title = "Open an image to create texture data";
         filter = "Image files (";
         const auto formats = QImageReader::supportedImageFormats();
@@ -229,6 +229,9 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     } else if (item.parent() == mProject->itemParent(Project::ShaderItems)) {
         title = "Open a shader source file to create a shader";
         filter = "GLSL files ( *.glsl *.vert *.frag)";
+    } else if (item.parent() == mProject->itemParent(Project::TextureItems)) {
+        title = "Open a KTX file to create a texture";
+        filter = "KTX files ( *.ktx)";
     }
 
     QString fileName = QFileDialog::getOpenFileName(
@@ -353,6 +356,7 @@ void Demo::MainWindow::on_actionEdit_triggered() {
 void Demo::MainWindow::on_actionReload_triggered() {
     auto item = getSelection();
     if (item.parent() != mProject->itemParent(Project::ModelItems) &&
+            item.parent() != mProject->itemParent(Project::ImageItems) &&
             item.parent() != mProject->itemParent(Project::TextureItems) &&
             item.parent() != mProject->itemParent(Project::ShaderItems)) {
         return;
@@ -513,7 +517,7 @@ void Demo::MainWindow::selectionChanged() {
 
     setupScriptActions(selection);
 
-    // models/textures/shaders
+    // models/images/shaders
     setupResourceActions(selection);
 
 }
@@ -588,6 +592,7 @@ void Demo::MainWindow::setupScriptActions(const QModelIndex& selection) {
 void Demo::MainWindow::setupResourceActions(const QModelIndex& selection) {
 
     if (selection.parent() != mProject->itemParent(Project::ModelItems) &&
+            selection.parent() != mProject->itemParent(Project::ImageItems) &&
             selection.parent() != mProject->itemParent(Project::TextureItems) &&
             selection.parent() != mProject->itemParent(Project::ShaderItems)) {
         return;

@@ -1,0 +1,33 @@
+Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+Var toon_tex_data: Array of Natural = Array(\
+  0x44, 0x44, 0x00, 0x00,\
+  0x88, 0x88, 0x00, 0x00,\
+  0xcc, 0xcc, 0x00, 0x00,\
+  0xff, 0xff, 0x00, 0x00)
+
+activetexture texture0
+Shared Var tex_toon: Natural = gentexture()
+bindtexture texture_1d, tex_toon
+texstorage1d texture_1d, 1, rgb8, 4
+texsubimage1d texture_1d, 0, 0, 4, rgba, unsigned_byte, toon_tex_data
+texparameter texture_1d, texture_mag_filter, nearest
+texparameter texture_1d, texture_min_filter, nearest
+texparameter texture_1d, texture_wrap_s, clamp_to_edge
+
+// Model store
+Shared Var model_array: Natural = genbuffer()
+bindbuffer array_buffer, model_array
+bufferextdata array_buffer, modelstore, static_draw
+
+Shared Var model_elements: Natural = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferextdata element_array_buffer, modelstore, static_draw
+
+Execute "load shaders"
+
+clearcolor vec(.1,.1,.1,1)
+cleardepth 1
+enable depth_test
+depthfunc lequal

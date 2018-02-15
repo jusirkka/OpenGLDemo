@@ -1,0 +1,44 @@
+Var blend_func: Array of Natural = Array(\
+  zero, one, src_color, one_minus_src_color, dst_color, \
+  one_minus_dst_color, src_alpha, one_minus_src_alpha, \
+  dst_alpha, one_minus_dst_alpha, constant_color, \
+  one_minus_constant_color, constant_alpha, one_minus_constant_alpha, \
+  src_alpha_saturate, src1_color, one_minus_src1_color, src1_alpha, one_minus_src1_alpha)
+
+Var num_blends: Natural = 19
+Var x_scale: Real = 60. / num_blends
+Var y_scale: Real = 60. / num_blends
+
+From "" import projection, time, camera
+From "init main" import prog, u
+
+
+clear color_buffer_bit | depth_buffer_bit
+
+useprogram prog
+
+uniformmatrix4f u.proj, projection
+
+enable blend
+blendcolor vec(.2, .5, .7, .5)
+
+Var i: Natural = 0
+Var j: Natural = 0
+Var mv: Matrix
+
+vertexattribextpointer 0, modelstore, "dod:vertex"
+
+While j < num_blends
+  i = 0
+  While i < num_blends
+    mv = translation(vec(x_scale * i - x_scale * num_blends / 2, y_scale * j - y_scale * num_blends / 2, 0, 1)) * \
+         rotation(time * -0.45, vec(0, 1, 0, 1)) * \
+         rotation(time * -0.21, vec(1, 0, 0, 1))
+    uniformmatrix4f u.mv, camera * mv
+    blendfunc blend_func[i], blend_func[j]
+    draw modelstore, "dod", triangles
+    i = i + 1
+  Endwhile
+  j = j + 1
+Endwhile
+

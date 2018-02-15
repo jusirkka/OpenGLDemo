@@ -6,9 +6,9 @@ enablevertexattribarray a_tex
 
 From "draw main" import  model_colors, model_matrix, model_tex, model_tex_scale
 
-vertexattribpointer a_vertex, teapot, "vertex"
-vertexattribpointer a_normal, teapot, "normal"
-vertexattribpointer a_tex, teapot, "tex"
+vertexattribextpointer a_vertex, teapot, "vertex"
+vertexattribextpointer a_normal, teapot, "normal"
+vertexattribextpointer a_tex, teapot, "tex"
 
 From "create progs" import u_s_scale
 

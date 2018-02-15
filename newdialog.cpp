@@ -30,6 +30,11 @@ void Demo::NewDialog::on_modelButton_pressed() {
     accept();
 }
 
+void Demo::NewDialog::on_imageButton_pressed() {
+    mParentRow = mProject->itemParent(Project::ImageItems).row();
+    accept();
+}
+
 void Demo::NewDialog::on_textureButton_pressed() {
     mParentRow = mProject->itemParent(Project::TextureItems).row();
     accept();

@@ -1,0 +1,28 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "init main" import tex_toon
+From "load shaders" import prog_toon, u_proj, u_mv
+From "" import projection, camera, time
+
+bindtexture texture_1d, tex_toon
+useprogram prog_toon
+
+Var mv: Matrix = translation(vec(0, 0, -1, 1)) * \
+  rotation(time * 2.1375, vec(0, 1, 0, 1)) * \
+  rotation(time * 1.775, vec(0,  0, 1, 1)) * \
+  rotation(time * 0.353, vec(1, 0, 0, 1))
+
+uniformmatrix4f u_proj, projection
+uniformmatrix4f u_mv, camera * mv
+
+enablevertexattribarray 0
+enablevertexattribarray 1
+
+vertexattribextpointer 0, modelstore, "teapot:vertex"
+vertexattribextpointer 1, modelstore, "teapot:normal"
+
+draw modelstore, "teapot", triangles
+
+disablevertexattribarray 0
+disablevertexattribarray 1
+

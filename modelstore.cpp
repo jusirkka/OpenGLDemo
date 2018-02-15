@@ -21,18 +21,54 @@ using Math3D::Vector4;
 using namespace Demo::GL;
 
 ModelStore::ModelStore()
-    : QObject()
+    : ProjectFolder("modelstore")
     , Blob()
     , mContext(nullptr)
     , mError()
     , mScanner(nullptr)
     , mPatchState()
 {
-    setObjectName("modelstore");
-    wavefront_lex_init(&mScanner);
     mData[GL_ARRAY_BUFFER] = Data();
     mData[GL_ELEMENT_ARRAY_BUFFER] = Data();
 }
+
+void ModelStore::rename(const QString& from, const QString& to) {
+    if (mIndexMap.contains(from)) {
+        int index = mIndexMap.take(from);
+        mIndexMap[to] = index;
+        mModels[index].name = to;
+        mSpecs[to + ":vertex"] = mSpecs.take(from + ":vertex");
+        mSpecs[to + ":normal"] = mSpecs.take(from + ":normal");
+        mSpecs[to + ":tex"] = mSpecs.take(from + ":tex");
+    }
+}
+
+void ModelStore::remove(int index) {
+    if (index < 0 || index >= mModels.size()) return;
+    mModels.removeAt(index);
+    mIndexMap.clear();
+    for (int k = 0; k < mModels.size(); ++k) {
+        mIndexMap[mModels[k].name] = k;
+    }
+    makeModelBuffer();
+}
+
+int ModelStore::size() const {
+    return mModels.size();
+}
+
+QString ModelStore::fileName(int index) const {
+    return mModels[index].fileName;
+}
+
+QString ModelStore::itemName(int index) const {
+    return mModels[index].name;
+}
+
+QStringList ModelStore::items() const {
+    return mIndexMap.keys();
+}
+
 
 void ModelStore::setContext(GLWidget *context) {
     mContext = context;
@@ -222,17 +258,6 @@ void ModelStore::endPatch() {
 }
 
 
-void ModelStore::rename(const QString& from, const QString& to) {
-    if (mIndexMap.contains(from)) {
-        int index = mIndexMap.take(from);
-        mIndexMap[to] = index;
-        mModels[index].name = to;
-        mSpecs[to + ":vertex"] = mSpecs.take(from + ":vertex");
-        mSpecs[to + ":normal"] = mSpecs.take(from + ":normal");
-        mSpecs[to + ":tex"] = mSpecs.take(from + ":tex");
-    }
-}
-
 void ModelStore::makeModelBuffer() {
 
     mSpecs.clear();
@@ -300,15 +325,6 @@ void ModelStore::makeModelBuffer() {
 }
 
 
-void ModelStore::remove(int index) {
-    if (index < 0 || index >= mModels.size()) return;
-    mModels.removeAt(index);
-    mIndexMap.clear();
-    for (int k = 0; k < mModels.size(); ++k) {
-        mIndexMap[mModels[k].name] = k;
-    }
-    makeModelBuffer();
-}
 
 static const char square [] =
     "v -1 1 1\n"
@@ -335,9 +351,10 @@ void ModelStore::parseModelData(const QString& path) {
         file.close();
     }
 
-    YY_BUFFER_STATE buf = wavefront__scan_string(inp.toUtf8().data(), mScanner);
+    wavefront_lex_init(&mScanner);
+    wavefront__scan_string(inp.toUtf8().data(), mScanner);
     int err = wavefront_parse(this, mScanner);
-    wavefront__delete_buffer(buf, mScanner);
+    wavefront_lex_destroy(mScanner);
 
     if (err) throw WF::ModelError(mError);
 
@@ -380,7 +397,7 @@ Vector4 ModelStore::makeNormal(int start) const {
 }
 
 
-void ModelStore::setModel(const QString& key, const QString& path) {
+void ModelStore::setItem(const QString& key, const QString& path) {
     try {
         parseModelData(path);
     } catch (WF::ModelError& e) {
@@ -447,28 +464,6 @@ void ModelStore::clean() {
     delete mData[GL_ELEMENT_ARRAY_BUFFER].data;
     mData[GL_ELEMENT_ARRAY_BUFFER] = Data();
 
-}
-
-int ModelStore::size() {
-    return mModels.size();
-}
-
-const QString& ModelStore::fileName(int index) {
-    return mModels[index].fileName;
-}
-
-const QString& ModelStore::modelName(int index) {
-    return mModels[index].name;
-}
-
-QStringList ModelStore::itemSample(const QString& except) const {
-    QStringList r;
-    const auto keys = mIndexMap.keys();
-    for (auto& k: keys) {
-        if (!except.isEmpty() && k == except) continue;
-        r.append(k);
-    }
-    return r;
 }
 
 void ModelStore::createError(const QString &msg, Error err) {

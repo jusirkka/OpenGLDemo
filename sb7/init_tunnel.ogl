@@ -1,0 +1,82 @@
+Var vs_source: Text = "
+#version 420 core
+
+out vec2 tc;
+
+uniform mat4 mvp;
+uniform float offset;
+
+void main(void)
+{
+    const vec2[4] position = vec2[4](vec2(-0.5, -0.5),
+                                     vec2( 0.5, -0.5),
+                                     vec2(-0.5,  0.5),
+                                     vec2( 0.5,  0.5));
+    tc = (position[gl_VertexID].xy + vec2(offset, 0.5)) * vec2(30.0, 1.0);
+    gl_Position = mvp * vec4(position[gl_VertexID], 0.0, 1.0);
+}
+"
+
+Var fs_source: Text = "
+#version 420 core
+
+layout (location = 0) out vec4 color;
+
+in vec2 tc;
+
+layout (binding = 0) uniform sampler2D tex;
+
+void main(void)
+{
+    color = texture(tex, tc);
+}
+"
+
+
+Var vs: Natural = createshader(vertex_shader)
+compileshader vs, vs_source
+
+Var fs: Natural = createshader(fragment_shader)
+compileshader fs, fs_source
+
+Shared Var render_prog: Natural = createprogram()
+
+attachshader render_prog, fs
+attachshader render_prog, vs
+
+linkprogram render_prog
+
+detachshader render_prog, fs
+detachshader render_prog, vs
+
+deleteshader fs
+deleteshader vs
+
+Shared Var mvp: Natural = getuniformlocation(render_prog, "mvp")
+Shared Var offset: Natural = getuniformlocation(render_prog, "offset")
+
+Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+
+activetexture texture0
+
+
+Var ts: Array of Record(id: Natural, name: Text) = \
+    Array(Record(0, "wall"), Record(0, "floor"), Record(0, "ceiling"))
+
+Var i: Natural = 0
+While i < 3
+  ts[i].id = gentexture()
+  bindtexture texture_2d, ts[i].id
+  texextimage2d texture_2d, 0, rgba, imagestore, ts[i].name
+  texparameter texture_2d, texture_min_filter, linear_mipmap_linear
+  texparameter texture_2d, texture_mag_filter, linear
+  generatemipmap texture_2d
+  i = i + 1
+Endwhile
+
+Shared Var textures: Array of Natural = \
+  Array(ts[0].id, ts[1].id, ts[0].id, ts[2].id)
+
+clearcolor vec(.1,.4,.2,1)

@@ -4,7 +4,7 @@ enablevertexattribarray a_vertex_s
 
 From "draw main" import model_name, model_matrix, light_direction, plane_normal, point_in_plane
 
-vertexattribpointer a_vertex_s, modelstore, model_name + ":vertex"
+vertexattribextpointer a_vertex_s, modelstore, model_name + ":vertex"
 
 
 

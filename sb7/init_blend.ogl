@@ -1,0 +1,72 @@
+Var vs_source: Text = "
+#version 410 core
+
+layout (location = 0) in vec4 position;
+
+out VS_OUT
+{
+    vec4 color0;
+    vec4 color1;
+} vs_out;
+
+uniform mat4 mv_matrix;
+uniform mat4 proj_matrix;
+
+void main(void)
+{
+    gl_Position = proj_matrix * mv_matrix * position;
+    vs_out.color0 = position * 2.0 + vec4(0.5, 0.5, 0.5, 0.0);
+    vs_out.color1 = vec4(0.5, 0.5, 0.5, 0.0) - position * 2.0;
+}
+"
+
+Var fs_source: Text = "
+#version 410 core
+
+layout (location = 0, index = 0) out vec4 color0;
+layout (location = 0, index = 1) out vec4 color1;
+
+in VS_OUT
+{
+    vec4 color0;
+    vec4 color1;
+} fs_in;
+
+void main(void)
+{
+    color0 = vec4(fs_in.color0.xyz, 1.0);
+    color1 = vec4(fs_in.color0.xyz, 1.0);
+}
+"
+Shared Var prog: Natural = createprogram()
+
+Var vs: Natural = createshader(vertex_shader)
+compileshader vs, vs_source
+
+Var fs: Natural = createshader(fragment_shader)
+compileshader fs, fs_source
+
+attachshader prog, vs
+attachshader prog, fs
+
+linkprogram prog
+
+Shared Var u: Record(mv, proj: Natural)
+u.mv = getuniformlocation(prog, "mv_matrix")
+u.proj = getuniformlocation(prog, "proj_matrix")
+
+Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+Var model_array: Natural = genbuffer()
+bindbuffer array_buffer, model_array
+bufferextdata array_buffer, modelstore, static_draw
+
+Var model_elements: Natural = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferextdata element_array_buffer, modelstore, static_draw
+
+enablevertexattribarray 0
+
+clearcolor vec(.6, .4, .1, 1)
+cleardepth 1

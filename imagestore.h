@@ -7,11 +7,12 @@
 #include <QStringList>
 
 #include "texblob.h"
+#include "projectfolder.h"
 
 namespace Demo {
 namespace GL {
 
-class ImageStore : public QObject, public TexBlob {
+class ImageStore : public ProjectFolder, public TexBlob {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "net.kvanttiapina.OpenGLDemos.TexBlob/1.0")
     Q_INTERFACES(Demo::GL::TexBlob)
@@ -25,15 +26,16 @@ public:
     const void* readData(const QString& key) const override;
     TexBlobSpec spec(const QString& key) const override;
 
-    void rename(const QString& from, const QString& to);
-    void remove(int index);
-    void setImage(const QString& key, const QString& path = QString(""));
-    void clean();
-    int size();
-    const QString& fileName(int);
-    const QString& imageName(int);
-    QStringList itemSample(const QString& except = QString()) const;
+    // Project interface
+    void rename(const QString& from, const QString& to) override;
+    void remove(int index) override;
+    void setItem(const QString& key, const QString& path = QString("")) override;
+    int size() const override;
+    QString fileName(int) const override;
+    QString itemName(int) const override;
+    QStringList items() const override;
 
+    void clean();
 
 private:
 

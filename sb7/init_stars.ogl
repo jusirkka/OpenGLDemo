@@ -1,0 +1,96 @@
+Var fs_source: Text = "
+#version 420 core
+
+layout (location = 0) out vec4 color;
+
+uniform sampler2D tex_star;
+flat in vec4 starColor;
+
+void main(void)
+{
+    color = 3 * starColor * texture(tex_star, gl_PointCoord);
+}
+"
+
+Var vs_source: Text = "
+#version 410 core
+
+layout (location = 0) in vec4 position;
+layout (location = 1) in vec4 color;
+
+uniform float time;
+uniform mat4 proj_matrix;
+
+flat out vec4 starColor;
+
+void main(void)
+{
+    vec4 newVertex = position;
+
+    newVertex.z += time;
+    newVertex.z = fract(newVertex.z);
+
+    float size = (20.0 * newVertex.z * newVertex.z);
+
+    starColor = smoothstep(1.0, 7.0, size) * color;
+
+    newVertex.z = (999.9 * newVertex.z) - 1000.0;
+    gl_Position = proj_matrix * newVertex;
+    gl_PointSize = size;
+}
+"
+
+Var vs: Natural = createshader(vertex_shader)
+Var fs: Natural = createshader(fragment_shader)
+
+compileshader vs, vs_source
+compileshader fs, fs_source
+
+Shared Var prog: Natural = createprogram()
+
+attachshader prog, vs
+attachshader prog, fs
+
+linkprogram prog
+
+deleteshader vs
+deleteshader fs
+
+Shared Var u: Record(time, proj: Natural)
+u.time = getuniformlocation(prog, "time")
+u.proj = getuniformlocation(prog, "proj_matrix")
+
+activetexture texture0
+Shared Var star_tex: Natural = ktx("star")
+bindtexture texture_2d, star_tex
+texparameter texture_2d, texture_min_filter, linear
+texparameter texture_2d, texture_mag_filter, linear
+
+Var stars: Array of Record(p, c: Vector)
+Shared Var numstars: Natural = 150
+Var i: Natural = 0
+While i < numstars
+  stars[i].p = 200 * randompos() - pos(1, 1, 1) * 100
+  stars[i].p[2]  = random()
+  stars[i].c = randompos() * 0.7 + pos(1, 1, 1) * 0.3
+  i = i + 1
+Endwhile
+
+Shared Var star_vao: Natural = genvertexarray()
+bindvertexarray star_vao
+
+Shared Var star_buffer: Natural = genbuffer()
+bindbuffer array_buffer, star_buffer
+bufferdata array_buffer, stars, static_draw
+
+enablevertexattribarray 0
+enablevertexattribarray 1
+
+vertexattribpointer 0, 4, float, false, 8, 0
+vertexattribpointer 1, 4, float, false, 8, 4
+
+
+
+clearcolor vec(.0,.0,.1,1)
+cleardepth 1
+

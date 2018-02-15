@@ -1,10 +1,10 @@
 Shared Var model_array: Natural = genbuffer()
 bindbuffer array_buffer, model_array
-bufferdata array_buffer, modelstore, static_draw
+bufferextdata array_buffer, modelstore, static_draw
 
 Shared Var model_elements: Natural = genbuffer()
 bindbuffer element_array_buffer, model_elements
-bufferdata element_array_buffer, modelstore, static_draw
+bufferextdata element_array_buffer, modelstore, static_draw
 
 From "get locations" import a_vertex, a_normal, a_tex, a_vertex_d
 

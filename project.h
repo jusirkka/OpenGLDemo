@@ -7,12 +7,14 @@
 #include "codeeditor.h"
 #include "symbol.h"
 
+
 class QFileSystemWatcher;
 
 namespace Demo {
 
 class GLWidget;
 class Scope;
+class ProjectFolder;
 
 class TextFileStore;
 
@@ -52,6 +54,7 @@ public:
     enum ItemType {
         ScriptItems = 0,
         ModelItems,
+        ImageItems,
         TextureItems,
         ShaderItems,
         NumItemTypes
@@ -69,8 +72,8 @@ public:
     void setProjectFile(const QString& fname);
     bool autoCompileEnabled() const {return mAutoCompileOn;}
     void toggleAutoCompile(bool on);
-    const QString& initScriptName() const {return mInitName;}
-    const QString& drawScriptName() const {return mDrawName;}
+    QString initScriptName() const {return INIT_NAME;}
+    QString drawScriptName() const {return DRAW_NAME;}
 
     void saveProject();
 
@@ -134,25 +137,20 @@ signals:
 
 private:
 
-
     using NameMap = QMap<QString, QString>;
     using NameIterator = QMapIterator<QString, QString>;
-    using EditorVector = QVector<Demo::CodeEditor *>;
+    using FolderMap = QMap<ItemType, ProjectFolder*>;
+    using FolderIterator = QMapIterator<ItemType, ProjectFolder*>;
 
-
+    QString fullpath(const QString& v);
 
 private:
 
     QDir mProjectDir;
     QString mProjectIni;
-    Scope* mGlobals;
-    GL::ImageStore* mImages;
-    GL::ModelStore* mModels;
-    TextFileStore* mShaders;
+    FolderMap mFolders;
     CodeEditor* mInit;
     CodeEditor* mDraw;
-    QString mInitName;
-    QString mDrawName;
     GLWidget* mTarget;
     bool mAutoCompileOn;
     QFileSystemWatcher* mWatcher;

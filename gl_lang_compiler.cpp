@@ -59,7 +59,6 @@ Compiler::Compiler(const QString &name, Scope* globalScope, QObject *parent):
     mGlobalScope(globalScope) {
 
     setObjectName(name);
-    gl_lang_lex_init(&mScanner);
 }
 
 
@@ -69,15 +68,17 @@ Compiler::Compiler(const QString &name, Scope* globalScope, QObject *parent):
 
 void Compiler::compile(const QString& script) {
     reset();
+
+    gl_lang_lex_init(&mScanner);
+
     // ensure that the source starts and ends with newlines
     mSource = "\n" + script + "\n";
-    YY_BUFFER_STATE buf = gl_lang__scan_string(mSource.toUtf8().data(), mScanner);
+    gl_lang__scan_string(mSource.toUtf8().data(), mScanner);
     int err = gl_lang_parse(this, mScanner);
 
     if (!err) err = checkControls();
 
-    gl_lang__flush_buffer(buf, mScanner);
-    gl_lang__delete_buffer(buf, mScanner);
+    gl_lang_lex_destroy(mScanner);
 
     if (err) throw mError;
 
@@ -136,7 +137,6 @@ bool Compiler::createCompletion(const IdentifierType&, unsigned) {
 Compiler::~Compiler() {
     qDeleteAll(mSymbols);
     qDeleteAll(mStatements);
-    gl_lang_lex_destroy(mScanner);
 }
 
 void Compiler::compileLater() {

@@ -33,7 +33,6 @@ Highlight::Highlight(Compiler* c, QTextDocument* parent):
     mCommentExp("//[^\n]*")
 {
 
-    gl_lang_lex_init(&mScanner);
 
     mComment.setForeground(Qt::gray);
     mReserved.setForeground(QColor("#808000"));
@@ -89,8 +88,9 @@ void Highlight::highlightBlock(const QString &text) {
 
     setCurrentBlockState(previousBlockState());
 
+    if (text.trimmed().isEmpty()) return;
 
-    YY_BUFFER_STATE buf = gl_lang__scan_string(text.toUtf8().data(), mScanner);
+    gl_lang_lex_init(&mScanner);
 
     int text_start = 0;
     int text_length = 0;
@@ -99,6 +99,18 @@ void Highlight::highlightBlock(const QString &text) {
     gl_lang_set_lloc(&loc, mScanner);
     ValueType val;
     gl_lang_set_lval(&val, mScanner);
+
+    if (currentBlockState() == 1) {
+//        qDebug() << "INSTRING";
+//        qDebug() << text;
+        gl_lang__scan_string("\"", mScanner);
+        for (int t = gl_lang_lex(&val, &loc, mScanner); t > 0; t = gl_lang_lex(&val, &loc, mScanner)) {}
+//    } else {
+//        qDebug() << "INITIAL";
+//        qDebug() << text;
+    }
+
+    gl_lang__scan_string(text.toUtf8().data(), mScanner);
 
     for (int token = gl_lang_lex(&val, &loc, mScanner);
          token > 0;
@@ -159,7 +171,7 @@ void Highlight::highlightBlock(const QString &text) {
         }
     }
 
-    gl_lang__delete_buffer(buf, mScanner);
+    gl_lang_lex_destroy(mScanner);
 
 
     if (currentBlockState() == 1) {
@@ -175,5 +187,4 @@ void Highlight::highlightBlock(const QString &text) {
 }
 
 Highlight::~Highlight() {
-    gl_lang_lex_destroy(mScanner);
 }

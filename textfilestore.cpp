@@ -32,9 +32,8 @@ TextSource* TextSource::clone() const {
 
 
 TextFileStore::TextFileStore(const QString& name, Scope* globals, QObject* parent)
-    : QObject(parent)
+    : ProjectFolder(name, parent)
 {
-    setObjectName(name);
     globals->addFunction(new TextSource(this));
 }
 
@@ -60,7 +59,7 @@ void TextFileStore::remove(int index) {
 }
 
 
-void TextFileStore::setText(const QString& key, const QString& path) {
+void TextFileStore::setItem(const QString& key, const QString& path) {
     if (mTexts.contains(key)) {
         mFileNames[mNames.indexOf(key)] = path;
     } else {
@@ -77,23 +76,18 @@ void TextFileStore::setText(const QString& key, const QString& path) {
     mTexts[key] = txt;
 }
 
-int TextFileStore::size() {
+int TextFileStore::size() const {
     return mNames.size();
 }
 
-const QString& TextFileStore::fileName(int index) {
+QString TextFileStore::fileName(int index) const {
     return mFileNames[index];
 }
 
-const QString& TextFileStore::itemName(int index) {
+QString TextFileStore::itemName(int index) const {
     return mNames[index];
 }
 
-QStringList TextFileStore::itemSample(const QString& except) const {
-    QStringList r;
-    for (auto& n: mNames) {
-        if (!except.isEmpty() && n == except) continue;
-        r.append(n);
-    }
-    return r;
+QStringList TextFileStore::items() const {
+    return mNames;
 }

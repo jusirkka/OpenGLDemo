@@ -34,7 +34,9 @@ SOURCES += main.cpp\
     bezierpatcher.cpp \
     statement.cpp \
     value.cpp \
-    type.cpp
+    type.cpp \
+    projectfolder.cpp \
+    texturestore.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -68,7 +70,9 @@ HEADERS  += mainwindow.h \
     operation.h \
     type.h \
     typedef.h \
-    value.h
+    value.h \
+    projectfolder.h \
+    texturestore.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

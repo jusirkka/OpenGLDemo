@@ -5,6 +5,7 @@
 #include "codeeditor.h"
 #include "statement.h"
 #include "typedef.h"
+#include "project.h"
 
 using namespace Demo;
 
@@ -37,7 +38,7 @@ Dispatcher* Dispatcher::clone() const {
 }
 
 Scope::Scope(GLWidget* glContext, QObject *parent)
-    : QObject(parent)
+    : ProjectFolder("scope", parent)
 {
     // GL functions, constants & variables
     glContext->addGLSymbols(mSymbols, mExports);
@@ -72,7 +73,7 @@ Scope::~Scope() {
 }
 
 Scope::Scope(const Scope& s):
-    QObject()
+    ProjectFolder("scope")
 {
     for (auto sym: s.symbols()) {
         mSymbols[sym->name()] = sym->clone();
@@ -138,13 +139,41 @@ const Scope::EditorVector& Scope::editors() const {
     return mEditors;
 }
 
-void Scope::appendEditor(CodeEditor* editor, const QString& file) {
-    editor->setFileName(file);
-    mEditorIndices[editor->objectName()] = mEditors.size();
-    mEditors.append(editor);
+void Scope::setItem(const QString& key, const QString& path) {
+    QString code;
+    if (!path.isEmpty()) {
+        QFile file(path);
+        if (file.open(QFile::ReadOnly)) {
+            code = QString(file.readAll()).append('\n');
+            file.close();
+        } else {
+            code = ERR_CODE;
+        }
+    } else if (key == INIT_NAME) {
+        code = INIT_CODE;
+    } else if (key == DRAW_CODE) {
+        code = DRAW_CODE;
+    } else {
+        code = DEFAULT_CODE;
+    }
+
+    CodeEditor* ed;
+    if (mEditorIndices.contains(key)) {
+        ed = mEditors[mEditorIndices[key]];
+        ed->setPlainText(code);
+    } else {
+        auto project = qobject_cast<Project*>(parent());
+        ed = new CodeEditor(key, this, project, code);
+        mEditorIndices[ed->objectName()] = mEditors.size();
+        mEditors.append(ed);
+    }
+
+    if (code != ERR_CODE) {
+        ed->setFileName(path);
+    }
 }
 
-void Scope::removeEditor(int index) {
+void Scope::remove(int index) {
     if (index < 0 || index >= mEditors.size()) return;
     mEditors.removeAt(index);
     mEditorIndices.clear();
@@ -152,6 +181,34 @@ void Scope::removeEditor(int index) {
         CodeEditor* ed = mEditors[idx];
         mEditorIndices[ed->objectName()] = idx;
     }
+}
+
+void Scope::rename(const QString& from, const QString& to) {
+    if (!mEditorIndices.contains(from)) return;
+    int index = mEditorIndices.take(from);
+    mEditorIndices[to] = index;
+    mEditors[index]->setObjectName(to);
+}
+
+QStringList Scope::items() const {
+    QStringList r;
+    for (auto ed: mEditors) {
+        r.append(ed->objectName());
+    }
+    return r;
+}
+
+
+int Scope::size() const {
+    return mEditors.size();
+}
+
+QString Scope::fileName(int index) const {
+    return mEditors[index]->fileName();
+}
+
+QString Scope::itemName(int index) const {
+    return mEditors[index]->objectName();
 }
 
 CodeEditor* Scope::editor(const QString& name) const {
@@ -171,23 +228,6 @@ GL::Compiler* Scope::compiler(const QString& name) const {
     return nullptr;
 }
 
-void Scope::rename(CodeEditor* ed, const QString& name) {
-    if (!mEditorIndices.contains(ed->objectName())) return;
-    if (mEditors[mEditorIndices[ed->objectName()]] != ed) return;
-
-    int index = mEditorIndices.take(ed->objectName());
-    mEditorIndices[name] = index;
-    ed->setObjectName(name);
-}
-
-QStringList Scope::itemSample(const QString& except) const {
-    QStringList r;
-    for (auto ed: mEditors) {
-        if (!except.isEmpty() && ed->objectName() == except) continue;
-        r.append(ed->objectName());
-    }
-    return r;
-}
 
 const VariableMap& Scope::exports() const {
     return mExports;

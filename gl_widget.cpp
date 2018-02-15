@@ -226,7 +226,7 @@ Demo::GLWidget::~GLWidget() {
 
 void Demo::GLWidget::initializeGL() {
     if (!mInitialized) {
-        // qDebug() << "initializeOpenGLFunctions";
+        qDebug() << "initializeOpenGLFunctions";
         if (!initializeOpenGLFunctions()) {
             qFatal("initializeOpenGLFunctions failed");
         }
@@ -439,6 +439,8 @@ void Demo::GLWidget::hideEvent(QHideEvent*) {
 void Demo::GLWidget::keyPressEvent(QKeyEvent* ev) {
     if (ev->key() == Qt::Key_Space) {
         emit toggleAnimate();
+    } else if (ev->key() == Qt::Key_Escape) {
+        hide();
     }
 }
 
@@ -535,9 +537,10 @@ void Demo::GLWidget::defaults() {
     glUseProgram(0);
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_1D, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_1D, 0);
     glBindVertexArray(0);
 
     qDeleteAll(mResources);

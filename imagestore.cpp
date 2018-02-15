@@ -6,10 +6,8 @@
 using namespace Demo::GL;
 
 ImageStore::ImageStore():
-    QObject(),
-    TexBlob() {
-    setObjectName("imagestore");
-}
+    ProjectFolder("imagestore"),
+    TexBlob() {}
 
 
 
@@ -83,7 +81,7 @@ static const char* const plaid[] = {
 };
 
 
-void ImageStore::setImage(const QString& key, const QString& path) {
+void ImageStore::setItem(const QString& key, const QString& path) {
     if (mImages.contains(key)) {
         mFileNames[mNames.indexOf(key)] = path;
     } else {
@@ -105,23 +103,18 @@ void ImageStore::clean() {
     mImages.clear();
 }
 
-int ImageStore::size() {
+int ImageStore::size() const {
     return mNames.size();
 }
 
-const QString& ImageStore::fileName(int index) {
+QString ImageStore::fileName(int index) const {
     return mFileNames[index];
 }
 
-const QString& ImageStore::imageName(int index) {
+QString ImageStore::itemName(int index) const {
     return mNames[index];
 }
 
-QStringList ImageStore::itemSample(const QString& except) const {
-    QStringList r;
-    for (auto& k: mNames) {
-        if (!except.isEmpty() && k == except) continue;
-        r.append(k);
-    }
-    return r;
+QStringList ImageStore::items() const {
+    return mNames;
 }

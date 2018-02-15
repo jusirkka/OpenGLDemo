@@ -702,6 +702,58 @@ public:
 
     BufferData(Demo::GLWidget* p): GLProc("bufferdata", new Integer_T, p) {
         mArgTypes.append(new Integer_T);
+        mArgTypes.append(new NullType);
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        traverse(vals[start+1]);
+        GLuint usage = vals[start+2].value<int>();
+        // qDebug() << "glBufferData" << target << blob.name() << usage;
+        mParent->glBufferData(target, mData.size() * sizeof(GLfloat), mData.constData(), usage);
+        mData.clear();
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(BufferData)
+
+private:
+
+    void traverse(const QVariant& data) {
+        int id = data.userType();
+        if (id == Type::Real) {
+            mData << data.value<Math3D::Real>();
+        } else if (id == Type::Integer) {
+            mData << static_cast<GLfloat>(data.value<Math3D::Integer>());
+        } else if (id == Type::Vector) {
+            auto v = data.value<Vector4>();
+            for (int i = 0; i < 4; i++) mData << static_cast<GLfloat>(v[i]);
+        } else if (id == Type::Matrix) {
+            auto m = data.value<Matrix4>();
+            const Math3D::Real* arr = m.readArray();
+            for (int i = 0; i < 16; i++) mData << static_cast<GLfloat>(arr[i]);
+        } else if (id == QMetaType::QVariantList) {
+            for (auto v: data.toList()) traverse(v);
+        } else {
+            mData.clear();
+            throw GLError("Unsupported data type");
+        }
+    }
+
+private:
+
+    QVector<GLfloat> mData;
+
+};
+
+class BufferExtData: public GLProc {
+
+public:
+
+    BufferExtData(Demo::GLWidget* p): GLProc("bufferextdata", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
         mArgTypes.append(new Integer_T);
         mArgTypes.append(new Integer_T);
     }
@@ -716,7 +768,7 @@ public:
         return mValue;
     }
 
-    COPY_AND_CLONE(BufferData)
+    COPY_AND_CLONE(BufferExtData)
 };
 
 class VertexAttribPointer: public GLProc {
@@ -724,6 +776,39 @@ class VertexAttribPointer: public GLProc {
 public:
 
     VertexAttribPointer(Demo::GLWidget* p): GLProc("vertexattribpointer", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // index
+        mArgTypes.append(new Integer_T); // size
+        mArgTypes.append(new Integer_T); // type
+        mArgTypes.append(new Integer_T); // normalized
+        mArgTypes.append(new Integer_T); // stride
+        mArgTypes.append(new Integer_T); // offset
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint index = vals[start].value<int>();
+        GLint size = vals[start + 1].value<int>();
+        GLenum type = vals[start + 2].value<int>();
+        GLboolean normalized = vals[start + 3].value<int>();
+        GLsizei stride = vals[start + 4].value<int>() * sizeof(GLfloat);
+        GLuint64 offset = vals[start + 5].value<int>() * sizeof(GLfloat);
+        mParent->glVertexAttribPointer(index,
+                                       size,
+                                       type,
+                                       normalized,
+                                       stride,
+                                       (const void*) offset);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(VertexAttribPointer)
+};
+
+class VertexAttribExtPointer: public GLProc {
+
+public:
+
+    VertexAttribExtPointer(Demo::GLWidget* p): GLProc("vertexattribextpointer", new Integer_T, p) {
         mArgTypes.append(new Integer_T);
         mArgTypes.append(new Integer_T);
         mArgTypes.append(new Text_T);
@@ -746,7 +831,7 @@ public:
         return mValue;
     }
 
-    COPY_AND_CLONE(VertexAttribPointer)
+    COPY_AND_CLONE(VertexAttribExtPointer)
 };
 
 class Draw: public GLProc {
@@ -919,7 +1004,7 @@ public:
         GLuint name = vals[start].value<int>();
         // qDebug() << "DeleteTexture" << name;
         if (!mParent->glIsTexture(name)) {
-            throw GLError(QString(R"("%1" is not a testure)").arg(name));
+            throw GLError(QString(R"("%1" is not a texture)").arg(name));
         }
         mParent->deresource("texture", name);
         mValue.setValue(0);
@@ -1594,7 +1679,9 @@ public:
         contents.append(new DeleteBuffer(p));
         contents.append(new BindBuffer(p));
         contents.append(new BufferData(p));
+        contents.append(new BufferExtData(p));
         contents.append(new VertexAttribPointer(p));
+        contents.append(new VertexAttribExtPointer(p));
         contents.append(new Draw(p));
         contents.append(new DrawArrays(p));
         contents.append(new EnableVertexAttribArray(p));
@@ -1650,6 +1737,7 @@ public:
         CONST(SAMPLE_COVERAGE);
         CONST(SCISSOR_TEST);
         CONST(STENCIL_TEST);
+        CONST(PROGRAM_POINT_SIZE);
         // frontface
         CONST(CCW);
         CONST(CW);
@@ -1744,6 +1832,10 @@ public:
         CONST(ONE_MINUS_DST_COLOR);
         CONST(SRC_ALPHA_SATURATE);
         CONST(ZERO);
+        CONST(SRC1_COLOR);
+        CONST(ONE_MINUS_SRC1_COLOR);
+        CONST(SRC1_ALPHA);
+        CONST(ONE_MINUS_SRC1_ALPHA);
         // blend equation
         CONST(MAX);
         CONST(MIN);

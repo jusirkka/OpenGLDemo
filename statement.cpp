@@ -287,9 +287,9 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
         case Compiler::cAss:
             v = vars[codes[++ic]];
             v->setValue(mStack[sPos]);
-            // if (v->name() != "gl_result") {
-            //     qDebug() <<"ass" << v->name() << "=" << v->value();
-            // }
+            if (v->name() != "gl_result") {
+                qDebug() <<"ass" << v->name() << "=" << v->value();
+            }
             break;
 
         case Compiler::cAssPath:
@@ -301,7 +301,7 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
             }
             v = vars[index];
             v->setValue(mStack[sPos], indices);
-            // qDebug() << "asspath" << v->name() << "=" << v->value();
+            qDebug() << "asspath" << v->name() << "[" << indices << "] =" << v->value(indices);
             mStack[sPos - numItems] = mStack[sPos];
             sPos -= numItems;
             break;

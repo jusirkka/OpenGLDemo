@@ -49,6 +49,7 @@ public:
     GLuint resource(const QString& res, GLenum param = 0);
     void deresource(const QString& res, GLuint name);
 
+    bool initialized() const {return mInitialized;}
 
     ~GLWidget() override;
 

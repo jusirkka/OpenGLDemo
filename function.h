@@ -28,6 +28,7 @@
 #include <QVector>
 #include <QVector>
 #include <QVariant>
+#include <random>
 
 using Math3D::Vector4;
 using Math3D::Matrix4;
@@ -141,6 +142,107 @@ public:
 };
 
 
+class VecPos: public Function {
+
+public:
+
+    VecPos(): Function("pos", new Vector_T) {
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        Vector4 v(vals[start].value<Math3D::Real>(),
+                  vals[start+1].value<Math3D::Real>(),
+                  vals[start+2].value<Math3D::Real>());
+
+        mValue.setValue(v);
+        return mValue;
+    }
+
+    COPY(VecPos)
+    CLONE(VecPos)
+
+};
+
+class VecDir: public Function {
+
+public:
+
+    VecDir(): Function("dir", new Vector_T) {
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        Vector4 v(vals[start].value<Math3D::Real>(),
+                  vals[start+1].value<Math3D::Real>(),
+                  vals[start+2].value<Math3D::Real>(),
+                  0);
+
+        mValue.setValue(v);
+        return mValue;
+    }
+
+    COPY(VecDir)
+    CLONE(VecDir)
+
+};
+
+
+class Random: public Function {
+
+public:
+
+    Random()
+        : Function("random", new Real_T)
+        , mDevice()
+        , mEngine(mDevice())
+        , mDist(0, 1)
+    {}
+
+    const QVariant& execute(const QVector<QVariant>&, int) override {
+        mValue.setValue(mDist(mEngine));
+        return mValue;
+    }
+
+    COPY(Random)
+    CLONE(Random)
+
+private:
+    std::random_device mDevice;
+    std::default_random_engine mEngine;
+    std::uniform_real_distribution<Math3D::Real> mDist;
+};
+
+class RandomPos: public Function {
+
+public:
+
+    RandomPos()
+        : Function("randompos", new Vector_T)
+        , mDevice()
+        , mEngine(mDevice())
+        , mDist(0, 1)
+    {}
+
+    const QVariant& execute(const QVector<QVariant>&, int) override {
+        Vector4 v(mDist(mEngine), mDist(mEngine), mDist(mEngine), 1);
+        mValue.setValue(v);
+        return mValue;
+    }
+
+    COPY(RandomPos)
+    CLONE(RandomPos)
+
+private:
+    std::random_device mDevice;
+    std::default_random_engine mEngine;
+    std::uniform_real_distribution<Math3D::Real> mDist;
+};
+
 class MatRow: public Function {
 
 public:
@@ -170,6 +272,7 @@ public:
     CLONE(MatRow)
 
 };
+
 
 class MatCol: public Function {
 
@@ -420,6 +523,10 @@ public:
 
     Functions() {
         contents.append(new Vecx());
+        contents.append(new VecPos());
+        contents.append(new VecDir());
+        contents.append(new Random());
+        contents.append(new RandomPos());
         contents.append(new MatRow());
         contents.append(new MatCol());
         contents.append(new Rot());

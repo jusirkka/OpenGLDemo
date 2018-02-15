@@ -1,0 +1,20 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "" import time, projection, camera
+From "init main" import prog, u, numstars
+
+Var t: Real = 0.0091762 * time
+t = t - floor(t)
+
+useprogram prog
+
+uniform1f u.time, t
+uniformmatrix4f u.proj, projection
+
+
+enable blend
+blendfunc one, one
+
+enable program_point_size
+
+drawarrays points, 0, numstars

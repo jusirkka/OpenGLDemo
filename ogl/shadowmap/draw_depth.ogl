@@ -1,7 +1,7 @@
 From "draw main" import model_name, model_matrix, camera_light
 From "get locations" import a_vertex_d, u_m_pvm_d
 
-vertexattribpointer a_vertex_d, modelstore, model_name + ":vertex"
+vertexattribextpointer a_vertex_d, modelstore, model_name + ":vertex"
 
 From "" import projection
 uniformmatrix4f u_m_pvm_d, projection*camera_light*model_matrix

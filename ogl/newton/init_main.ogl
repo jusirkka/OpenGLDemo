@@ -42,11 +42,11 @@ Shared Var u_s_radius: Natural = getuniformlocation(prog_ex1, "iEarthRadius")
 
 Shared Var model_array: Natural = genbuffer()
 bindbuffer array_buffer, model_array
-bufferdata array_buffer, modelstore, static_draw
+bufferextdata array_buffer, modelstore, static_draw
 
 Shared Var model_elements: Natural = genbuffer()
 bindbuffer element_array_buffer, model_elements
-bufferdata element_array_buffer, modelstore, static_draw
+bufferextdata element_array_buffer, modelstore, static_draw
 
 enablevertexattribarray a_vertex
 
@@ -60,5 +60,5 @@ uniformmatrix4f u_m_invproj, inverse_projection
 
 uniform4f u_v_resolution, vec(width, height, 1000, 1)
 
-vertexattribpointer a_vertex, modelstore, "plate:vertex"
+vertexattribextpointer a_vertex, modelstore, "plate:vertex"
 
