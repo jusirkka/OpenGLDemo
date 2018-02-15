@@ -142,7 +142,9 @@ private:
     using FolderMap = QMap<ItemType, ProjectFolder*>;
     using FolderIterator = QMapIterator<ItemType, ProjectFolder*>;
 
-    QString fullpath(const QString& v);
+    QString fullpath(const QString& path) const;
+    bool isReadable(const QString& path) const;
+    bool isWritable(const QString& path) const;
 
 private:
 

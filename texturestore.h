@@ -6,12 +6,11 @@
 #include <QStringList>
 
 #include "projectfolder.h"
-
+#include "gl_widget.h"
 
 namespace Demo {
 
 class Scope;
-class GLWidget;
 
 class KtxError {
 
@@ -54,13 +53,16 @@ public:
 
 private:
 
-    using TextureMap = QMap<QString, uint>;
+    using TextureMap = QMap<QString, GLuint>;
+    using TextureVector = QVector<GLuint>;
 
     uint load_ktx(const QString& path) const;
+    void tidyUp(GLuint tex);
 
 private:
 
     TextureMap mTextures;
+    TextureVector mRemovableTextures;
     QStringList mNames;
     QStringList mFileNames;
     GLWidget* mTarget;

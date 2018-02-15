@@ -209,16 +209,30 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
     recompileProject();
 }
 
-QString Demo::Project::fullpath(const QString &v) {
-    QFileInfo info(v);
+QString Demo::Project::fullpath(const QString& path) const {
+    QFileInfo info(path);
     if (!info.isAbsolute()) {
-        info = QFileInfo(mProjectDir.absoluteFilePath(v));
+        info = QFileInfo(mProjectDir.absoluteFilePath(path));
     }
-    QString fname = info.canonicalFilePath();
-    if (!v.isEmpty() && (!info.exists() || !info.isFile() || !info.isReadable())) {
-        throw BadProject(QString(R"(Project file "%1" is not readable)").arg(v));
+    return path.isEmpty() ? path : info.absoluteFilePath();
+}
+
+bool Demo::Project::isReadable(const QString& path) const {
+    QFileInfo info(path);
+    if (info.isRelative()) {
+        info = QFileInfo(mProjectDir.absoluteFilePath(path));
     }
-    return v.isEmpty() ? v : fname;
+    if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
+    return true;
+}
+
+bool Demo::Project::isWritable(const QString& path) const {
+    QFileInfo info(path);
+    if (info.isRelative()) {
+        info = QFileInfo(mProjectDir.absoluteFilePath(path));
+    }
+    if (!info.exists() || !info.isFile() || !info.isReadable() || !info.isWritable()) return false;
+    return true;
 }
 
 void Demo::Project::fileChanged(const QString& path) {
@@ -252,7 +266,7 @@ void Demo::Project::saveProject() {
     project.clear();
 
     QMap<ItemType, QString> groups;
-    groups[ScriptItems] = "Script";
+    groups[ScriptItems] = "Scripts";
     groups[ImageItems] = "Images";
     groups[ModelItems] = "Models";
     groups[ShaderItems] = "Shaders";
@@ -264,7 +278,8 @@ void Demo::Project::saveProject() {
         project.beginGroup(itg.value());
         auto folder = mFolders[itg.key()];
         for (int i = 0; i < folder->size(); ++i) {
-            project.setValue(folder->itemName(i), mProjectDir.relativeFilePath(folder->fileName(i)));
+            project.setValue(folder->itemName(i),
+                             QDir::cleanPath(mProjectDir.relativeFilePath(folder->fileName(i))));
         }
         project.endGroup();
     }
@@ -387,12 +402,15 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
 
     auto t = static_cast<ItemType>(index.parent().row());
     auto folder = mFolders[t];
+
+    QString fname = folder->fileName(index.row());
+
     if (role == Qt::DisplayRole) {
         return QVariant::fromValue(folder->itemName(index.row()));
     }
 
     if (role == Qt::ToolTipRole || role == FileNameRole) {
-        return QVariant::fromValue(folder->fileName(index.row()));
+        return QVariant::fromValue(fname);
     }
 
 
@@ -404,8 +422,9 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
             if (ed->hasCompileError()) return QIcon::fromTheme("error");
             if (ed->hasRunError()) return QIcon::fromTheme("error");
             if (ed->document()->isModified()) return QIcon::fromTheme("document-save");
-            if (!ed->fileName().isEmpty()) return QIcon::fromTheme("text-x-generic");
-            return QIcon::fromTheme("unknown");
+            if (fname.isEmpty()) return QIcon::fromTheme("unknown");
+            if (isWritable(fname)) return QIcon::fromTheme("text-x-generic");
+            return QIcon::fromTheme("error");
         }
 
         if (role == ScriptRole) return QVariant::fromValue(ed->toPlainText());
@@ -416,20 +435,18 @@ QVariant Demo::Project::data(const QModelIndex& index, int role) const {
 
     if (index.parent() == itemParent(ModelItems) || index.parent() == itemParent(ShaderItems)) {
         if (role == Qt::DecorationRole) {
-            if (!folder->fileName(index.row()).isEmpty()) {
-                return QIcon::fromTheme("text-x-generic");
-            }
-            return QIcon::fromTheme("unknown");
+            if (fname.isEmpty()) return QIcon::fromTheme("unknown");
+            if (isReadable(fname)) return QIcon::fromTheme("text-x-generic");
+            return QIcon::fromTheme("error");
         }
         return QVariant();
     }
 
     if (index.parent() == itemParent(ImageItems) || index.parent() == itemParent(TextureItems)) {
         if (role == Qt::DecorationRole) {
-            if (!folder->fileName(index.row()).isEmpty()) {
-                return QIcon::fromTheme("image-x-generic");
-            }
-            return QIcon::fromTheme("unknown");
+            if (fname.isEmpty()) return QIcon::fromTheme("unknown");
+            if (isReadable(fname)) return QIcon::fromTheme("image-x-generic");
+            return QIcon::fromTheme("error");
         }
         return QVariant();
     }
@@ -454,13 +471,8 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
         QString path = value.toString();
         QString name = folder->itemName(index.row());
 
-        QFileInfo info(path);
-        if (info.isRelative()) {
-            info = QFileInfo(mProjectDir.absoluteFilePath(path));
-        }
-        path = info.canonicalFilePath();
-
-        if (!info.exists() || !info.isFile() || !info.isReadable()) return false;
+        if (!isReadable(path)) return false;
+        path = fullpath(path);
 
         if (dynamic_cast<TextFileStore*>(folder)) {
             QString oldpath = QFileInfo(folder->fileName(index.row())).canonicalFilePath();
@@ -551,15 +563,11 @@ bool Demo::Project::appendRow(const QString& name, const QString& file, const QM
     auto folder = mFolders[t];
 
     beginInsertRows(parent, row, row);
-    QString fname = file;
-    QFileInfo info(fname);
-    if (info.isRelative()) {
-        info = QFileInfo(mProjectDir.absoluteFilePath(fname));
-    }
-    fname = info.canonicalFilePath();
-
     QString uniq = uniqueName(name, folder->items());
-    if (info.exists() && info.isFile() && info.isReadable()) {
+
+    if (isReadable(file)) {
+
+        QString fname = fullpath(file);
 
         folder->setItem(uniq, fname);
 

@@ -67,12 +67,10 @@ Var ts: Array of Record(id: Natural, name: Text) = \
 
 Var i: Natural = 0
 While i < 3
-  ts[i].id = gentexture()
+  ts[i].id = ktx(ts[i].name)
   bindtexture texture_2d, ts[i].id
-  texextimage2d texture_2d, 0, rgba, imagestore, ts[i].name
   texparameter texture_2d, texture_min_filter, linear_mipmap_linear
   texparameter texture_2d, texture_mag_filter, linear
-  generatemipmap texture_2d
   i = i + 1
 Endwhile
 
@@ -80,3 +78,5 @@ Shared Var textures: Array of Natural = \
   Array(ts[0].id, ts[1].id, ts[0].id, ts[2].id)
 
 clearcolor vec(.1,.4,.2,1)
+
+

@@ -237,7 +237,7 @@ void Demo::MainWindow::on_actionOpen_triggered() {
     QString fileName = QFileDialog::getOpenFileName(
                 this,
                 title,
-                mLastDir.canonicalPath(),
+                mLastDir.absolutePath(),
                 filter
                 );
     if (fileName.isEmpty()) return;
