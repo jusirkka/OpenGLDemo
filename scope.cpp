@@ -151,7 +151,7 @@ void Scope::setItem(const QString& key, const QString& path) {
         }
     } else if (key == INIT_NAME) {
         code = INIT_CODE;
-    } else if (key == DRAW_CODE) {
+    } else if (key == DRAW_NAME) {
         code = DRAW_CODE;
     } else {
         code = DEFAULT_CODE;

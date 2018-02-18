@@ -73,6 +73,7 @@ public:
     void pushBack(unsigned, unsigned, int) override {}
     void setJump() override {}
     void initJump() override {}
+    void finalizeJumps() override {}
     void pushBackImmed(int) override {}
     void pushBackImmed(Math3D::Real) override {}
     void pushBackImmed(const QVariant&) override {}

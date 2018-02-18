@@ -1,0 +1,126 @@
+Var vs_source: Text = "
+#version 410 core
+
+layout (location = 0) in int alien_index;
+
+out VS_OUT
+{
+    flat int alien;
+    vec2 tc;
+} vs_out;
+
+struct droplet_t
+{
+    float x_offset;
+    float y_offset;
+    float orientation;
+    float unused;
+};
+
+layout (std140) uniform droplets
+{
+    droplet_t droplet[256];
+};
+
+void main(void)
+{
+    const vec2[4] position = vec2[4](vec2(-0.5, -0.5),
+                                     vec2( 0.5, -0.5),
+                                     vec2(-0.5,  0.5),
+                                     vec2( 0.5,  0.5));
+    vs_out.tc = position[gl_VertexID].xy + vec2(0.5);
+    float co = cos(droplet[alien_index].orientation);
+    float so = sin(droplet[alien_index].orientation);
+    mat2 rot = mat2(vec2(co, so),
+                    vec2(-so, co));
+    vec2 pos = 0.25 * rot * position[gl_VertexID];
+    gl_Position = vec4(pos.x + droplet[alien_index].x_offset,
+                       pos.y + droplet[alien_index].y_offset,
+                       0.5, 1.0);
+    vs_out.alien = alien_index % 64;
+}
+"
+Var fs_source: Text = "
+#version 410 core
+
+layout (location = 0) out vec4 color;
+
+in VS_OUT
+{
+    flat int alien;
+    vec2 tc;
+} fs_in;
+
+uniform sampler2DArray tex_aliens;
+
+void main(void)
+{
+    color = texture(tex_aliens, vec3(fs_in.tc, float(fs_in.alien)));
+}
+"
+
+Var vs: Natural = createshader(vertex_shader)
+compileshader vs, vs_source
+
+Var fs: Natural = createshader(fragment_shader)
+compileshader fs, fs_source
+
+Shared Var prog: Natural = createprogram()
+attachshader prog, vs
+attachshader prog, fs
+
+linkprogram prog
+
+detachshader prog, fs
+detachshader prog, vs
+deleteshader fs
+deleteshader vs
+
+Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+activetexture texture0
+
+Shared Var tex_alien: Natural = ktx("alien")
+bindtexture texture_2d_array, tex_alien
+texparameter texture_2d_array, texture_min_filter, linear_mipmap_linear
+
+Shared Var rain_buffer: Natural = genbuffer()
+bindbuffer uniform_buffer, rain_buffer
+
+Shared Var num_aliens: Natural = 256
+
+Var data: Array of Vector
+Var i: Natural = 0
+While i < num_aliens
+  data[i] = pos(1, 1, 1)
+  i = i + 1
+Endwhile
+
+bufferdata uniform_buffer, data, dynamic_draw
+
+Shared Var x_offset, rot_speed, fall_speed: Array of Real
+
+i = 0
+While i < num_aliens
+  x_offset[i] = random() * 2 - 1
+
+  If mod(i, 2) == 0
+    rot_speed[i] = -.3 * (random() + .5)
+  Else
+    rot_speed[i] = .3 * (random() + .5)
+  Endif
+    
+    // @ i & 1 == 1 = -3 * (random() + .5) \
+    // @ true = 3 * (random() + .5)
+  fall_speed[i] = random() + .2
+  i = i +1
+Endwhile
+
+enable blend
+blendfunc src_alpha, one_minus_src_alpha
+
+clearcolor vec(.1,.2,.2,1)
+
+
+

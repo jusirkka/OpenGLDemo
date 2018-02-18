@@ -1,0 +1,30 @@
+clear color_buffer_bit
+
+From "" import time
+From "init main" import prog, x_offset, rot_speed, fall_speed, rain_buffer, num_aliens
+
+useprogram prog
+
+bindbufferbase uniform_buffer, 0, rain_buffer
+
+
+Var droplet: Array of Vector
+Var i: Natural = 0
+While i < num_aliens
+  droplet[i][0] = x_offset[i]
+  droplet[i][1] = 2 - fmodf((.01 * time + i) * fall_speed[i], 4.31)
+  droplet[i][2] = time * rot_speed[i]
+  i = i + 1
+Endwhile
+
+buffersubdata uniform_buffer, 0, droplet
+
+i = 0
+While i < num_aliens
+  vertexattrib1i 0, i
+  drawarrays triangle_strip, 0, 4
+  i = i + 1
+Endwhile
+
+
+

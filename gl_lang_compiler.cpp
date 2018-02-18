@@ -389,10 +389,9 @@ void Compiler::pushBack(unsigned op, unsigned lrtype, int inc) {
 
 void Compiler::setJump() {
     mStackPos = 0;
-    if (mCodeAddr) {
-        mCurrent[mCodeAddr - 2] = mCurrent.size() - mCodeAddr;
-        mCurrent[mCodeAddr - 1] = mCurrImmed.size() - mImmedAddr;
-    }
+    mCurrent[mCodeAddr - 2] = mCurrent.size() - mCodeAddr;
+    mCurrent[mCodeAddr - 1] = mCurrImmed.size() - mImmedAddr;
+    mGuardJumps.push(GuardJump(mCurrent.size(), mCurrImmed.size()));
 }
 
 void Compiler::initJump() {
@@ -401,6 +400,13 @@ void Compiler::initJump() {
     mImmedAddr = mCurrImmed.size();
 }
 
+void Compiler::finalizeJumps() {
+    while (!mGuardJumps.isEmpty()) {
+        auto jumps = mGuardJumps.pop();
+        mCurrent[jumps.codeAddr - 2] = mCurrent.size() - jumps.codeAddr;
+        mCurrent[jumps.codeAddr - 1] = mCurrImmed.size() - jumps.immedAddr;
+    }
+}
 
 void Compiler::pushBackImmed(int constVal) {
     mCurrImmed.append(QVariant(constVal));

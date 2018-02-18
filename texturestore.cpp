@@ -68,6 +68,7 @@ TextureStore::TextureStore(const QString& name, Scope* globals, GLWidget* ctx, Q
 }
 
 uint TextureStore::texture(const QString& key) {
+    tidyUp(); // delete dangling textures
     if (mTextures.contains(key)) {
         if (mTextures[key] == 0) {
             mTextures[key] = load_ktx(mFileNames[mNames.indexOf(key)]);
@@ -172,20 +173,21 @@ static uint swap32(const quint32 u32) {
 static quint32 calculate_stride(const header& h, quint32 width, quint32 pad = 4)
 {
     quint32 channels = 0;
+    static struct {quint32 ifmt; quint32 nch;} ch[] = {
+        {GL_RED, 1},
+        {GL_RG, 2},
+        {GL_BGR, 3},
+        {GL_RGB, 3},
+        {GL_BGRA, 4},
+        {GL_RGBA, 4},
+        {0, 0}
+    };
 
-    switch (h.glbaseinternalformat) {
-    case GL_RED: channels = 1;
-        break;
-    case GL_RG: channels = 2;
-        break;
-    case GL_BGR:
-    case GL_RGB: channels = 3;
-        break;
-    case GL_BGRA:
-    case GL_RGBA: channels = 4;
-        break;
-    default:
-        ;
+    for (int i = 0; ch[i].nch != 0; i++) {
+        if (h.glbaseinternalformat == ch[i].ifmt) {
+            channels = ch[i].nch;
+            break;
+        }
     }
 
     quint32 stride = h.gltypesize * channels * width;
@@ -242,7 +244,7 @@ uint TextureStore::load_ktx(const QString& path) const {
         h.keypairbytes          = swap32(h.keypairbytes);
     } else {
         file.close();
-        throw KtxError("Corrupt endianness in the header");
+        throw KtxError("Corrupt endianness signature in the header");
     }
 
     // Guess target (texture type)
@@ -284,8 +286,10 @@ uint TextureStore::load_ktx(const QString& path) const {
     mTarget->glBindTexture(target, tex);
 
     file.seek(file.pos() + h.keypairbytes);
-    auto data = file.readAll().constData();;
+    auto bytes = file.readAll();
     file.close();
+    qDebug() << "texture size =" << bytes.size();
+    auto data = bytes.constData();
 
     if (h.miplevels == 0) {
         h.miplevels = 1;

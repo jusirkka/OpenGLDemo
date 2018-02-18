@@ -57,7 +57,7 @@ private:
     using TextureVector = QVector<GLuint>;
 
     uint load_ktx(const QString& path) const;
-    void tidyUp(GLuint tex);
+    void tidyUp(GLuint tex = 0);
 
 private:
 

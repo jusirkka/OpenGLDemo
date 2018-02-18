@@ -93,6 +93,7 @@ public:
     void pushBack(unsigned op, unsigned lrtype, int inc) override;
     void setJump() override;
     void initJump() override;
+    void finalizeJumps() override;
     void pushBackImmed(int constVal) override;
     void pushBackImmed(Math3D::Real constVal) override;
     void pushBackImmed(const QVariant& constVal) override;
@@ -156,6 +157,15 @@ private:
     using PendingJumpStack = QStack<PendingJump>;
     using PendingIfStack = QStack<PendingJumpStack>;
 
+    class GuardJump {
+    public:
+        GuardJump(int c = -1, int i = -1): codeAddr(c), immedAddr(i) {}
+        int codeAddr;
+        int immedAddr;
+    };
+
+    using GuardJumpStack = QStack<GuardJump>;
+
 private:
 
     StatementVector mStatements;
@@ -166,6 +176,7 @@ private:
     ValueStack mCurrImmed;
     IndexStack mWhiles;
     PendingIfStack mConds;
+    GuardJumpStack mGuardJumps;
     int mStackSize;
     int mStackPos;
     int mCodeAddr;

@@ -34,6 +34,8 @@ using Math3D::Vector4;
 using Math3D::Matrix4;
 
 
+#define COPY_AND_CLONE(T) T(const T& f): Function(f) {} \
+                          T* clone() const override {return new T(*this);}
 
 
 namespace Demo {
@@ -112,7 +114,6 @@ class StdFunction: public Function {
 
 };
 
-#define COPY(T) T(const T& f): Function(f) {}
 
 
 class Vecx: public Function {
@@ -136,8 +137,7 @@ public:
         return mValue;
     }
 
-    COPY(Vecx)
-    CLONE(Vecx)
+    COPY_AND_CLONE(Vecx)
 
 };
 
@@ -161,8 +161,7 @@ public:
         return mValue;
     }
 
-    COPY(VecPos)
-    CLONE(VecPos)
+    COPY_AND_CLONE(VecPos)
 
 };
 
@@ -186,8 +185,7 @@ public:
         return mValue;
     }
 
-    COPY(VecDir)
-    CLONE(VecDir)
+    COPY_AND_CLONE(VecDir)
 
 };
 
@@ -208,8 +206,7 @@ public:
         return mValue;
     }
 
-    COPY(Random)
-    CLONE(Random)
+    COPY_AND_CLONE(Random)
 
 private:
     std::random_device mDevice;
@@ -234,13 +231,51 @@ public:
         return mValue;
     }
 
-    COPY(RandomPos)
-    CLONE(RandomPos)
+    COPY_AND_CLONE(RandomPos)
 
 private:
     std::random_device mDevice;
     std::default_random_engine mEngine;
     std::uniform_real_distribution<Math3D::Real> mDist;
+};
+
+
+class FMod: public Function {
+
+public:
+
+    FMod(): Function("fmodf", new Real_T) {
+        mArgTypes.append(new Real_T);
+        mArgTypes.append(new Real_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        Math3D::Real x = vals[start].value<Math3D::Real>();
+        Math3D::Real y = vals[start + 1].value<Math3D::Real>();
+        mValue.setValue(static_cast<Math3D::Real>(fmodf(x, y)));
+        return mValue;
+    }
+
+    COPY_AND_CLONE(FMod)
+};
+
+class Mod: public Function {
+
+public:
+
+    Mod(): Function("mod", new Integer_T) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        Math3D::Integer x = vals[start].value<Math3D::Real>();
+        Math3D::Integer y = vals[start + 1].value<Math3D::Real>();
+        mValue.setValue(x % y);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(Mod)
 };
 
 class MatRow: public Function {
@@ -268,8 +303,7 @@ public:
         return mValue;
     }
 
-    COPY(MatRow)
-    CLONE(MatRow)
+    COPY_AND_CLONE(MatRow)
 
 };
 
@@ -299,8 +333,7 @@ public:
         return mValue;
     }
 
-    COPY(MatCol)
-    CLONE(MatCol)
+    COPY_AND_CLONE(MatCol)
 
 };
 
@@ -324,8 +357,7 @@ public:
         return mValue;
     }
 
-    COPY(Rot)
-    CLONE(Rot)
+    COPY_AND_CLONE(Rot)
 };
 
 class Tr: public Function {
@@ -345,8 +377,7 @@ public:
         return mValue;
     }
 
-    COPY(Tr)
-    CLONE(Tr)
+    COPY_AND_CLONE(Tr)
 
 };
 
@@ -371,8 +402,7 @@ public:
         return mValue;
     }
 
-    COPY(Sc)
-    CLONE(Sc)
+    COPY_AND_CLONE(Sc)
 };
 
 class Norm: public Function {
@@ -391,8 +421,7 @@ public:
         return mValue;
     }
 
-    COPY(Norm)
-    CLONE(Norm)
+    COPY_AND_CLONE(Norm)
 
 };
 
@@ -412,8 +441,7 @@ public:
         return mValue;
     }
 
-    COPY(NormalT)
-    CLONE(NormalT)
+    COPY_AND_CLONE(NormalT)
 };
 
 class Inverse: public Function {
@@ -430,8 +458,7 @@ public:
         return mValue;
     }
 
-    COPY(Inverse)
-    CLONE(Inverse)
+    COPY_AND_CLONE(Inverse)
 };
 
 class Refl: public Function {
@@ -457,8 +484,7 @@ public:
         return mValue;
     }
 
-    COPY(Refl)
-    CLONE(Refl)
+    COPY_AND_CLONE(Refl)
 };
 
 
@@ -476,8 +502,7 @@ public:
         return mValue;
     }
 
-    COPY(Length)
-    CLONE(Length)
+    COPY_AND_CLONE(Length)
 };
 
 
@@ -508,8 +533,7 @@ public:
         return mValue;
     }
 
-    COPY(LookAt)
-    CLONE(LookAt)
+    COPY_AND_CLONE(LookAt)
 };
 
 
@@ -527,6 +551,8 @@ public:
         contents.append(new VecDir());
         contents.append(new Random());
         contents.append(new RandomPos());
+        contents.append(new Mod());
+        contents.append(new FMod());
         contents.append(new MatRow());
         contents.append(new MatCol());
         contents.append(new Rot());
@@ -562,7 +588,7 @@ public:
 
 using FunctionVector = QVector<Demo::Function*>;
 
-#undef COPY
+#undef COPY_AND_CLONE
 
 } // namespace DEMO
 #endif // DEMO_FUNCTION_H

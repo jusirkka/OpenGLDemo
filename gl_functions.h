@@ -696,7 +696,61 @@ public:
     COPY_AND_CLONE(BindBuffer)
 };
 
-class BufferData: public GLProc {
+class BindBufferBase: public GLProc {
+
+public:
+
+    BindBufferBase(Demo::GLWidget* p): GLProc("bindbufferbase", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // target
+        mArgTypes.append(new Integer_T); // index
+        mArgTypes.append(new Integer_T); // buffer
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum target = vals[start].value<int>();
+        GLuint index = vals[start + 1].value<int>();
+        GLuint buffer = vals[start + 2].value<int>();
+        mParent->glBindBufferBase(target, index, buffer);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(BindBufferBase)
+};
+
+class Traversable {
+public:
+
+    Traversable() = default;
+
+protected:
+    void traverse(const QVariant& data) {
+        int id = data.userType();
+        if (id == Type::Real) {
+            mData << data.value<Math3D::Real>();
+        } else if (id == Type::Integer) {
+            mData << static_cast<GLfloat>(data.value<Math3D::Integer>());
+        } else if (id == Type::Vector) {
+            auto v = data.value<Vector4>();
+            for (int i = 0; i < 4; i++) mData << static_cast<GLfloat>(v[i]);
+        } else if (id == Type::Matrix) {
+            auto m = data.value<Matrix4>();
+            const Math3D::Real* arr = m.readArray();
+            for (int i = 0; i < 16; i++) mData << static_cast<GLfloat>(arr[i]);
+        } else if (id == QMetaType::QVariantList) {
+            for (auto v: data.toList()) traverse(v);
+        } else {
+            mData.clear();
+            throw GLError("Unsupported data type");
+        }
+    }
+
+protected:
+
+    QVector<GLfloat> mData;
+};
+
+class BufferData: public GLProc, public Traversable {
 
 public:
 
@@ -710,14 +764,39 @@ public:
         GLuint target = vals[start].value<int>();
         traverse(vals[start+1]);
         GLuint usage = vals[start+2].value<int>();
-        // qDebug() << "glBufferData" << target << blob.name() << usage;
-        mParent->glBufferData(target, mData.size() * sizeof(GLfloat), mData.constData(), usage);
+        GLsizeiptr size = mData.size() * sizeof(GLfloat);
+        mParent->glBufferData(target, size, mData.constData(), usage);
         mData.clear();
         mValue.setValue(0);
         return mValue;
     }
 
     COPY_AND_CLONE(BufferData)
+
+};
+
+class BufferSubData: public GLProc, public Traversable {
+
+public:
+
+    BufferSubData(Demo::GLWidget* p): GLProc("buffersubdata", new Integer_T, p) {
+        mArgTypes.append(new Integer_T); // target
+        mArgTypes.append(new Integer_T); // offset
+        mArgTypes.append(new NullType); // data
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint target = vals[start].value<int>();
+        GLintptr offset = vals[start+1].value<int>() * sizeof(GLfloat);
+        traverse(vals[start+2]);
+        GLsizeiptr size = mData.size() * sizeof(GLfloat);
+        mParent->glBufferSubData(target, offset, size, mData.constData());
+        mData.clear();
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(BufferSubData)
 
 private:
 
@@ -832,6 +911,46 @@ public:
     }
 
     COPY_AND_CLONE(VertexAttribExtPointer)
+};
+
+class VertexAttrib1i: public GLProc {
+
+public:
+
+    VertexAttrib1i(Demo::GLWidget* p): GLProc("vertexattrib1i", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint index = vals[start].toInt();
+        GLint v0 = vals[start+1].toInt();
+        mParent->glVertexAttribI1i(index, v0);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(VertexAttrib1i)
+};
+
+class VertexAttrib1f: public GLProc {
+
+public:
+
+    VertexAttrib1f(Demo::GLWidget* p): GLProc("vertexattrib1f", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Real_T);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLuint index = vals[start].toInt();
+        GLfloat v0 = vals[start+1].toFloat();
+        mParent->glVertexAttrib1f(index, v0);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(VertexAttrib1f)
 };
 
 class Draw: public GLProc {
@@ -1678,10 +1797,14 @@ public:
         contents.append(new GenBuffer(p));
         contents.append(new DeleteBuffer(p));
         contents.append(new BindBuffer(p));
+        contents.append(new BindBufferBase(p));
         contents.append(new BufferData(p));
+        contents.append(new BufferSubData(p));
         contents.append(new BufferExtData(p));
         contents.append(new VertexAttribPointer(p));
         contents.append(new VertexAttribExtPointer(p));
+        contents.append(new VertexAttrib1f(p));
+        contents.append(new VertexAttrib1i(p));
         contents.append(new Draw(p));
         contents.append(new DrawArrays(p));
         contents.append(new EnableVertexAttribArray(p));
@@ -1755,6 +1878,7 @@ public:
         // bindbuffer
         CONST(ARRAY_BUFFER);
         CONST(ELEMENT_ARRAY_BUFFER);
+        CONST(UNIFORM_BUFFER);
         // bufferdata
         CONST(STATIC_DRAW);
         CONST(STREAM_DRAW);
@@ -1773,6 +1897,7 @@ public:
         CONST(TEXTURE_1D);
         CONST(TEXTURE_2D);
         CONST(TEXTURE_2D_MULTISAMPLE);
+        CONST(TEXTURE_2D_ARRAY);
         CONST(TEXTURE_CUBE_MAP);
         CONST(TEXTURE_CUBE_MAP_POSITIVE_X);
         CONST(TEXTURE_CUBE_MAP_POSITIVE_Y);

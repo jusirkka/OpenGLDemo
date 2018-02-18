@@ -77,6 +77,9 @@ signals:
     void compiled();
     void statusChanged();
 
+private:
+
+    void setErrPos(QTextCursor& cursor, int errpos) const;
 
 private:
 

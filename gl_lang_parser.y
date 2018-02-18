@@ -409,7 +409,11 @@ statement: ENDIF {
 };
 
 rhs: simple_rhs;
-rhs: cond_rhs_seq;
+
+rhs: cond_rhs_seq {
+  $$ = $1;
+  parser->finalizeJumps();
+};
 
 cond_rhs_seq: cond_rhs {$$ = $1;};
 cond_rhs_seq: cond_rhs_seq cond_rhs {
@@ -423,12 +427,17 @@ cond_rhs_seq: cond_rhs_seq cond_rhs {
   }
 };
 
-cond_rhs: guard simple_rhs {$$ = $2;};
-
-simple_rhs: '=' expression {
+cond_rhs: guard simple_rhs {
   $$ = $2;
+  // qDebug() << "Code: JUMP";
+  parser->pushBack(Parser::cJump, 0, 0);
+  // reserve space for unconditional code and immed jumps:
+  // jump to end of guard sequence after executing assignment
+  parser->pushBack(0, 0, 0);
+  parser->pushBack(0, 0, 0);
   parser->setJump();
 };
+
 
 guard: '@' expression {
   if ($2->id() != Type::Integer) {
@@ -437,12 +446,14 @@ guard: '@' expression {
   $$ = $2;
   // qDebug() << "Code: GUARD";
   parser->pushBack(Parser::cGuard, 0, 0);
-  // reserve space for code and immed jumps
+  // reserve space for conditional code and immed jumps:
+  // jump to next guard expression if this guard expression is false
   parser->pushBack(0, 0, 0);
   parser->pushBack(0, 0, 0);
   parser->initJump();
 };
 
+simple_rhs: '=' expression {$$ = $2;};
 
 expression: terms {$$ = $1;};
 

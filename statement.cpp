@@ -166,24 +166,19 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
 
     for (int ic = 0; ic < mCode.size(); ++ic) {
 
+        int code = Code(codes[ic]);
         int lrType = LRType(codes[ic]);
 
-        int index, numItems;
-        Function* fun;
-        QList<QVariant> list;
-        QVector<int> indices;
-        Variable* v;
-
-        switch (Code(codes[ic])) {
+        switch (code) {
 
         case Compiler::cImmed:
             mStack[++sPos] = mImmed[dPos++];
             break;
 
-        case Compiler::cImmedPath:
-            numItems = codes[++ic];
+        case Compiler::cImmedPath: {
+            int numItems = codes[++ic];
             sPos -= numItems - 1;
-            index = mStack[sPos].toInt();
+            int index = mStack[sPos].toInt();
             if (index < 0 || index > 3) throw RunError("Out of range error", mPos);
             mStack[sPos] = mImmed[dPos++];
             take_f(mStack[sPos], index, lrType);
@@ -193,7 +188,7 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
                 take_f(mStack[sPos], index, Compiler::cVI);
             }
             break;
-
+        }
 
         case Compiler::cNeg:
             neg_f(mStack[sPos], lrType);
@@ -263,62 +258,64 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
             mStack[sPos].setValue(int(!mStack[sPos].value<int>()));
             break;
 
-        case Compiler::cFun:
-            fun = funcs[codes[++ic] - Scope::FunctionOffset];
+        case Compiler::cFun: {
+            auto fun = funcs[codes[++ic] - Scope::FunctionOffset];
             sPos -= fun->argTypes().size() - 1;
             mStack[sPos] = fun->execute(mStack, sPos);
             break;
-
+        }
         case Compiler::cVar:
             mStack[++sPos] = vars[codes[++ic]]->value();
             break;
 
-        case Compiler::cVarPath:
-            index = codes[++ic];
-            numItems = codes[++ic];
-            sPos -= numItems - 1;
-            indices.clear();
+        case Compiler::cVarPath: {
+            int index = codes[++ic];
+            int numItems = codes[++ic];
+            QVector<int> indices;
             for (int k = 0; k < numItems; k++) {
                 indices << mStack[sPos + k].toInt();
             }
             mStack[sPos] = vars[index]->value(indices);
             break;
+        }
+        case Compiler::cAss: {
+            if (jumpFlag && !stopFlag) throw RunError("No Value error", mPos);
 
-        case Compiler::cAss:
-            v = vars[codes[++ic]];
+            auto v = vars[codes[++ic]];
             v->setValue(mStack[sPos]);
             if (v->name() != "gl_result") {
                 qDebug() <<"ass" << v->name() << "=" << v->value();
             }
             break;
+        }
+        case Compiler::cAssPath: {
+            if (jumpFlag && !stopFlag) throw RunError("No Value error", mPos);
 
-        case Compiler::cAssPath:
-            index = codes[++ic];
-            numItems = codes[++ic];
-            indices.clear();
+            int index = codes[++ic];
+            int numItems = codes[++ic];
+            QVector<int> indices;
             for (int k = 0; k < numItems; k++) {
                 indices << mStack[sPos - numItems + k].toInt();
             }
-            v = vars[index];
+            auto v = vars[index];
             v->setValue(mStack[sPos], indices);
             qDebug() << "asspath" << v->name() << "[" << indices << "] =" << v->value(indices);
             mStack[sPos - numItems] = mStack[sPos];
             sPos -= numItems;
             break;
+        }
 
-        case Compiler::cList:
-            numItems = codes[++ic];
+        case Compiler::cList: {
+            int numItems = codes[++ic];
             sPos -= numItems - 1;
-            list.clear();
+            QVariantList list;
             for (int k = 0; k < numItems; k++) {
                 list << mStack[sPos + k];
             }
             mStack[sPos] = QVariant::fromValue(list);
             break;
-
+        }
         case Compiler::cGuard:
-            if (stopFlag) return mStack[sPos - 1];
-
             jumpFlag = !mStack[sPos].value<int>();
             if (jumpFlag) {
                 dPos += codes[ic + 2];
@@ -330,14 +327,14 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
             --sPos;
             break;
 
+        case Compiler::cJump:
+            dPos += codes[ic + 2];
+            ic += codes[ic + 1] + 2;
+            break;
+
         default:
             Q_ASSERT(false);
         }
-    }
-
-    // we have jumped but not stopped
-    if (jumpFlag && !stopFlag) {
-        throw RunError("No Value error", mPos);
     }
 
     return mStack[sPos];

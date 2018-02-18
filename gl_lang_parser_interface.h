@@ -114,6 +114,7 @@ public:
     virtual void pushBack(unsigned op, unsigned lrtype, int inc) = 0;
     virtual void setJump() = 0;
     virtual void initJump() = 0;
+    virtual void finalizeJumps() = 0;
     virtual void pushBackImmed(int constVal) = 0;
     virtual void pushBackImmed(Math3D::Real constVal) = 0;
     virtual void pushBackImmed(const QVariant& constVal) = 0;
@@ -142,7 +143,7 @@ public:
     enum Codes {
         cImmed, cAdd, cSub, cMul, cDiv, cEqual, cNEqual, cLess, cLessOrEq,
         cGreater, cGreaterOrEq, cAnd, cOr, cNot, cFun, cVar, cNeg,
-        cGuard, cBOr, cBAnd, cList, cVarPath, cImmedPath, cAss, cAssPath
+        cGuard, cJump, cBOr, cBAnd, cList, cVarPath, cImmedPath, cAss, cAssPath
     };
 
     // LR types

@@ -390,7 +390,7 @@ void Demo::MainWindow::on_editorsTabs_currentChanged(int index) {
     if (index < 0) return;
     QItemSelectionModel* s = mUI->projectItems->selectionModel();
     // check if selection already points to the correct tab
-    if (s->hasSelection()) {
+    if (!s->selectedIndexes().isEmpty()) {
         QModelIndex sel = s->selectedIndexes()[0];
         QWidget* widget = mProject->data(sel, Project::EditorRole).value<QWidget*>();
         if (mUI->editorsTabs->indexOf(widget) == index) return;
@@ -767,7 +767,6 @@ bool Demo::MainWindow::maybeSave(const QModelIndex& item) {
 
 void Demo::MainWindow::closeEvent(QCloseEvent *event) {
     if (maybeSaveProject()) {
-        delete mProject;
         writeSettings();
         mGLWidget->hide();
         event->accept();
@@ -841,6 +840,7 @@ void Demo::MainWindow::openProject(const QString &path) {
 
 Demo::MainWindow::~MainWindow() {
     delete mUI;
+    mProject->deleteLater();
 }
 
 // #include "mainwindow.moc"
