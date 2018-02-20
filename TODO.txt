@@ -3,4 +3,3 @@
 - plugin description/config
 - autosave scripts
 - function defs in gl_lang
-- record button for saving the animation as a movie clip

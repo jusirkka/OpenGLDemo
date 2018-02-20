@@ -111,6 +111,7 @@ private slots:
     void on_actionCompileProject_triggered();
     void on_actionComplete_triggered();
     void on_actionViewScene_triggered();
+    void on_actionRecord_toggled(bool on);
 
     void scriptModification_changed(bool edited);
 

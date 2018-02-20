@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>847</width>
-    <height>567</height>
+    <width>845</width>
+    <height>565</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -50,8 +50,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>847</width>
-     <height>28</height>
+     <width>845</width>
+     <height>34</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuItems">
@@ -156,7 +156,7 @@
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
        <property name="alternatingRowColors">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <attribute name="headerVisible">
         <bool>false</bool>
@@ -193,6 +193,7 @@
    </attribute>
    <addaction name="actionViewScene"/>
    <addaction name="actionPlay"/>
+   <addaction name="actionRecord"/>
   </widget>
   <action name="actionNew">
    <property name="enabled">
@@ -554,13 +555,28 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="camera-photo"/>
+    <iconset theme="camera-photo">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>View Scene</string>
    </property>
    <property name="toolTip">
     <string>View the GL scene</string>
+   </property>
+  </action>
+  <action name="actionRecord">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="media-record"/>
+   </property>
+   <property name="text">
+    <string>Record</string>
+   </property>
+   <property name="toolTip">
+    <string>Record to a file</string>
    </property>
   </action>
  </widget>

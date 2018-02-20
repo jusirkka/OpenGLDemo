@@ -84,7 +84,7 @@ class SharedData: public QSharedData {
 public:
     Value* value;
     SharedData(Type* t): value(Value::Create(t)) {}
-    SharedData(const SharedData& other): value(other.value->clone()) {}
+    SharedData(const SharedData& other): QSharedData(other), value(other.value->clone()) {}
     ~SharedData() {delete value;}
 };
 

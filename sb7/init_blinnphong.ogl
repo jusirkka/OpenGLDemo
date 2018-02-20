@@ -1,0 +1,55 @@
+Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+Var vs, fs:Natural
+
+vs = createshader(vertex_shader)
+fs = createshader(fragment_shader)
+
+compileshader fs, source("fragment")
+compileshader vs, source("vertex")
+
+Shared Var prog: Natural = createprogram()
+
+attachshader prog, vs
+attachshader prog, fs
+
+linkprogram prog
+
+Shared Var u: Array of Record(diff_albedo, spec_albedo, spec_pow: Natural)
+
+u[0].diff_albedo = getuniformlocation(prog, "diffuse_albedo")
+u[0].spec_albedo = getuniformlocation(prog, "specular_albedo")
+u[0].spec_pow = getuniformlocation(prog, "specular_power")
+
+Shared Var u_buffer: Natural = genbuffer()
+bindbuffer uniform_buffer, u_buffer
+Var u_block: Array of Real
+u_block[3*16 - 1] = 0
+bufferdata uniform_buffer, u_block, dynamic_draw
+
+// Model store
+Shared Var model_array: Natural = genbuffer()
+bindbuffer array_buffer, model_array
+bufferextdata array_buffer, modelstore, static_draw
+
+Shared Var model_elements: Natural = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferextdata element_array_buffer, modelstore, static_draw
+
+enablevertexattribarray 0
+enablevertexattribarray 1
+
+vertexattribextpointer 0, modelstore, "teapot:vertex"
+vertexattribextpointer 1, modelstore, "teapot:normal"
+
+enable cull_face
+cullface front
+enable depth_test
+depthfunc lequal
+ 
+
+clearcolor vec(.1,.2,.2,1)
+cleardepth 1
+
+

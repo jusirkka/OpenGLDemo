@@ -5,6 +5,8 @@
 #include "camera.h"
 #include "imagestore.h"
 #include "modelstore.h"
+#include "videoencoder.h"
+#include "downloader.h"
 
 #include <QDebug>
 #include <QMouseEvent>
@@ -91,6 +93,9 @@ GLWidget::GLWidget(QWidget *parent)
     , mNear(1)
     , mFar(500)
     , mLastOp(None)
+    , mEncoder(nullptr)
+    , mDownloader(nullptr)
+    , mRecording(false)
 {
 
     mTime = 0;
@@ -231,12 +236,35 @@ void Demo::GLWidget::initializeGL() {
             qFatal("initializeOpenGLFunctions failed");
         }
         mInitialized = true;
+        emit openGLReady(mInitialized);
     }
+}
+
+void Demo::GLWidget::saveToDisk(bool on, const QString& basePath) {
+    if (on) {
+        if (mRecording) return;
+        mRecording = true;
+        mDownloader = new GL::Downloader(this);
+        mEncoder = new VideoEncoder(mDownloader, basePath);
+        connect(mEncoder, SIGNAL(finished()), this, SLOT(encodingFinished()));
+        mEncoder->start();
+    } else {
+        mEncoder->stop();
+    }
+}
+
+void Demo::GLWidget::encodingFinished() {
+    qDebug() << "encoding finished";
+    mRecording = false;
+    delete mDownloader;
+    delete mEncoder;
 }
 
 void Demo::GLWidget::paintGL()
 {
     emit draw();
+    if (!mRecording) return;
+    mDownloader->readFrame();
 }
 
 void Demo::GLWidget::initChanged() {

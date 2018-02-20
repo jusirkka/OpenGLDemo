@@ -1,0 +1,30 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "" import time, projection, camera
+From "init main" import prog, u, u_buffer
+
+useprogram prog
+
+Var view_pos: Vector = pos(0, 0, 50)
+Var view_mat: Matrix = lookat(view_pos, pos(0, 0, 0) ,pos(0, 1, 0))
+Var light_pos: Vector = pos(-20, -20, 0)
+Var light_proj: Matrix = projection
+Var light_view: Matrix = lookat(light_pos, pos(0, 0, 0), pos(0, 1, 0))
+
+bindbufferbase uniform_buffer, 0, u_buffer
+
+Var block: Record(mv, view, proj: Matrix)
+
+block.mv = view_mat * scaling(7, 7, 7) * camera
+block.view = view_mat
+block.proj = projection
+
+buffersubdata uniform_buffer, 0, block
+
+uniform1f u[0].spec_pow, 30
+uniform4f u[0].spec_albedo, pos(1, 1, 1)
+
+draw modelstore, "teapot", triangles
+
+
+

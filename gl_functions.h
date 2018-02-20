@@ -1875,6 +1875,7 @@ public:
         // createshader
         CONST(VERTEX_SHADER);
         CONST(FRAGMENT_SHADER);
+        CONST(GEOMETRY_SHADER);
         // bindbuffer
         CONST(ARRAY_BUFFER);
         CONST(ELEMENT_ARRAY_BUFFER);

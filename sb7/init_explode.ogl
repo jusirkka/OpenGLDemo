@@ -1,0 +1,115 @@
+Var vs_source, fs_source: Text
+
+vs_source = "
+#version 410 core
+
+layout (location = 0) in vec4 position;
+layout (location = 1) in vec3 normal;
+
+out VS_OUT
+{
+    vec3 normal;
+    vec4 color;
+    int index;
+} vs_out;
+
+uniform mat4 mv_matrix;
+uniform mat4 proj_matrix;
+
+void main(void)
+{
+    gl_Position = proj_matrix * mv_matrix * position;
+    vs_out.color = position * 2.0 + vec4(0.5, 0.5, 0.5, 0.0);
+    vs_out.normal = normalize(mat3(mv_matrix) * normal);
+    vs_out.index = gl_VertexID;
+}
+"
+
+fs_source = "
+#version 410 core
+
+out vec4 color;
+
+in GS_OUT
+{
+    vec3 normal;
+    vec4 color;
+} fs_in;
+
+void main(void)
+{
+    color = vec4(1.0) * abs(normalize(fs_in.normal).z);
+}
+"
+
+Shared Var prog: Natural = createprogram()
+Var vs, gs, fs: Natural
+vs = createshader(vertex_shader)
+gs = createshader(geometry_shader)
+fs = createshader(fragment_shader)
+
+compileshader vs, vs_source
+compileshader gs, source("geometry")
+compileshader fs, fs_source
+
+attachshader prog, vs
+attachshader prog, gs
+attachshader prog, fs
+
+linkprogram prog
+
+Shared Var u: Record(mv, proj, e: Natural)
+
+u.mv = getuniformlocation(prog, "mv_matrix")
+u.proj = getuniformlocation(prog, "proj_matrix")
+u.e = getuniformlocation(prog, "xplode")
+
+Shared Var u_buffer: Natural = genbuffer()
+bindbufferbase uniform_buffer, 0, u_buffer
+
+Shared Var num_e: Natural = 200
+
+Var data: Array of Vector
+data[num_e * 5 - 1] = pos(1, 1, 1)
+
+bufferdata uniform_buffer, data, dynamic_draw
+
+Shared Var v: Array of Record(w, t, p, v: Real)
+Var i: Natural = 0
+While i < num_e
+  v[i].w = 360 * (1 + 2 * random())
+  v[i].t = 0.3 + 0.7 * random()
+  v[i].p = 0.3 + 0.7 * random()
+  v[i].v = 3 + 3 * random()
+  i = i + 1
+Endwhile
+
+Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+// Model store
+Shared Var model_array: Natural = genbuffer()
+bindbuffer array_buffer, model_array
+bufferextdata array_buffer, modelstore, static_draw
+
+Shared Var model_elements: Natural = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferextdata element_array_buffer, modelstore, static_draw
+
+enablevertexattribarray 0
+enablevertexattribarray 1
+
+vertexattribextpointer 0, modelstore, "teapot:vertex"
+vertexattribextpointer 1, modelstore, "teapot:normal"
+
+
+clearcolor vec(.1,.2,.2,1)
+cleardepth 1
+
+enable depth_test
+depthfunc lequal
+
+disable cull_face
+cullface front
+
+

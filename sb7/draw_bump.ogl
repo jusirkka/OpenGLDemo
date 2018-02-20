@@ -1,0 +1,24 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "" import time, projection, camera
+From "init main" import prog, u, tex
+
+useprogram prog
+
+activetexture texture0
+bindtexture texture_2d, tex.color
+activetexture texture0 + 1
+bindtexture texture_2d, tex.normals
+
+uniformmatrix4f u.proj, projection
+
+Var mv: Matrix = translation(pos(0, -.2, -5.5)) * \
+  rotation(14.5, dir(1, 0, 0)) * \
+  rotation(-20, dir(0, 1, 0)) * camera
+
+uniformmatrix4f u.mv, mv
+
+uniform4f u.light, pos(40 * sin(0.1*time), 30 + 20*cos(0.1*time), 40)
+
+draw modelstore, "dod", triangles
+

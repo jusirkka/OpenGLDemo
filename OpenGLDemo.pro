@@ -36,7 +36,9 @@ SOURCES += main.cpp\
     value.cpp \
     type.cpp \
     projectfolder.cpp \
-    texturestore.cpp
+    texturestore.cpp \
+    downloader.cpp \
+    videoencoder.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -72,7 +74,9 @@ HEADERS  += mainwindow.h \
     typedef.h \
     value.h \
     projectfolder.h \
-    texturestore.h
+    texturestore.h \
+    downloader.h \
+    videoencoder.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \
@@ -124,4 +128,4 @@ my_flex_hdr.CONFIG += target_predeps
 QMAKE_EXTRA_COMPILERS += my_flex_src
 QMAKE_EXTRA_COMPILERS += my_flex_hdr
 
-
+LIBS += -lavcodec -lavutil -lswscale

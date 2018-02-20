@@ -1,0 +1,40 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "" import time, projection, camera
+
+From "init main" import u, prog, v, num_e, u_buffer
+
+useprogram prog
+
+uniformmatrix4f u.mv, camera
+uniformmatrix4f u.proj, projection
+
+Var t0: Real = 0.35 + 0.65 * sin(time * 0.01)
+Var t: Real @ t0 > 0 = t0 \
+            @ true = 0
+Var xplode: Natural @ t0 >= 0 = 1 \
+                    @ true = 0
+uniform1i u.e, xplode
+
+Var r: Array of Record(rot: Matrix, tr:Vector)
+Var i: Natural = 0
+
+If xplode == 1
+  While i < num_e
+    r[i].tr = dir(0, 0, v[i].v * t)
+    r[i].rot = rotation(v[i].w * t, \
+      dir(1, 1, 0) + \
+      dir(cos(v[i].p * t) * sin(v[i].t * t), \
+          sin(v[i].p * t) * sin(v[i].t * t), \
+          cos(v[i].t * t)))
+    i = i + 1
+  Endwhile
+  bindbufferbase uniform_buffer, 0, u_buffer
+  buffersubdata uniform_buffer, 0, r
+Endif
+
+
+
+draw modelstore, "teapot", triangles
+
+

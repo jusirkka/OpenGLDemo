@@ -72,7 +72,11 @@ MainWindow::MainWindow(const QString& project)
     // Initialize globals
     mGlobals = new Scope(mGLWidget, this);
 
-     // init the projection near/far values
+    // cannot record until opengl is initialized
+    mUI->actionRecord->setEnabled(false);
+    connect(mGLWidget, SIGNAL(openGLReady(bool)), mUI->actionRecord, SLOT(setEnabled(bool)));
+
+    // init the projection near/far values
     depthChanged(zoom->near(), zoom->far());
 
 
@@ -655,6 +659,19 @@ void Demo::MainWindow::on_actionAutocompile_toggled(bool on) {
         }
     }
     mProject->toggleAutoCompile(on);
+}
+
+void Demo::MainWindow::on_actionRecord_toggled(bool on) {
+    QString tmpl;
+    QFileInfo info(mProject->directory().absoluteFilePath(mProject->projectFile()));
+    if (info.exists() && info.isFile()) {
+        tmpl = mProject->directory().absoluteFilePath(info.completeBaseName());
+    } else {
+        tmpl = mProject->directory().absoluteFilePath(QApplication::applicationName());
+    }
+    // qDebug() << "record file template" << tmpl;
+
+    mGLWidget->saveToDisk(on, tmpl);
 }
 
 void Demo::MainWindow::on_actionCompile_triggered() {

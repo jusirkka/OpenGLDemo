@@ -18,9 +18,10 @@ namespace Demo {
 namespace GL {
     class Blob;
     class TexBlob;
-    class Emitter;
+    class Downloader;
 }
 
+class VideoEncoder;
 class Variable;
 
 class GLWidget : public QOpenGLWidget, public OpenGLFunctions {
@@ -43,6 +44,7 @@ public:
     void animStop();
     void animReset(int);
     void cameraStop();
+    void saveToDisk(bool on, const QString& basePath);
 
     void setProjection(float near, float far);
 
@@ -73,8 +75,6 @@ protected:
 
 private:
 
-
-    friend class GL::Emitter;
 
     using BlobVector = QVector<GL::Blob *>;
     using TexBlobVector = QVector<GL::TexBlob *>;
@@ -206,6 +206,7 @@ signals:
     void draw();
     void hidden();
     void toggleAnimate();
+    void openGLReady(bool);
 
 private:
 
@@ -221,6 +222,7 @@ private slots:
     void move();
     void anim();
     void realResize();
+    void encodingFinished();
 
 private:
 
@@ -246,6 +248,9 @@ private:
     float mNear;
     float mFar;
     LastOp mLastOp;
+    VideoEncoder* mEncoder;
+    GL::Downloader* mDownloader;
+    bool mRecording;
 
 };
 
