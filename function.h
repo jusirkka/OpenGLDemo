@@ -352,7 +352,7 @@ public:
         Vector4 axis = vals[start + 1].value<Vector4>();
         Matrix4 m;
         m.setRotation(angle, axis);
-        // qDebug() << "Rot";
+        // qCDebug(OGL) << "Rot";
         mValue.setValue(m);
         return mValue;
     }
@@ -372,7 +372,7 @@ public:
         Vector4 tr = vals[start].value<Vector4>();
         Matrix4 m;
         m.setTranslation(tr);
-        // qDebug() << "Tr";
+        // qCDebug(OGL) << "Tr";
         mValue.setValue(m);
         return mValue;
     }
@@ -397,7 +397,7 @@ public:
         Math3D::Real z = vals[start+2].value<Math3D::Real>();
         Matrix4 m;
         m.setScaling(x, y, z);
-        // qDebug() << "Sc";
+        // qCDebug(OGL) << "Sc";
         mValue.setValue(m);
         return mValue;
     }
@@ -416,7 +416,7 @@ public:
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Vector4 x = vals[start].value<Vector4>();
         Vector4 u = x.normalized3();
-        // qDebug() << "Norm";
+        // qCDebug(OGL) << "Norm";
         mValue.setValue(u);
         return mValue;
     }
@@ -435,8 +435,8 @@ public:
 
     const QVariant& execute(const QVector<QVariant>& vals, int start) override {
         Matrix4 m = vals[start].value<Matrix4>();
-        // qDebug() << "normal transform: check" << m.comatrix() * m.transpose3();
-        // qDebug() << "NormalT";
+        // qCDebug(OGL) << "normal transform: check" << m.comatrix() * m.transpose3();
+        // qCDebug(OGL) << "NormalT";
         mValue.setValue(m.comatrix());
         return mValue;
     }
@@ -479,7 +479,7 @@ public:
         Matrix4 r;
         r.setIdentity();
         r = r - 2 * Math3D::projection3(normal);
-        // qDebug() << "Refl";
+        // qCDebug(OGL) << "Refl";
         mValue.setValue(t * r);
         return mValue;
     }
@@ -528,7 +528,7 @@ public:
 
         rot.setBasis(y, z);
         tr.setTranslation(- eye);
-        // qDebug() << rot*tr;
+        // qCDebug(OGL) << rot*tr;
         mValue.setValue(rot * tr);
         return mValue;
     }

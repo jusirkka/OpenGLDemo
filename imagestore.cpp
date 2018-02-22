@@ -1,6 +1,6 @@
 #include "imagestore.h"
 #include <QGLWidget>
-#include <QDebug>
+#include "logging.h"
 #include <QPluginLoader>
 
 using namespace Demo::GL;
@@ -12,9 +12,9 @@ ImageStore::ImageStore():
 
 
 const void* ImageStore::readData(const QString& key) const {
-    // qDebug() << "GL::ImageStore::data" << key;
+    // qCDebug(OGL) << "GL::ImageStore::data" << key;
     if (mImages.contains(key)) {
-        // qDebug() << "has" << mImages[key].size() << "bytes";
+        // qCDebug(OGL) << "has" << mImages[key].size() << "bytes";
         return mImages[key].bits();
     }
     return nullptr;

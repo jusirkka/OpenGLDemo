@@ -27,7 +27,7 @@ are met:
 
 
 #include "triangleoptimizer.h"
-#include <QDebug>
+#include "logging.h"
 
 using namespace AC;
 
@@ -44,7 +44,7 @@ TriangleOptimizer::TriangleOptimizer(const IndexVector& triangles)
 
     // init vertices and edges
     mVertices = VertexVector(mx + 1, nullptr);
-    // qDebug() << "Last Vertex index" << mVertices.size() - 1;
+    // qCDebug(OGL) << "Last Vertex index" << mVertices.size() - 1;
     for (int t = 0; t < triangles.size() / 3; t++) {
         addTriangle(triangles[3*t], triangles[3*t+1], triangles[3*t+2]);
     }
@@ -66,17 +66,17 @@ TriangleOptimizer::TriangleOptimizer(const IndexVector& triangles)
 
     uint v1, v2;
     while (startNextStrip(v1, v2)) {
-        // qDebug() << "v1 v2 = " << v1 << v2;
+        // qCDebug(OGL) << "v1 v2 = " << v1 << v2;
         IndexVector strip;
         strip << v1 << v2;
         uint v3;
         while (getNextVert(v1, v2, v3)) {
-            // qDebug() << "v1 v2 v3 = " << v1 << v2 << v3;
+            // qCDebug(OGL) << "v1 v2 v3 = " << v1 << v2 << v3;
             strip << v3;
             mForwardWinding ? v1 = v3 : v2 = v3;
             mForwardWinding = !mForwardWinding;
         }
-        // qDebug() << "End of strip";
+        // qCDebug(OGL) << "End of strip";
         mStrips.append(strip);
     }
 }
@@ -103,11 +103,11 @@ TriangleOptimizer::Vertex* TriangleOptimizer::incVertexValence(uint v)
 
     if (!mVertices[v]) {
         mVertices[v] = new Vertex;
-        // qDebug() << "created" << mVertices[v]->index << mVertices[v]->count;
+        // qCDebug(OGL) << "created" << mVertices[v]->index << mVertices[v]->count;
     }
 
     Vertex *vertex = mVertices[v];
-    // qDebug() << vertex->index << vertex->count;
+    // qCDebug(OGL) << vertex->index << vertex->count;
 
     vertex->count++;
 
@@ -148,7 +148,7 @@ bool TriangleOptimizer::startNextStrip(uint& v1Return, uint& v2Return) {
     Vertex *v1 = findNextStripVertex();
     if (!v1) return false;
 
-    // qDebug() << "start new strip with" << v1->index;
+    // qCDebug(OGL) << "start new strip with" << v1->index;
     mForwardWinding = true;
 
     v1Return = v1->index;
@@ -161,7 +161,7 @@ TriangleOptimizer::Vertex* TriangleOptimizer::findNextStripVertex()
 {
     if (mVertexBins.isEmpty()) return nullptr;
     Vertex* v = mVertexBins.first();
-    // qDebug() << v->index << v->count;
+    // qCDebug(OGL) << v->index << v->count;
     return v;
 }
 
@@ -180,7 +180,7 @@ bool TriangleOptimizer::getNextVert(uint v1, uint v2, uint& v3) {
     }
 
     v3 = edge->triangles.last()->finalVertex->index;
-    // qDebug() << "num triangles " << edge->triangles.size();
+    // qCDebug(OGL) << "num triangles " << edge->triangles.size();
 
     if (foundReversed) {
         uint tmp = v2;
@@ -292,12 +292,12 @@ void TriangleOptimizer::decVertexValence(uint v) {
         }
     } else {
         // not first
-        // qDebug() << "still left in bin" << V->count << ": " << V->prev->index;
+        // qCDebug(OGL) << "still left in bin" << V->count << ": " << V->prev->index;
         V->prev->next = V->next;
     }
 
     if (V->next) { // not last
-        // qDebug() << "still left in bin" << V->count << ": " << V->next->index;
+        // qCDebug(OGL) << "still left in bin" << V->count << ": " << V->next->index;
         V->next->prev = V->prev;
     }
 

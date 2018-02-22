@@ -19,16 +19,16 @@
 // ------------------------------------------------------------------------------
 
 #include <QApplication>
-#include <QDebug>
 #include <QtPlugin>
-#include <QDebug>
 #include <QSurfaceFormat>
 
+#include "logging.h"
 #include "mainwindow.h"
 
 Q_IMPORT_PLUGIN(ImageStore)
 Q_IMPORT_PLUGIN(ModelStore)
 
+Q_LOGGING_CATEGORY(OGL, "OpenGLDemo")
 
 
 // -------------------------------------------------------
@@ -57,6 +57,15 @@ int main(int argc, char *argv[]) {
     format.setVersion(4, 5);
     format.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(format);
+
+    qSetMessagePattern("[%{category} "
+                       "%{if-debug}D%{endif}"
+                       "%{if-info}I%{endif}"
+                       "%{if-warning}W%{endif}"
+                       "%{if-critical}C%{endif}"
+                       "%{if-fatal}F%{endif}]"
+                       "[%{file}:%{line}] - %{message}");
+    QLoggingCategory::setFilterRules(QStringLiteral("OpenGLDemo.debug=true"));
 
     Demo::MainWindow mw(demo);
     mw.show();

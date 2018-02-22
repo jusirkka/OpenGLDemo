@@ -173,7 +173,7 @@ BezierPatcher::PolyVector BezierPatcher::genPoly(uint deg) {
         b1 = b2;
         n++;
     }
-    // qDebug() << b2;
+    // qCDebug(OGL) << b2;
     return b2;
 }
 

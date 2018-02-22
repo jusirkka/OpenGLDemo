@@ -101,13 +101,13 @@ void Highlight::highlightBlock(const QString &text) {
     gl_lang_set_lval(&val, mScanner);
 
     if (currentBlockState() == 1) {
-//        qDebug() << "INSTRING";
-//        qDebug() << text;
+//        qCDebug(OGL) << "INSTRING";
+//        qCDebug(OGL) << text;
         gl_lang__scan_string("\"", mScanner);
         for (int t = gl_lang_lex(&val, &loc, mScanner); t > 0; t = gl_lang_lex(&val, &loc, mScanner)) {}
 //    } else {
-//        qDebug() << "INITIAL";
-//        qDebug() << text;
+//        qCDebug(OGL) << "INITIAL";
+//        qCDebug(OGL) << text;
     }
 
     gl_lang__scan_string(text.toUtf8().data(), mScanner);
@@ -120,9 +120,9 @@ void Highlight::highlightBlock(const QString &text) {
         QString token_text(gl_lang_get_text(mScanner));
 
         // if (token >= 255) {
-        //     qDebug() << tokens[token - 255] << token_text;
+        //     qCDebug(OGL) << tokens[token - 255] << token_text;
         // } else {
-        //     qDebug() << token_text;
+        //     qCDebug(OGL) << token_text;
         //}
 
 

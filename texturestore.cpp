@@ -30,6 +30,7 @@
 #include "texturestore.h"
 #include "scope.h"
 #include "gl_widget.h"
+#include "logging.h"
 
 using namespace Demo;
 
@@ -205,6 +206,22 @@ static quint32 calculate_face_size(const header& h)
 }
 
 
+#define ALT(item) case item: qCWarning(OGL) << #item; throw KtxError(#item); break
+static void checkError() {
+    switch (glGetError()) {
+    ALT(GL_INVALID_ENUM);
+    ALT(GL_INVALID_VALUE);
+    ALT(GL_INVALID_OPERATION);
+    ALT(GL_STACK_UNDERFLOW);
+    ALT(GL_STACK_OVERFLOW);
+    ALT(GL_OUT_OF_MEMORY);
+    ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
+    default: ;// nothing
+    }
+}
+#undef ALT
+
+
 uint TextureStore::load_ktx(const QString& path) const {
 
     if (!mTarget->initialized()) return 0;
@@ -283,12 +300,14 @@ uint TextureStore::load_ktx(const QString& path) const {
 
     GLuint tex = 0;
     mTarget->glGenTextures(1, &tex);
+    checkError();
     mTarget->glBindTexture(target, tex);
+    checkError();
 
     file.seek(file.pos() + h.keypairbytes);
     auto bytes = file.readAll();
     file.close();
-    qDebug() << "texture size =" << bytes.size();
+    qCDebug(OGL) << "texture size =" << bytes.size();
     auto data = bytes.constData();
 
     if (h.miplevels == 0) {
@@ -298,20 +317,26 @@ uint TextureStore::load_ktx(const QString& path) const {
     switch (target) {
     case GL_TEXTURE_1D:
         mTarget->glTexStorage1D(GL_TEXTURE_1D, h.miplevels, h.glinternalformat, h.pixelwidth);
+        checkError();
         mTarget->glTexSubImage1D(GL_TEXTURE_1D, 0, 0, h.pixelwidth, h.glformat, h.glinternalformat, data);
+        checkError();
         break;
     case GL_TEXTURE_2D:
         if (h.gltype == GL_NONE) {
             mTarget->glCompressedTexImage2D(GL_TEXTURE_2D, 0, h.glinternalformat, h.pixelwidth, h.pixelheight, 0, 420 * 380 / 2, data);
+            checkError();
         } else {
             mTarget->glTexStorage2D(GL_TEXTURE_2D, h.miplevels, h.glinternalformat, h.pixelwidth, h.pixelheight);
+            checkError();
             {
                 const char * ptr = data;
                 uint height = h.pixelheight;
                 uint width = h.pixelwidth;
                 mTarget->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+                checkError();
                 for (uint i = 0; i < h.miplevels; i++) {
                     mTarget->glTexSubImage2D(GL_TEXTURE_2D, i, 0, 0, width, height, h.glformat, h.gltype, ptr);
+                    checkError();
                     ptr += height * calculate_stride(h, width, 1);
                     height >>= 1;
                     width >>= 1;
@@ -323,28 +348,38 @@ uint TextureStore::load_ktx(const QString& path) const {
         break;
     case GL_TEXTURE_3D:
         mTarget->glTexStorage3D(GL_TEXTURE_3D, h.miplevels, h.glinternalformat, h.pixelwidth, h.pixelheight, h.pixeldepth);
+        checkError();
         mTarget->glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, h.pixelwidth, h.pixelheight, h.pixeldepth, h.glformat, h.gltype, data);
+        checkError();
         break;
     case GL_TEXTURE_1D_ARRAY:
         mTarget->glTexStorage2D(GL_TEXTURE_1D_ARRAY, h.miplevels, h.glinternalformat, h.pixelwidth, h.arrayelements);
+        checkError();
         mTarget->glTexSubImage2D(GL_TEXTURE_1D_ARRAY, 0, 0, 0, h.pixelwidth, h.arrayelements, h.glformat, h.gltype, data);
+        checkError();
         break;
     case GL_TEXTURE_2D_ARRAY:
         mTarget->glTexStorage3D(GL_TEXTURE_2D_ARRAY, h.miplevels, h.glinternalformat, h.pixelwidth, h.pixelheight, h.arrayelements);
+        checkError();
         mTarget->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, h.pixelwidth, h.pixelheight, h.arrayelements, h.glformat, h.gltype, data);
+        checkError();
         break;
     case GL_TEXTURE_CUBE_MAP:
         mTarget->glTexStorage2D(GL_TEXTURE_CUBE_MAP, h.miplevels, h.glinternalformat, h.pixelwidth, h.pixelheight);
+        checkError();
         {
             uint face_size = calculate_face_size(h);
             for (uint i = 0; i < h.faces; i++) {
                 mTarget->glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, h.pixelwidth, h.pixelheight, h.glformat, h.gltype, data + face_size * i);
+                checkError();
             }
         }
         break;
     case GL_TEXTURE_CUBE_MAP_ARRAY:
         mTarget->glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, h.miplevels, h.glinternalformat, h.pixelwidth, h.pixelheight, h.arrayelements);
+        checkError();
         mTarget->glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, 0, 0, 0, h.pixelwidth, h.pixelheight, h.faces * h.arrayelements, h.glformat, h.gltype, data);
+        checkError();
         break;
     default: // Should never happen
         throw KtxError("Unknown texture target");
@@ -352,6 +387,7 @@ uint TextureStore::load_ktx(const QString& path) const {
 
     if (h.miplevels == 1) {
         mTarget->glGenerateMipmap(target);
+        checkError();
     }
 
     return tex;

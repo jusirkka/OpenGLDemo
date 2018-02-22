@@ -121,7 +121,7 @@ void Compiler::run() {
     if (!mReady) {
         throw RunError("Not compiled ", 0);
     }
-    // qDebug() << "running" << objectName();
+    // qCDebug(OGL) << "running" << objectName();
     mRunner->run();
 }
 
@@ -190,13 +190,13 @@ void Compiler::reset() {
 
 
 void Compiler::addSymbol(Symbol* s) {
-    // qDebug() << "adding" << objectName() << v->name();
+    // qCDebug(OGL) << "adding" << objectName() << v->name();
     auto v = dynamic_cast<Variable*>(s);
     if (v) {
         v->setIndex(mVariables.size() + Scope::VariableOffset);
         mVariables[v->name()] = v;
         if (v->shared()) {
-            // qDebug() << "exporting" << objectName() << v->name();
+            // qCDebug(OGL) << "exporting" << objectName() << v->name();
             mExports[v->name()] = v;
         }
     }
@@ -276,7 +276,7 @@ void Compiler::assignment() {
     mCodeAddr = 0;
     mImmedAddr = 0;
     mStackPos = 0;
-    // qDebug() << name << ": assignment: Byte code ready. Stack size =" << mStackSize;
+    // qCDebug(OGL) << name << ": assignment: Byte code ready. Stack size =" << mStackSize;
     mStackSize = 0;
 }
 

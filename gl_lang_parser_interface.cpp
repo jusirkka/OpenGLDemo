@@ -48,7 +48,7 @@ int GL::Parser::LRType(const Type* left, const Type* right) {
 const Operation* GL::Parser::Op(int token) {
     static QMap<int, const Operation*> ops;
     if (ops.isEmpty()) {
-        // qDebug() << "init";
+        // qCDebug(OGL) << "init";
         ops['<'] = new RelOp("<", Parser::cLess);
         ops['>'] = new RelOp(">", Parser::cGreater);
         ops[LE] = new RelOp("<=", Parser::cLessOrEq);

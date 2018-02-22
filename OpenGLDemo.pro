@@ -76,7 +76,8 @@ HEADERS  += mainwindow.h \
     projectfolder.h \
     texturestore.h \
     downloader.h \
-    videoencoder.h
+    videoencoder.h \
+    logging.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

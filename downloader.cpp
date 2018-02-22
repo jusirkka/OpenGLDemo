@@ -1,9 +1,9 @@
 #include "downloader.h"
 #include "gl_widget.h"
 
-#define ALT(item) case item: qDebug() << i; qWarning(#item); break
+#define ALT(item) case item: return QString(#item);
 
-static void checkError(int i) {
+static QString checkError() {
     switch (glGetError()) {
         ALT(GL_INVALID_ENUM);
         ALT(GL_INVALID_VALUE);
@@ -14,10 +14,12 @@ static void checkError(int i) {
         ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
     default: ;
     }
+    return QString();
 }
 
 #undef ALT
 
+#define CHECK(msg) do {msg = checkError(); if (!msg.isEmpty()) {qCWarning(OGL) << msg;}} while (false)
 
 using namespace Demo::GL;
 
@@ -38,17 +40,18 @@ Downloader::Downloader(GLWidget* p)
     , mFrameSize(mWidth * mHeight * 3) // RGB, 8 bits / color
 {
     mParent->makeCurrent();
+    QString err;
 
     // GLint buf;
     // mParent->glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &buf);
-    // qDebug() << "GL_PIXEL_PACK_BUFFER_BINDING" << buf;
+    // qCDebug(OGL) << "GL_PIXEL_PACK_BUFFER_BINDING" << buf;
 
     mParent->glGenBuffers(mPBOSize, mPBOs.data());
     for (auto pbo: mPBOs) {
         mParent->glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
-        checkError(1);
+        CHECK(err);
         mParent->glBufferData(GL_PIXEL_PACK_BUFFER, mFrameSize, 0, GL_STREAM_READ);
-        checkError(2);
+        CHECK(err);
     }
     mParent->glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
@@ -58,34 +61,37 @@ void Downloader::readFrame() {
 
     int nextPBO = (mPBOIndex + 1) % mPBOSize;
 
+    QString err;
 
     mEmpty.acquire();
 
     mParent->glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    // qDebug() << "readframe" << mPBOs[mPBOIndex] << mBufferIndex;
+    CHECK(err);
+    // qCDebug(OGL) << "readframe" << mPBOs[mPBOIndex] << mBufferIndex;
 
     // GLint buf;
     // mParent->glGetIntegerv(GL_READ_BUFFER, &buf);
-    // qDebug() << "GL_READ_BUFFER" << buf << GL_COLOR_ATTACHMENT0;
+    // qCDebug(OGL) << "GL_READ_BUFFER" << buf << GL_COLOR_ATTACHMENT0;
     // mParent->glReadBuffer(GL_FRONT);
     mParent->glBindBuffer(GL_PIXEL_PACK_BUFFER, mPBOs[mPBOIndex]);
-    checkError(3);
+    CHECK(err);
     mParent->glReadPixels(0, 0, mWidth, mHeight, mFormat, mType, 0);
-    checkError(4);
+    CHECK(err);
 
     mParent->glBindBuffer(GL_PIXEL_PACK_BUFFER, mPBOs[nextPBO]);
-    checkError(5);
+    CHECK(err);
     auto src = reinterpret_cast<const char*>(mParent->glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY));
-    checkError(6);
+    CHECK(err);
 
     if (src) {
         mBuffer[mBufferIndex].append(src, mFrameSize);
     }
 
     mParent->glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-    checkError(7);
+    CHECK(err);
 
     mParent->glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    CHECK(err);
 
     mPBOIndex = (mPBOIndex + 1) % mPBOSize;
     mBufferIndex = (mBufferIndex + 1) % mBufferSize;

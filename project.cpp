@@ -10,7 +10,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QSettings>
-#include <QDebug>
+#include "logging.h"
 #include <QIcon>
 #include <QRegExp>
 #include <QFileSystemWatcher>
@@ -147,7 +147,7 @@ Demo::Project::Project(const QString& path, GLWidget* target, const Scope* globa
         auto fpath = fullpath(project.value(key).toString());
         shaders->setItem(uniqueName(key, shaders->items()), fpath);
         if (!fpath.isEmpty()) {
-            // qDebug() << "adding (project) " << fname;
+            // qCDebug(OGL) << "adding (project) " << fname;
             if (!mWatcher->addPath(fpath)) {
                 qWarning() << "Ctor: Cannot watch" << fpath;
             }
@@ -236,12 +236,12 @@ bool Demo::Project::isWritable(const QString& path) const {
 }
 
 void Demo::Project::fileChanged(const QString& path) {
-    // qDebug() << path;
+    // qCDebug(OGL) << path;
     for (int i = 0; i < rowCount(itemParent(ShaderItems)); i++) {
         QModelIndex addr = index(i, ShaderItems);
         QString fname = data(addr, FileNameRole).toString();
         if (fname == path) {
-            // qDebug() << "set data";
+            // qCDebug(OGL) << "set data";
             setData(addr, path, FileRole);
             // Does not work without resetting!?
             if (!mWatcher->addPath(path)) {
@@ -289,7 +289,7 @@ void Demo::Project::setProjectFile(const QString& fname) {
     QFileInfo info(fname);
     mProjectIni = info.fileName();
     mProjectDir = info.absoluteDir();
-    // qDebug() << "setProjectFile" << mProjectDir.absolutePath() << mProjectIni;
+    // qCDebug(OGL) << "setProjectFile" << mProjectDir.absolutePath() << mProjectIni;
 }
 
 void Demo::Project::scriptCompiled() {
@@ -477,11 +477,11 @@ bool Demo::Project::setData(const QModelIndex &index, const QVariant &value, int
         if (dynamic_cast<TextFileStore*>(folder)) {
             QString oldpath = QFileInfo(folder->fileName(index.row())).canonicalFilePath();
             if (oldpath != path) {
-                // qDebug() << "removing" << oldpath;
+                // qCDebug(OGL) << "removing" << oldpath;
                 if (!mWatcher->removePath(oldpath)) {
                     qWarning() << "setData: Cannot unwatch" << oldpath;
                 }
-                // qDebug() << "adding" << path;
+                // qCDebug(OGL) << "adding" << path;
                 if (!mWatcher->addPath(path)) {
                     qWarning() << "setData: Cannot watch" << path;
                 }
@@ -536,7 +536,7 @@ bool Demo::Project::removeRows(int row, int count, const QModelIndex &parent)
 
     if (dynamic_cast<TextFileStore*>(folder)) {
         QString oldpath = data(index(row, ShaderItems), FileNameRole).toString();
-        // qDebug() << "removing" << oldpath;
+        // qCDebug(OGL) << "removing" << oldpath;
         if (!mWatcher->removePath(oldpath)) {
             qWarning() << "removeRows: Cannot unwatch" << oldpath;
         }

@@ -260,7 +260,7 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
 
         case Compiler::cFun: {
             auto fun = funcs[codes[++ic] - Scope::FunctionOffset];
-            // qDebug() << "function" << fun->name();
+            // qCDebug(OGL) << "function" << fun->name();
             sPos -= fun->argTypes().size() - 1;
             mStack[sPos] = fun->execute(mStack, sPos);
             break;
@@ -272,8 +272,8 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
         case Compiler::cVarPath: {
             int index = codes[++ic];
             int numItems = codes[++ic];
-            // qDebug() << "varpath" << vars[index]->name() << numItems;
-            // qDebug() << mStack;
+            // qCDebug(OGL) << "varpath" << vars[index]->name() << numItems;
+            // qCDebug(OGL) << mStack;
             sPos -= numItems - 1;
             QVector<int> indices;
             for (int k = 0; k < numItems; k++) {
@@ -288,7 +288,7 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
             auto v = vars[codes[++ic]];
             v->setValue(mStack[sPos]);
 //            if (v->name() != "gl_result") {
-//                qDebug() <<"ass" << v->name() << "=" << v->value();
+//                qCDebug(OGL) <<"ass" << v->name() << "=" << v->value();
 //            }
             break;
         }
@@ -303,7 +303,7 @@ const QVariant& Statement::evalCode(const VariableIndexMap& vars, const Function
             }
             auto v = vars[index];
             v->setValue(mStack[sPos], indices);
-            // qDebug() << "asspath" << v->name() << "[" << indices << "] =" << v->value(indices);
+            // qCDebug(OGL) << "asspath" << v->name() << "[" << indices << "] =" << v->value(indices);
             mStack[sPos - numItems] = mStack[sPos];
             sPos -= numItems;
             break;

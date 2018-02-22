@@ -126,7 +126,7 @@ bool Scope::subscriptRelation(const QString& top, const QString& sub) {
 }
 
 void Scope::dispatch(const QString& other) const {
-    // qDebug() << "dispatch" << other;
+    // qCDebug(OGL) << "dispatch" << other;
     if (mEditorIndices.contains(other)) {
         CodeEditor* other_ed = mEditors[mEditorIndices[other]];
         other_ed->run();
@@ -254,23 +254,23 @@ void Scope::recompileAll() {
     for (auto ed: qAsConst(mEditors)) {
         ed->compile();
         if (!ed->compiler()->ready()) {
-            // qDebug() << ed->objectName() << ": compile failed";
+            // qCDebug(OGL) << ed->objectName() << ": compile failed";
             currFailed.append(ed);
         }
     }
     EditorVector prevFailed;
     while (!currFailed.isEmpty() && prevFailed != currFailed) {
-        // qDebug() << "num failed = " << currFailed.size();
+        // qCDebug(OGL) << "num failed = " << currFailed.size();
         prevFailed = currFailed;
         currFailed.clear();
         for (auto ed: qAsConst(prevFailed)) {
             ed->compile();
             if (!ed->compiler()->ready()) {
-                // qDebug() << ed->objectName() << ": compile failed";
+                // qCDebug(OGL) << ed->objectName() << ": compile failed";
                 currFailed.append(ed);
             }
         }
     }
 
-    // qDebug() << "final num failed = " << currFailed.size();
+    // qCDebug(OGL) << "final num failed = " << currFailed.size();
 }

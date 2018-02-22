@@ -1,5 +1,5 @@
 #include "modelstore.h"
-#include <QDebug>
+#include "logging.h"
 #include <QPluginLoader>
 #include <QFile>
 
@@ -360,7 +360,7 @@ void ModelStore::parseModelData(const QString& path) {
 
     // gen missing tex coords
     if (!mGenTexes.isEmpty()) {
-        // qDebug() << "gen tex" << path;
+        // qCDebug(OGL) << "gen tex" << path;
         for (auto v_index: qAsConst(mGenTexes)) {
             // (x,y,z) -> (x,y)
             mVertexData[v_index].tex = mVertexData[v_index].vertex;
@@ -370,7 +370,7 @@ void ModelStore::parseModelData(const QString& path) {
 
     // gen missing normals
     if (!mGenNormals.isEmpty()) {
-        // qDebug() << "gen normals" << path;
+        // qCDebug(OGL) << "gen normals" << path;
         Vector4Vector normalSum(mVertexData.size(), Vector4());
         IndexVector faceCount(mVertexData.size(), 0);
         int numFaces = mTriangleIndices.size() / 3; // they are triangles
@@ -407,7 +407,7 @@ void ModelStore::setItem(const QString& key, const QString& path) {
     }
 
     AC::TriangleOptimizer stripper(mTriangleIndices);
-    // qDebug() << stripper.strips().size();
+    // qCDebug(OGL) << stripper.strips().size();
 
     Model model;
     model.name = key;

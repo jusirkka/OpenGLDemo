@@ -150,7 +150,7 @@ void Demo::MainWindow::on_actionSaveAll_triggered() {
             "INI files (*.ini)"
         );
         if (fname.isEmpty()) return;
-        // qDebug() << "on_actionSaveAll_triggered" << fname;
+        // qCDebug(OGL) << "on_actionSaveAll_triggered" << fname;
         mProject->setProjectFile(fname);
         setWindowTitle(QString("%1: %2 [*]").arg(QApplication::applicationName(), fname));
     }
@@ -669,7 +669,7 @@ void Demo::MainWindow::on_actionRecord_toggled(bool on) {
     } else {
         tmpl = mProject->directory().absoluteFilePath(QApplication::applicationName());
     }
-    // qDebug() << "record file template" << tmpl;
+    // qCDebug(OGL) << "record file template" << tmpl;
 
     mGLWidget->saveToDisk(on, tmpl);
 }

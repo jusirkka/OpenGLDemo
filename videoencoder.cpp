@@ -1,8 +1,9 @@
-#include "videoencoder.h"
-#include "downloader.h"
-#include <QDebug>
 #include <QFile>
 #include <QDateTime>
+
+#include "videoencoder.h"
+#include "downloader.h"
+#include "logging.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -50,7 +51,7 @@ VideoEncoder::VideoEncoder(GL::Downloader *parent, const QString& basePath)
 
 void VideoEncoder::stop() {mReady = true;}
 
-static uint8_t endcode[] = {0, 0, 1, 0xb7};
+static uint8_t endcode[] = {0x00, 0x00, 0x01, 0xb7};
 
 static SwsContext* getSWSContext(int w, int h) {
     static SwsContext* ctx = nullptr;
@@ -67,7 +68,7 @@ void VideoEncoder::frame_yuv_from_rgb(AVFrame* frame, char* data) const {
     int w = mContext->width;
     int h = mContext->height;
 
-    // swap rows
+    // reverse rows
     for (int i = 0; i < h / 2; i++) {
         char tmp[3 * w];
         memcpy(tmp, &data[3 * w * i], 3 * w);
@@ -102,27 +103,30 @@ void VideoEncoder::run() {
     while (!mReady) {
         mParent->acquireFilledFrame();
 
+        // construct an YUV frame
         QByteArray& bytes = mParent->buffer()[slot];
-        // qDebug() << "encoding frame" << frameNum << "size =" << bytes.size();
+        // qCDebug(OGL) << "encoding frame" << frameNum << "size =" << bytes.size();
         frame_yuv_from_rgb(frame, bytes.data());
-        bytes.clear();
         frame->pts = frameNum;
+        frameNum++;
+        slot = frameNum % mParent->bufferSize();
+
+        // clear & release
+        bytes.clear();
+        mParent->releaseEmptyFrame();
+
+        // encode
         avcodec_send_frame(mContext, frame);
 
         ret = avcodec_receive_packet(mContext, pkt);
         while (ret >= 0) {
-            // qDebug() << "write packet, size =" << pkt->size;
+            // qCDebug(OGL) << "write packet, size =" << pkt->size;
             sample.write(reinterpret_cast<const char*>(pkt->data), pkt->size);
             av_packet_unref(pkt);
             ret = avcodec_receive_packet(mContext, pkt);
         }
-        // qDebug() << "receive status = " << ret;
+        // qCDebug(OGL) << "receive status = " << ret;
 
-
-        frameNum++;
-        slot = frameNum % mParent->bufferSize();
-
-        mParent->releaseEmptyFrame();
     }
 
     // delayed frames
@@ -130,13 +134,13 @@ void VideoEncoder::run() {
 
     ret = avcodec_receive_packet(mContext, pkt);
     while (ret >= 0) {
-        // qDebug() << "write delayed packet, size =" << pkt->size;
+        // qCDebug(OGL) << "write delayed packet, size =" << pkt->size;
         sample.write(reinterpret_cast<const char*>(pkt->data), pkt->size);
         av_packet_unref(pkt);
         ret = avcodec_receive_packet(mContext, pkt);
     }
 
-    qDebug() << "encoding ready, closing. Last receive status = " << ret;
+    qCDebug(OGL) << "encoding ready, closing. Last receive status = " << ret;
 
     sample.write(reinterpret_cast<const char*>(endcode), sizeof(endcode));
     sample.close();

@@ -95,7 +95,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
-        // qDebug() << "glEnable" << vals[start].value<Math3D::Integer>();
+        // qCDebug(OGL) << "glEnable" << vals[start].value<Math3D::Integer>();
         mParent->glEnable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
         return mValue;
@@ -113,7 +113,7 @@ public:
     }
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
-        // qDebug() << "glDisable" << vals[start].value<Math3D::Integer>();
+        // qCDebug(OGL) << "glDisable" << vals[start].value<Math3D::Integer>();
         mParent->glDisable(vals[start].value<Math3D::Integer>());
         mValue.setValue(0);
         return mValue;
@@ -134,7 +134,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real near = vals[start].value<Math3D::Real>();
         Math3D::Real far = vals[start + 1].value<Math3D::Real>();
-        // qDebug() << "glDepthRange" << near << far;
+        // qCDebug(OGL) << "glDepthRange" << near << far;
         mParent->glDepthRangef(near, far);
         mValue.setValue(0);
         return mValue;
@@ -153,7 +153,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real w = vals[start].value<Math3D::Real>();
-        // qDebug() << "glLineWidth" << w;
+        // qCDebug(OGL) << "glLineWidth" << w;
         mParent->glLineWidth(w);
         mValue.setValue(0);
         return mValue;
@@ -172,7 +172,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer face = vals[start].value<Math3D::Integer>();
-        // qDebug() << "glFrontFace" << face;
+        // qCDebug(OGL) << "glFrontFace" << face;
         mParent->glFrontFace(face);
         mValue.setValue(0);
         return mValue;
@@ -191,7 +191,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer face = vals[start].value<Math3D::Integer>();
-        // qDebug() << "glCullFace" << face;
+        // qCDebug(OGL) << "glCullFace" << face;
         mParent->glCullFace(face);
         mValue.setValue(0);
         return mValue;
@@ -216,7 +216,7 @@ public:
         Math3D::Integer g = vals[start+1].value<Math3D::Integer>();
         Math3D::Integer b = vals[start+2].value<Math3D::Integer>();
         Math3D::Integer a = vals[start+3].value<Math3D::Integer>();
-        // qDebug() << "glColorMask" << r << g << b << a;
+        // qCDebug(OGL) << "glColorMask" << r << g << b << a;
         mParent->glColorMask(r, g, b, a);
         mValue.setValue(0);
         return mValue;
@@ -235,7 +235,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer d = vals[start].value<Math3D::Integer>();
-        // qDebug() << "glDepthMask" << d;
+        // qCDebug(OGL) << "glDepthMask" << d;
         mParent->glDepthMask(d);
         mValue.setValue(0);
         return mValue;
@@ -254,7 +254,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Integer mask = vals[start].value<Math3D::Integer>();
-        // qDebug() << "glClear" << mask;
+        // qCDebug(OGL) << "glClear" << mask;
         mParent->glClear(mask);
         mValue.setValue(0);
         return mValue;
@@ -273,7 +273,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Vector4 color = vals[start].value<Vector4>();
-        // qDebug() << "glClearColor" << color[X] << color[Y] << color[Z] << color[W];
+        // qCDebug(OGL) << "glClearColor" << color[X] << color[Y] << color[Z] << color[W];
         mParent->glClearColor(color[X], color[Y], color[Z], color[W]);
         mValue.setValue(0);
         return mValue;
@@ -292,7 +292,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real depth = vals[start].value<Math3D::Real>();
-        // qDebug() << "glClearDepth" << depth;
+        // qCDebug(OGL) << "glClearDepth" << depth;
         mParent->glClearDepthf(depth);
         mValue.setValue(0);
         return mValue;
@@ -331,9 +331,9 @@ public:
         GLuint name = vals[start].value<int>();
         QByteArray bytes = vals[start+1].toString().toLatin1();
         const char *data = bytes.constData();
-        // qDebug() << "glShaderSource" << name;
+        // qCDebug(OGL) << "glShaderSource" << name;
         mParent->glShaderSource(name, 1, &data, nullptr);
-        // qDebug() << "glCompileShader" << name;
+        // qCDebug(OGL) << "glCompileShader" << name;
         mParent->glCompileShader(name);
         int status;
         mParent->glGetShaderiv(name, GL_COMPILE_STATUS, &status);
@@ -361,7 +361,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
-        // qDebug() << "glDeleteShader" << name;
+        // qCDebug(OGL) << "glDeleteShader" << name;
         if (!mParent->glIsShader(name)) {
             throw GLError(QString(R"("%1" is not a shader)").arg(name));
         }
@@ -381,7 +381,7 @@ public:
     CreateProgram(Demo::GLWidget* p): GLProc("createprogram", new Integer_T, p) {}
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
-        // qDebug() << "glCreateProgram";
+        // qCDebug(OGL) << "glCreateProgram";
         mValue.setValue(mParent->resource("program"));
         return mValue;
     }
@@ -402,7 +402,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
         int shader = vals[start+1].value<int>();
-        // qDebug() << "glAttachShader" << prog << shader;
+        // qCDebug(OGL) << "glAttachShader" << prog << shader;
         mParent->glAttachShader(prog, shader);
         mValue.setValue(0);
         return mValue;
@@ -424,7 +424,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
         int shader = vals[start+1].value<int>();
-        // qDebug() << "glDetachShader" << prog << shader;
+        // qCDebug(OGL) << "glDetachShader" << prog << shader;
         mParent->glDetachShader(prog, shader);
         mValue.setValue(0);
         return mValue;
@@ -444,7 +444,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
-        // qDebug() << "glLinkProgram" << name;
+        // qCDebug(OGL) << "glLinkProgram" << name;
         mParent->glLinkProgram(name);
         int status;
         mParent->glGetProgramiv(name, GL_LINK_STATUS, &status);
@@ -473,7 +473,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
-        // qDebug() << "glUseProgram" << name;
+        // qCDebug(OGL) << "glUseProgram" << name;
         mParent->glUseProgram(name);
         mValue.setValue(0);
         return mValue;
@@ -493,7 +493,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int name = vals[start].value<int>();
-        // qDebug() << "glDeleteProgram" << name;
+        // qCDebug(OGL) << "glDeleteProgram" << name;
         if (!mParent->glIsProgram(name)) {
             throw GLError(QString(R"("%1" is not a program)").arg(name));
         }
@@ -517,7 +517,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
         QString name = vals[start+1].toString();
-        // qDebug() << "glGetAttribLocation" << prog << name;
+        // qCDebug(OGL) << "glGetAttribLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
         int loc = mParent->glGetAttribLocation(prog, data);
@@ -541,7 +541,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int prog = vals[start].value<int>();
         QString name = vals[start+1].toString();
-        // qDebug() << "glGetUniformLocation" << prog << name;
+        // qCDebug(OGL) << "glGetUniformLocation" << prog << name;
         QByteArray bytes = name.toLatin1();
         const char* data = bytes.constData();
         int loc = mParent->glGetUniformLocation(prog, data);
@@ -565,7 +565,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         Math3D::Real uniform = vals[start+1].value<Math3D::Real>();
-        // qDebug() << "glUniform1f" << loc << uniform;
+        // qCDebug(OGL) << "glUniform1f" << loc << uniform;
         mParent->glUniform1f(loc, uniform);
         mValue.setValue(0);
         return mValue;
@@ -586,7 +586,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         int uniform = vals[start+1].value<int>();
-        // qDebug() << "glUniform1i" << loc << uniform;
+        // qCDebug(OGL) << "glUniform1i" << loc << uniform;
         mParent->glUniform1i(loc, uniform);
         mValue.setValue(0);
         return mValue;
@@ -607,7 +607,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         Vector4 uni = vals[start+1].value<Vector4>();
-        // qDebug() << "glUniform4f" << loc << uni[X] << uni[Y] << uni[Z] << uni[W];
+        // qCDebug(OGL) << "glUniform4f" << loc << uni[X] << uni[Y] << uni[Z] << uni[W];
         mParent->glUniform4f(loc, uni[X], uni[Y], uni[Z], uni[W]);
         mValue.setValue(0);
         return mValue;
@@ -629,7 +629,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         int loc = vals[start].value<int>();
         Matrix4 uni = vals[start+1].value<Matrix4>();
-        // qDebug() << "glUniformMatrix4F" << loc;
+        // qCDebug(OGL) << "glUniformMatrix4F" << loc;
         mParent->glUniformMatrix4fv(loc, 1, GL_FALSE, uni.readArray());
         mValue.setValue(0);
         return mValue;
@@ -662,7 +662,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
-        // qDebug() << "glDeleteBuffers" << name;
+        // qCDebug(OGL) << "glDeleteBuffers" << name;
         if (!mParent->glIsBuffer(name)) {
             throw GLError(QString(R"("%1" is not a buffer)").arg(name));
         }
@@ -687,7 +687,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         GLuint buffer = vals[start+1].value<int>();
-        // qDebug() << "glBindBuffer" << target << buffer;
+        // qCDebug(OGL) << "glBindBuffer" << target << buffer;
         mParent->glBindBuffer(target, buffer);
         mValue.setValue(0);
         return mValue;
@@ -841,7 +841,7 @@ public:
         GLuint target = vals[start].value<int>();
         const Blob& blob = mParent->blob(vals[start+1].value<int>());
         GLuint usage = vals[start+2].value<int>();
-        // qDebug() << "glBufferData" << target << blob.name() << usage;
+        // qCDebug(OGL) << "glBufferData" << target << blob.name() << usage;
         mParent->glBufferData(target, blob.bytelen(target), blob.bytes(target), usage);
         mValue.setValue(0);
         return mValue;
@@ -897,9 +897,9 @@ public:
         GLuint index = vals[start].value<int>();
         const Blob& blob = mParent->blob(vals[start+1].value<int>());
         QString attr = vals[start+2].toString();
-        // qDebug() << "VertexAttribPointer" << index << blob.name() << attr;
+        // qCDebug(OGL) << "VertexAttribPointer" << index << blob.name() << attr;
         const BlobSpec& spec = blob.spec(attr);
-        // qDebug() << "VertexAttribPointer" << spec.size << spec.offset;
+        // qCDebug(OGL) << "VertexAttribPointer" << spec.size << spec.offset;
         mParent->glVertexAttribPointer(index,
                                        spec.size,
                                        spec.type,
@@ -967,7 +967,7 @@ public:
         const Blob& blob = mParent->blob(vals[start].value<int>());
         QString attr = vals[start + 1].toString();
         GLuint mode = vals[start + 2].value<int>();
-        // qDebug() << "Draw" << blob.name() << attr << mode;
+        // qCDebug(OGL) << "Draw" << blob.name() << attr << mode;
         blob.draw(mode, attr);
         mValue.setValue(0);
         return mValue;
@@ -1008,7 +1008,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
-        // qDebug() << "glEnableVertexAttribArray" << name;
+        // qCDebug(OGL) << "glEnableVertexAttribArray" << name;
         mParent->glEnableVertexAttribArray(name);
         mValue.setValue(0);
         return mValue;
@@ -1027,7 +1027,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
-        // qDebug() << "glDisableVertexAttribArray" << name;
+        // qCDebug(OGL) << "glDisableVertexAttribArray" << name;
         mParent->glDisableVertexAttribArray(name);
         mValue.setValue(0);
         return mValue;
@@ -1047,7 +1047,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
-        // qDebug() << "ActiveTexture" << name;
+        // qCDebug(OGL) << "ActiveTexture" << name;
         mParent->glActiveTexture(name);
         mValue.setValue(0);
         return mValue;
@@ -1067,7 +1067,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
-        // qDebug() << "GenerateMipMap" << target;
+        // qCDebug(OGL) << "GenerateMipMap" << target;
         mParent->glGenerateMipmap(target);
         mValue.setValue(0);
         return mValue;
@@ -1088,7 +1088,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         GLuint texture = vals[start + 1].value<int>();
-        // qDebug() << "BindTexture" << target << texture;
+        // qCDebug(OGL) << "BindTexture" << target << texture;
         mParent->glBindTexture(target, texture);
         mValue.setValue(0);
         return mValue;
@@ -1121,7 +1121,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
-        // qDebug() << "DeleteTexture" << name;
+        // qCDebug(OGL) << "DeleteTexture" << name;
         if (!mParent->glIsTexture(name)) {
             throw GLError(QString(R"("%1" is not a texture)").arg(name));
         }
@@ -1148,7 +1148,7 @@ public:
         GLuint target = vals[start].value<int>();
         GLuint name = vals[start + 1].value<int>();
         GLuint param = vals[start + 2].value<int>();
-        // qDebug() << "TexParameter" << target << name << param;
+        // qCDebug(OGL) << "TexParameter" << target << name << param;
         mParent->glTexParameteri(target, name, param);
         mValue.setValue(0);
         return mValue;
@@ -1176,9 +1176,9 @@ public:
         GLint iformat = vals[start + 2].value<int>();
         const TexBlob& blob = mParent->texBlob(vals[start + 3].value<int>());
         QString attr = vals[start + 4].toString();
-        // qDebug() << "TexImage2D" << target << level << iformat << blob.name() << attr;
+        // qCDebug(OGL) << "TexImage2D" << target << level << iformat << blob.name() << attr;
         const TexBlobSpec spec = blob.spec(attr);
-        // qDebug() << "TexImage2D" << spec.width << spec.height << spec.type;
+        // qCDebug(OGL) << "TexImage2D" << spec.width << spec.height << spec.type;
         mParent->glTexImage2D(target, level, iformat,
                               spec.width, spec.height, 0, spec.format, spec.type, blob.readData(attr));
         mValue.setValue(0);
@@ -1479,7 +1479,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         Math3D::Real factor = vals[start].value<Math3D::Real>();
         Math3D::Real units = vals[start + 1].value<Math3D::Real>();
-        // qDebug() << "glPolygonOffset" << depth;
+        // qCDebug(OGL) << "glPolygonOffset" << depth;
         mParent->glPolygonOffset(factor, units);
         mValue.setValue(0);
         return mValue;
@@ -1559,7 +1559,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>&, int) override {
         GLuint res = mParent->resource("frame_buffer");
-        // qDebug() << "genframebuffer" << res;
+        // qCDebug(OGL) << "genframebuffer" << res;
         mValue.setValue(res);
         return mValue;
     }
@@ -1577,7 +1577,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint name = vals[start].value<int>();
-        // qDebug() << "glDeleteFrameBuffers" << name;
+        // qCDebug(OGL) << "glDeleteFrameBuffers" << name;
         if (!mParent->glIsFramebuffer(name)) {
             throw GLError(QString(R"("%1" is not a frame buffer)").arg(name));
         }
@@ -1602,7 +1602,7 @@ public:
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
         GLuint buffer = vals[start+1].value<int>();
-        // qDebug() << "glBindFrameBuffer" << target << buffer;
+        // qCDebug(OGL) << "glBindFrameBuffer" << target << buffer;
         mParent->glBindFramebuffer(target, buffer);
         mValue.setValue(0);
         return mValue;
@@ -1630,7 +1630,7 @@ public:
         GLuint textarget = vals[start + 2].value<int>();
         GLuint texture = vals[start + 3].value<int>();
         GLint level = vals[start + 4].value<int>();
-        // qDebug() << "glFramebufferTexture2D" << target << name << param;
+        // qCDebug(OGL) << "glFramebufferTexture2D" << target << name << param;
         mParent->glFramebufferTexture2D(target, attachment, textarget, texture, level);
         mValue.setValue(0);
         return mValue;
@@ -1657,7 +1657,7 @@ public:
         GLuint texture = vals[start + 2].value<int>();
         GLint level = vals[start + 3].value<int>();
         GLuint layer = vals[start + 4].value<int>();
-        // qDebug() << "glFramebufferTextureLayer" << target << name << param;
+        // qCDebug(OGL) << "glFramebufferTextureLayer" << target << name << param;
         mParent->glFramebufferTextureLayer(target, attachment, texture, level, layer);
         mValue.setValue(0);
         return mValue;
@@ -1676,7 +1676,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint target = vals[start].value<int>();
-        // qDebug() << "glCheckFramebufferStatus" << target;
+        // qCDebug(OGL) << "glCheckFramebufferStatus" << target;
         GLuint status = mParent->glCheckFramebufferStatus(target);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
             throw GLError(QString("Framebuffer is not complete (%1)").arg(status));
@@ -1698,7 +1698,7 @@ public:
 
     const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
         GLuint buf = vals[start].value<int>();
-        // qDebug() << "glDrawBuffer" << target;
+        // qCDebug(OGL) << "glDrawBuffer" << target;
         mParent->glDrawBuffers(1, &buf);
         mValue.setValue(0);
         return mValue;

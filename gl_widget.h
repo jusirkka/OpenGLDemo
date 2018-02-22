@@ -3,7 +3,7 @@
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions_4_5_Core>
-#include <QDebug>
+#include "logging.h"
 #include "math3d.h"
 #include "gl_lang_compiler.h"
 

@@ -7,8 +7,8 @@
 #include "modelstore.h"
 #include "videoencoder.h"
 #include "downloader.h"
+#include "logging.h"
 
-#include <QDebug>
 #include <QMouseEvent>
 #include <QHideEvent>
 #include <QPluginLoader>
@@ -42,7 +42,7 @@ CameraConstraint::CameraConstraint(GLWidget* p)
 
 const QVariant& CameraConstraint::execute(const QVector<QVariant>& vals, int start) {
     bool doit = ! vals[start].toBool();
-    // qDebug() << "cameraconstraint" << doit << vals[start].toInt();
+    // qCDebug(OGL) << "cameraconstraint" << doit << vals[start].toInt();
     if (doit) {
         mParent->cameraStop();
     }
@@ -72,7 +72,7 @@ DefaultFrameBuffer::DefaultFrameBuffer(GLWidget* p)
 
 const QVariant& DefaultFrameBuffer::execute(const QVector<QVariant>&, int) {
     GLuint fbo = mParent->defaultFramebufferObject();
-    // qDebug() << "defaultframebuffer" << fbo;
+    // qCDebug(OGL) << "defaultframebuffer" << fbo;
     mValue.setValue(fbo);
     return mValue;
 }
@@ -80,6 +80,27 @@ const QVariant& DefaultFrameBuffer::execute(const QVector<QVariant>&, int) {
 DefaultFrameBuffer* DefaultFrameBuffer::clone() const {
     return new DefaultFrameBuffer(*this);
 }
+
+
+#define ALT(item) case item: return QString(#item);
+
+static QString checkError() {
+    switch (glGetError()) {
+        ALT(GL_INVALID_ENUM);
+        ALT(GL_INVALID_VALUE);
+        ALT(GL_INVALID_OPERATION);
+        ALT(GL_STACK_UNDERFLOW);
+        ALT(GL_STACK_OVERFLOW);
+        ALT(GL_OUT_OF_MEMORY);
+        ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
+    default: ;
+    }
+    return QString();
+}
+
+#undef ALT
+
+#define CHECK_GL do {QString msg = checkError(); if (!msg.isEmpty()) {qCWarning(OGL) << msg;}} while (false)
 
 
 #define updateGL update
@@ -231,7 +252,7 @@ Demo::GLWidget::~GLWidget() {
 
 void Demo::GLWidget::initializeGL() {
     if (!mInitialized) {
-        qDebug() << "initializeOpenGLFunctions";
+        qCInfo(OGL) << "initializeOpenGLFunctions";
         if (!initializeOpenGLFunctions()) {
             qFatal("initializeOpenGLFunctions failed");
         }
@@ -254,7 +275,7 @@ void Demo::GLWidget::saveToDisk(bool on, const QString& basePath) {
 }
 
 void Demo::GLWidget::encodingFinished() {
-    qDebug() << "encoding finished";
+    qCDebug(OGL) << "encoding finished";
     mRecording = false;
     delete mDownloader;
     delete mEncoder;
@@ -270,12 +291,15 @@ void Demo::GLWidget::paintGL()
 void Demo::GLWidget::initChanged() {
     if (!mInitialized) return;
     makeCurrent();
+    CHECK_GL;
     defaults();
     emit init();
     updateGL();
 }
 
 void Demo::GLWidget::drawChanged() {
+    makeCurrent();
+    CHECK_GL;
     updateGL();
 }
 
@@ -287,7 +311,7 @@ void Demo::GLWidget::resizeGL(int w, int h) {
 }
 
 void Demo::GLWidget::realResize() {
-    // qDebug() << "resizing";
+    // qCDebug(OGL) << "resizing";
     int w = mWidthVar->value().toInt();
     int h = mHeightVar->value().toInt();
     glViewport(0, 0, w, h);
@@ -476,32 +500,38 @@ void Demo::GLWidget::keyPressEvent(QKeyEvent* ev) {
 GLuint Demo::GLWidget::resource(const QString &res, GLenum param) {
     if (res == "texture") {
         auto r = new Texture(this);
+        CHECK_GL;
         mResources[QString("texture_%1").arg(r->name)] = r;
         return r->name;
     }
     if (res == "shader") {
         auto r = new Shader(this, param);
         mResources[QString("shader_%1").arg(r->name)] = r;
+        CHECK_GL;
         return r->name;
     }
     if (res == "program") {
         auto r = new Program(this);
         mResources[QString("program_%1").arg(r->name)] = r;
+        CHECK_GL;
         return r->name;
     }
     if (res == "buffer") {
         auto r = new Buffer(this);
         mResources[QString("buffer_%1").arg(r->name)] = r;
+        CHECK_GL;
         return r->name;
     }
     if (res == "frame_buffer") {
         auto r = new FrameBuffer(this);
         mResources[QString("frame_buffer_%1").arg(r->name)] = r;
+        CHECK_GL;
         return r->name;
     }
     if (res == "vertex_array") {
         auto r = new VertexArray(this);
         mResources[QString("vertex_array_%1").arg(r->name)] = r;
+        CHECK_GL;
         return r->name;
     }
     return 0;
@@ -514,29 +544,12 @@ void Demo::GLWidget::deresource(const QString &res, GLuint name) {
         delete mResources[key];
         mResources.remove(key);
     }
+    CHECK_GL;
 }
 
-/*
-#define ALT(item) case item: qFatal(#item); break
-
-static void checkError() {
-    switch (glGetError()) {
-        ALT(GL_INVALID_ENUM);
-        ALT(GL_INVALID_VALUE);
-        ALT(GL_INVALID_OPERATION);
-        ALT(GL_STACK_UNDERFLOW);
-        ALT(GL_STACK_OVERFLOW);
-        ALT(GL_OUT_OF_MEMORY);
-        ALT(GL_INVALID_FRAMEBUFFER_OPERATION);
-    default: ;
-    }
-}
-
-#undef ALT
-*/
 
 void Demo::GLWidget::defaults() {
-    // qDebug() << "resetting to defaults";
+    // qCDebug(OGL) << "resetting to defaults";
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
@@ -573,6 +586,9 @@ void Demo::GLWidget::defaults() {
 
     qDeleteAll(mResources);
     mResources.clear();
+
+    CHECK_GL;
+
 }
 
 

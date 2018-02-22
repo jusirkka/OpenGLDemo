@@ -3,8 +3,8 @@
 
 #include <cmath>
 #include <QMetaType>
-#include <QDebug>
 #include <GL/gl.h>
+#include "logging.h"
 
 namespace Math3D {
 
@@ -602,7 +602,6 @@ inline Matrix4 projection3(const Vector4& v) {
 
 #ifdef OSTREAM_MATH3D
 #include <QDataStream>
-#include <QDebug>
 
 inline QDataStream& operator<< (QDataStream& os, const Math3D::Vector4& v) {
     for (int i=0; i<4; ++i) os << v[i];
