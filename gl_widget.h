@@ -43,6 +43,7 @@ public:
     void animStart();
     void animStop();
     void animReset(int);
+    bool animRunning() const;
     void cameraStop();
     void saveToDisk(bool on, const QString& basePath);
 

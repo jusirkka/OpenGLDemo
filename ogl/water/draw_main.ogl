@@ -1,0 +1,151 @@
+From "" import camera, projection, time
+From "init shaders" import sh, u_buffer
+From "init main" import tex
+
+activetexture texture0
+
+Var water: Natural
+
+If getinteger(texture_binding_2d) == tex[0].id
+  water = 0
+Elsif getinteger(texture_binding_2d) == tex[1].id
+  water = 1
+Else
+  water = 30
+Endif
+
+Var buffer: Natural = 1 - water
+
+
+Shared Var g: Record(pv: Matrix, lp, cmin, cmax, eye: Vector)
+
+Var m: Matrix = affine_inverse(camera)
+
+g.pv = projection * camera
+g.lp =  pos(10, 10, 40)
+// TODO: depends on box model transformation
+g.cmin = -.5 * pos(1, 1, 1)
+g.cmax = .5 * pos(1, 1, 1)
+g.eye = m[3]
+
+bindbufferbase uniform_buffer, 0, u_buffer
+buffersubdata uniform_buffer, 0, g
+
+Type MU = Record(m, n: Matrix, upd, drop: Vector, vp: Real)
+Type U = Record(name: Text, doit, docl, shader, ib, iw: Natural, u: MU)
+
+Shared Var updater: U
+Var updaters: Array of U
+
+Var upd: Vector = pos(1. / tex[water].w, .3 / tex[water].w, .2)
+
+updaters[0].name = "waterlevel"
+updaters[0].doit = paused() == false
+updaters[0].docl = false
+updaters[0].shader = sh[2].id
+updaters[0].iw = water
+updaters[0].ib = buffer
+updaters[0].u.m = scaling(.5, .5, 1) * translation(pos(0, 0, -1))
+updaters[0].u.upd = upd
+
+If updaters[0].doit
+  water = 1 - water
+  buffer = 1 - water
+Endif
+
+updaters[1] = updaters[0]
+updaters[1].doit = paused() == false
+updaters[1].iw = water
+updaters[1].ib = buffer
+
+If updaters[1].doit
+  water = 1 - water
+  buffer = 1 - water
+Endif
+
+updaters[2].name = "waterlevel"
+updaters[2].doit = (mod(time, 200) < 5 * random()) && (paused() == false)
+updaters[2].docl = false
+// updaters[1].doit = true
+updaters[2].iw = water
+updaters[2].ib = buffer
+updaters[2].shader = sh[3].id
+updaters[2].u.m = scaling(.5, .5, 1) * translation(pos(0, 0, -1))
+updaters[2].u.upd = upd
+updaters[2].u.drop = vec(random(), random(), \
+                         .01 * (1 + random() * 6), .01 * (1 + random() * 2)) 
+
+If updaters[2].doit
+  water = 1 - water
+  buffer = 1 - water
+Endif
+
+
+updaters[3].name = "waterlevel"
+updaters[3].doit = paused() == false
+updaters[3].docl = true
+updaters[3].shader = sh[4].id
+updaters[3].iw = water
+updaters[3].ib = 2
+updaters[3].u.m = scaling(.5, .5, 1) * translation(pos(0, 0, -1))
+
+Var i: Natural = 0
+disable cull_face
+While i < 4
+  updater = updaters[i]
+  Execute "update"
+  i = i + 1
+Endwhile
+enable cull_face
+
+
+Type M = Record(name: Text, shader, cface: Natural, u: MU)
+
+Shared Var model: M
+Var models: Array of M
+
+models[0].name = "box"
+models[0].shader = sh[0].id
+models[0].cface = front
+models[0].u.m = scaling(1, 1, 1)
+models[0].u.n = scaling(1, 1, 1)
+
+models[1].name = "waterlevel"
+models[1].shader = sh[1].id
+models[1].cface = front
+models[1].u.m = scaling(.5, .5, 1) * translation(pos(0, 0, -1))
+models[1].u.vp = 1
+
+models[2].name = "waterlevel"
+models[2].shader = sh[1].id
+models[2].cface = back
+models[2].u.m = scaling(.5, .5, 1) * translation(pos(0, 0, -1))
+models[2].u.n = scaling(1, 1, 1)
+models[2].u.vp = -1
+
+// clear color_buffer_bit | depth_buffer_bit
+
+From "init main" import tiles, caustics
+
+activetexture texture0
+bindtexture texture_2d, tex[water].id
+activetexture texture0 + 1
+bindtexture texture_2d, tiles
+activetexture texture0 + 2
+bindtexture texture_2d, caustics
+
+
+i = 0
+While i < 3
+ model = models[i]
+ Execute "draw model"
+ i = i + 1
+Endwhile
+  
+
+
+
+
+
+
+

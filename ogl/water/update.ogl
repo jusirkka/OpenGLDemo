@@ -1,0 +1,52 @@
+From "draw main" import updater
+From "init shaders" import u_model_offset, u_buffer
+From "init main" import tex, fbo
+From "" import width, height
+
+If updater.doit
+
+  // trace(Record("update", updater.shader, updater.iw, updater.ib))
+  activetexture texture0
+  bindtexture texture_2d, tex[updater.iw].id
+
+  viewport 0, 0, tex[updater.ib].w, tex[updater.ib].h
+
+  useprogram updater.shader
+  vertexattribextpointer 0, modelstore, updater.name + ":vertex"
+  vertexattribextpointer 1, modelstore, updater.name + ":normal"
+  vertexattribextpointer 2, modelstore, updater.name + ":tex"
+
+  bindbufferbase uniform_buffer, 0, u_buffer
+  buffersubdata uniform_buffer, u_model_offset, updater.u
+
+  bindframebuffer framebuffer, fbo
+  drawbuffer color_attachment0
+  framebuffertexture2d framebuffer, color_attachment0, texture_2d, \
+                       tex[updater.ib].id, 0
+  checkframebufferstatus framebuffer
+
+  If updater.docl
+    clear color_buffer_bit
+  Endif
+
+  draw modelstore, updater.name, triangles
+
+  bindframebuffer framebuffer, defaultframebuffer()
+  viewport 0, 0, width, height
+
+
+Endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+

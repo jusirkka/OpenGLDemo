@@ -1,0 +1,18 @@
+From "draw main" import model
+From "init shaders" import u_model_offset, u_buffer
+
+useprogram model.shader
+
+vertexattribextpointer 0, modelstore, model.name + ":vertex"
+vertexattribextpointer 1, modelstore, model.name + ":normal"
+vertexattribextpointer 2, modelstore, model.name + ":tex"
+
+bindbufferbase uniform_buffer, 0, u_buffer
+buffersubdata uniform_buffer, u_model_offset, model.u
+
+cullface model.cface
+
+draw modelstore, model.name, triangles
+
+
+

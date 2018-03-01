@@ -537,6 +537,24 @@ public:
 };
 
 
+class Trace: public Function {
+
+public:
+
+    Trace(): Function("trace", new Integer_T) {
+        mArgTypes.append(new NullType);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        qCDebug(OGL) << vals[start];
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(Trace)
+};
+
+
 class Functions {
 
 public:
@@ -564,6 +582,7 @@ public:
         contents.append(new Refl());
         contents.append(new Length());
         contents.append(new LookAt());
+        contents.append(new Trace());
         FUN(sin);
         FUN(cos);
         FUN(tan);

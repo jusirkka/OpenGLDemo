@@ -25,61 +25,73 @@ using namespace Demo;
 
 class CameraConstraint: public Function {
 public:
-    CameraConstraint(GLWidget* p);
-    const QVariant& execute(const QVector<QVariant>& vals, int start) override;
-    CameraConstraint* clone() const override;
+    CameraConstraint(GLWidget* p)
+        : Function("cameraconstraint", new Integer_T)
+        , mParent(p)
+    {
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        bool doit = ! vals[start].toBool();
+        // qCDebug(OGL) << "cameraconstraint" << doit << vals[start].toInt();
+        if (doit) {
+            mParent->cameraStop();
+        }
+        mValue.setValue(doit);
+        return mValue;
+    }
+
+    CameraConstraint* clone() const override {
+        return new CameraConstraint(*this);
+    }
+
 private:
+
     GLWidget* mParent;
 };
-
-
-CameraConstraint::CameraConstraint(GLWidget* p)
-    : Function("cameraconstraint", new Integer_T)
-    , mParent(p)
-{
-    mArgTypes.append(new Integer_T);
-}
-
-const QVariant& CameraConstraint::execute(const QVector<QVariant>& vals, int start) {
-    bool doit = ! vals[start].toBool();
-    // qCDebug(OGL) << "cameraconstraint" << doit << vals[start].toInt();
-    if (doit) {
-        mParent->cameraStop();
-    }
-    mValue.setValue(doit);
-    return mValue;
-}
-
-CameraConstraint* CameraConstraint::clone() const {
-    return new CameraConstraint(*this);
-}
 
 class DefaultFrameBuffer: public Function {
 public:
-    DefaultFrameBuffer(GLWidget* p);
-    const QVariant& execute(const QVector<QVariant>& vals, int start) override;
-    DefaultFrameBuffer* clone() const override;
+    DefaultFrameBuffer(GLWidget* p)
+        : Function("defaultframebuffer", new Integer_T)
+        , mParent(p) {}
+
+    const QVariant& execute(const QVector<QVariant>&, int) override {
+        GLuint fbo = mParent->defaultFramebufferObject();
+        // qCDebug(OGL) << "defaultframebuffer" << fbo;
+        mValue.setValue(fbo);
+        return mValue;
+    }
+
+    DefaultFrameBuffer* clone() const override {
+        return new DefaultFrameBuffer(*this);
+    }
+
 private:
     GLWidget* mParent;
 };
 
+class Paused: public Function {
+public:
+    Paused(GLWidget* p)
+        : Function("paused", new Integer_T)
+        , mParent(p) {}
 
-DefaultFrameBuffer::DefaultFrameBuffer(GLWidget* p)
-    : Function("defaultframebuffer", new Integer_T)
-    , mParent(p)
-{
-}
+    const QVariant& execute(const QVector<QVariant>&, int) override {
+        int v = mParent->animRunning() ? 0 : 1;
+        // qCDebug(OGL) << "paused" << v;
+        mValue.setValue(v);
+        return mValue;
+    }
 
-const QVariant& DefaultFrameBuffer::execute(const QVector<QVariant>&, int) {
-    GLuint fbo = mParent->defaultFramebufferObject();
-    // qCDebug(OGL) << "defaultframebuffer" << fbo;
-    mValue.setValue(fbo);
-    return mValue;
-}
+    Paused* clone() const override {
+        return new Paused(*this);
+    }
 
-DefaultFrameBuffer* DefaultFrameBuffer::clone() const {
-    return new DefaultFrameBuffer(*this);
-}
+private:
+    GLWidget* mParent;
+};
 
 
 #define ALT(item) case item: return QString(#item);
@@ -144,6 +156,8 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
     Function* func = new CameraConstraint(this);
     globals[func->name()] = func;
     func = new DefaultFrameBuffer(this);
+    globals[func->name()] = func;
+    func = new Paused(this);
     globals[func->name()] = func;
 
 
@@ -315,7 +329,7 @@ void Demo::GLWidget::realResize() {
     int w = mWidthVar->value().toInt();
     int h = mHeightVar->value().toInt();
     glViewport(0, 0, w, h);
-
+    CHECK_GL;
     Real a = Real(w) / Real(h);
     Real ct = 1 / tan(Math3D::PI / 180 * 45 / 2);
     Real d = (mNear + mFar) / (mNear - mFar);
@@ -475,6 +489,10 @@ void Demo::GLWidget::animStop() {
 
 void Demo::GLWidget::animReset(int fps) {
     mAnimTimer->setInterval(1000/fps);
+}
+
+bool Demo::GLWidget::animRunning() const {
+    return mAnimTimer->isActive();
 }
 
 void Demo::GLWidget::anim() {

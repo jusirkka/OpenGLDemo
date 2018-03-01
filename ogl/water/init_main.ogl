@@ -1,0 +1,116 @@
+Shared Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+Execute "init shaders"
+
+// Model buffers
+
+Shared Var model_array: Natural = genbuffer()
+bindbuffer array_buffer, model_array
+bufferextdata array_buffer, modelstore, static_draw
+
+Shared Var model_elements: Natural = genbuffer()
+bindbuffer element_array_buffer, model_elements
+bufferextdata element_array_buffer, modelstore, static_draw
+
+enablevertexattribarray 0
+enablevertexattribarray 1
+enablevertexattribarray 2
+
+activetexture texture0 + 1
+Shared Var tiles: Natural = ktx("tiles")
+// Shared Var tiles: Natural = gentexture()
+bindtexture texture_2d, tiles
+// texextimage2d texture_2d, 0, rgba, imagestore, "tiling"
+texparameter texture_2d, texture_min_filter, linear
+texparameter texture_2d, texture_mag_filter, linear
+texparameter texture_2d, texture_wrap_s, clamp_to_edge
+texparameter texture_2d, texture_wrap_t, clamp_to_edge
+
+bindtexture texture_2d, 0
+
+
+Shared Var fbo: Natural = genframebuffer()
+bindframebuffer framebuffer, fbo
+drawbuffer color_attachment0
+
+
+activetexture texture0
+
+
+Shared Var tex: Array of Record(id, w, h: Natural)
+Var i: Natural = 0
+
+Var data: Array of Real
+data[256*256*4 - 1] = 0
+
+i = 0
+While i < 2
+  tex[i].id = gentexture()
+  tex[i].w = 256
+  tex[i].h = 256
+  bindtexture texture_2d, tex[i].id
+  teximage2d texture_2d, 0, rgba32f, tex[i].w, tex[i].h, rgba, float, data
+  // texemptyimage2d texture_2d, 0, rgba, tex[i].w, tex[i].h, rgba, float
+  texparameter texture_2d, texture_min_filter, linear
+  texparameter texture_2d, texture_mag_filter, linear
+  texparameter texture_2d, texture_wrap_s, clamp_to_edge
+  texparameter texture_2d, texture_wrap_t, clamp_to_edge
+  i = i + 1
+Endwhile
+
+activetexture texture0 + 2
+// caustics texture
+tex[2].id = gentexture()
+tex[2].w = 1024
+tex[2].h = 1024
+bindtexture texture_2d, tex[2].id
+texemptyimage2d texture_2d, 0, rgba, tex[2].w, tex[2].h, rgba, float
+texparameter texture_2d, texture_min_filter, linear
+texparameter texture_2d, texture_mag_filter, linear
+texparameter texture_2d, texture_wrap_s, clamp_to_edge
+texparameter texture_2d, texture_wrap_t, clamp_to_edge
+
+Shared Var caustics: Natural = tex[2].id
+
+bindtexture texture_2d, tex[0].id
+
+
+clearcolor vec(.1,.2,.2,1)
+enable cull_face
+enable depth_test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

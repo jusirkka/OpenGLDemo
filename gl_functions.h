@@ -552,6 +552,26 @@ public:
     COPY_AND_CLONE(GetUniformLocation)
 };
 
+class GetInteger: public GLProc {
+
+public:
+
+    GetInteger(Demo::GLWidget* p): GLProc("getinteger", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum pname = vals[start].value<int>();
+        GLint v;
+        mParent->glGetIntegerv(pname, &v);
+        // qCDebug(OGL) << "get integer" << pname << v;
+        mValue.setValue(v);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(GetInteger)
+};
+
 
 class Uniform1F: public GLProc {
 
@@ -616,6 +636,26 @@ public:
     COPY_AND_CLONE(Uniform4F)
 };
 
+class Uniform3F: public GLProc {
+
+public:
+
+    Uniform3F(Demo::GLWidget* p): GLProc("uniform3f", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Vector_T);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        int loc = vals[start].value<int>();
+        Vector4 uni = vals[start+1].value<Vector4>();
+        // qCDebug(OGL) << "glUniform4f" << loc << uni[X] << uni[Y] << uni[Z] << uni[W];
+        mParent->glUniform3f(loc, uni[X], uni[Y], uni[Z]);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(Uniform3F)
+};
 
 class UniformMatrix4F: public GLProc {
 
@@ -1630,7 +1670,7 @@ public:
         GLuint textarget = vals[start + 2].value<int>();
         GLuint texture = vals[start + 3].value<int>();
         GLint level = vals[start + 4].value<int>();
-        // qCDebug(OGL) << "glFramebufferTexture2D" << target << name << param;
+        // qCDebug(OGL) << "glFramebufferTexture2D" << GL_COLOR_ATTACHMENT0 << attachment << texture << level;
         mParent->glFramebufferTexture2D(target, attachment, textarget, texture, level);
         mValue.setValue(0);
         return mValue;
@@ -1790,9 +1830,11 @@ public:
         contents.append(new DeleteProgram(p));
         contents.append(new GetAttribLocation(p));
         contents.append(new GetUniformLocation(p));
+        contents.append(new GetInteger(p));
         contents.append(new Uniform1F(p));
         contents.append(new Uniform1I(p));
         contents.append(new Uniform4F(p));
+        contents.append(new Uniform3F(p));
         contents.append(new UniformMatrix4F(p));
         contents.append(new GenBuffer(p));
         contents.append(new DeleteBuffer(p));
@@ -2054,6 +2096,9 @@ public:
         CONST(RGBA16UI);
         CONST(RGBA32I);
         CONST(RGBA32UI);
+        // Get integer parameter names
+        CONST(TEXTURE_BINDING_2D);
+        // TODO: rest of the pnames
     }
 
 

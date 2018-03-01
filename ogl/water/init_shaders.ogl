@@ -1,0 +1,178 @@
+Var progs: Array of Record(fs, vs, hs, prog: Natural, name, f_src, v_src: Text)
+
+Var hs: Natural = createshader(fragment_shader)
+compileshader hs, source("helpers")
+
+progs[0].name = "walls"
+progs[0].v_src = "#version 450 core
+layout (location = 0) in vec4 vertex;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texcoord;
+
+out VS_OUT {
+  vec3 pos;
+  vec3 normal;
+  smooth vec2 texcoord;
+} vs_out;
+
+layout (std140) uniform UForms {
+  mat4 pv;
+  vec3 lightPos;
+  vec3 cmin;
+  vec3 cmax;
+  vec3 eye;
+  mat4 model;
+  mat3 normal_t;
+  vec4 p1;
+  vec4 updParams;
+  vec4 drop;
+  float viewPoint;
+} u;
+
+void main() {
+  vs_out.pos = (u.model * vertex).xyz;
+  vs_out.normal = u.normal_t * normal;
+  // TODO: tex transformations
+  vs_out.texcoord = texcoord;
+  gl_Position = u.pv * u.model * vertex;
+}
+"
+
+progs[0].f_src = source("walls frag")
+progs[0].hs = hs
+
+progs[1].name = "water"
+progs[1].v_src = "#version 450 core
+layout (location = 0) in vec4 vertex;
+layout (location = 2) in vec2 tex;
+
+out VS_OUT {
+  vec3 pos;
+  smooth vec2 surfcoord;
+} vs_out;
+
+
+layout (std140) uniform UForms {
+  mat4 pv;
+  vec3 lightPos;
+  vec3 cmin;
+  vec3 cmax;
+  vec3 eye;
+  mat4 model;
+  mat3 normal_t;
+  vec4 p1;
+  vec4 updParams;
+  vec4 drop;
+  float viewPoint;
+} u;
+
+layout (binding = 0) uniform sampler2D water;
+
+void main() {
+  vs_out.surfcoord = tex;
+  vec4 params = texture(water, tex);
+  vs_out.pos = (u.model * vertex).xyz;
+  vs_out.pos.z += params.x;
+  gl_Position = u.pv * vec4(vs_out.pos, 1);
+}
+"
+
+progs[1].f_src = source("water frag")
+progs[1].hs = hs
+
+progs[2].name = "updater"
+progs[2].v_src = "#version 450 core
+
+layout (location = 0) in vec4 vertex;
+layout (location = 2) in vec2 tex;
+
+layout (std140) uniform UForms {
+  mat4 pv;
+  vec3 lightPos;
+  vec3 cmin;
+  vec3 cmax;
+  vec3 eye;
+  mat4 model;
+  mat3 normal_t;
+  vec4 p1;
+  vec4 updParams;
+  vec4 drop;
+  float viewPoint;
+} u;
+
+smooth out vec2 surfcoord;
+
+void main() {
+  surfcoord = tex;
+  gl_Position = vertex;
+}
+"
+
+progs[2].f_src = source("updater frag")
+progs[2].hs = 0
+
+
+progs[3].name = "init"
+progs[3].v_src = progs[2].v_src
+progs[3].f_src = source("init frag")
+progs[3].hs = 0
+
+progs[4].name = "caustics"
+progs[4].v_src = source("caustics vert")
+progs[4].f_src = source("caustics frag")
+progs[4].hs = hs
+
+Shared Var num_progs: Natural = 5
+Var i: Natural = 0
+While i < num_progs
+  progs[i].vs = createshader(vertex_shader)
+  compileshader progs[i].vs, progs[i].v_src
+  progs[i].fs = createshader(fragment_shader)
+  compileshader progs[i].fs, progs[i].f_src
+  progs[i].prog = createprogram()
+  attachshader progs[i].prog, progs[i].vs
+  attachshader progs[i].prog, progs[i].fs
+  If progs[i].hs != 0
+    attachshader progs[i].prog, progs[i].hs
+  Endif
+  linkprogram progs[i].prog
+  If progs[i].hs != 0
+    detachshader progs[i].prog, progs[i].hs
+  Endif
+  detachshader progs[i].prog, progs[i].vs
+  detachshader progs[i].prog, progs[i].fs
+  deleteshader progs[i].vs
+  deleteshader progs[i].fs
+  i = i + 1
+Endwhile
+
+deleteshader hs
+
+Shared Var sh: Array of Record(id: Natural, name: Text)
+
+i = 0
+While i < num_progs
+  sh[i].name = progs[i].name
+  sh[i].id = progs[i].prog
+  i = i + 1
+Endwhile
+
+
+// uniform block
+Shared Var u_buffer: Natural = genbuffer()
+bindbufferbase uniform_buffer, 0, u_buffer
+Shared Var u_model_offset: Natural = 32
+Shared Var u_model_size: Natural = 41
+Var data: Array of Vector
+data[u_model_offset + u_model_size - 1] = pos(0, 0, 0)
+
+bufferdata uniform_buffer, data, dynamic_draw
+
+
+
+
+
+
+
+
+
