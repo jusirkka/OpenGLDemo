@@ -43,10 +43,8 @@ vec4 wallColor(const in vec4 base, const in vec3 p, const in vec3 n,
       float diffuse = max(0.0, dot(-refractedLight, n));
       if (diffuse > 0) {
           // caustics: k
-          vec2 k = p.xy - p.z * refractedLight.xy / refractedLight.z;
-          vec4 caustic = texture2D(caustics, (.33 * k + 1) / 2);
-          // vec4 caustic = texture2D(caustics, toTex(ETA_A2W * k, c));
-          // vec4 caustic = texture2D(caustics, toTex(p.xy, c));
+          vec2 k = .5 * (p.xy - p.z * refractedLight.xy / refractedLight.z);
+          vec4 caustic = texture2D(caustics, toTex(k, c));
           // r: rim shadow, g: caustics
           diffuse *= caustic.r * caustic.g;
           scale += 2 * diffuse;
@@ -58,7 +56,7 @@ vec4 wallColor(const in vec4 base, const in vec3 p, const in vec3 n,
           // zero for rays that first intersect the box at z = cmax.z
           float p0 = (p.z + incidentLight.z * t.x) - c.cmax.z;
           diffuse *= 1 / (1 + exp(-200 / (1 + 10 * (t.y - t.x)) * p0));
-          scale += 2 * diffuse;
+          scale += 3 * diffuse;
       }
     }
 

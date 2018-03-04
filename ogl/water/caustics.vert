@@ -57,6 +57,10 @@ vec3 project(const in vec3 p, const in vec3 ray1, const in vec3 ray2, float h) {
   return w + tb * ray2;
 }
 
+vec2 toPos(const in vec2 p) {
+  return 2 * (p - u.cmin.xy) / (u.cmax.xy - u.cmin.xy) - 1;
+}
+
 
 void main() {
   vec4 params = texture(water, tex);
@@ -74,8 +78,8 @@ void main() {
 
   float wl = - u.cmin.z / refr_calm.z;
   // pos is mapped to c, not necessarily inside the source square.
-  // Assume that target square is abs(c.xy) < 3
-  vec2 c = vs_out.npos.xy + wl * refr_calm.xy / refr_calm.z;
+  // Assume that target square is abs(c.xy) < 2
+  vec2 c = toPos(.5 * (vs_out.npos.xy + wl * refr_calm.xy));
   // device independent coords
-  gl_Position = vec4(0.333 * c.xy, 0, 1);
+  gl_Position = vec4(c, 0, 1);
 }

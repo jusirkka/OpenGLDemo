@@ -22,7 +22,7 @@ Shared Var g: Record(pv: Matrix, lp, cmin, cmax, eye: Vector)
 Var m: Matrix = affine_inverse(camera)
 
 g.pv = projection * camera
-g.lp =  pos(10, 10, 40)
+g.lp =  pos(100, 100, 400)
 // TODO: depends on box model transformation
 g.cmin = -.5 * pos(1, 1, 1)
 g.cmax = .5 * pos(1, 1, 1)
@@ -142,6 +142,8 @@ While i < 3
  i = i + 1
 Endwhile
   
+
+
 
 
 
