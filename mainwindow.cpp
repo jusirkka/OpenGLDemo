@@ -41,6 +41,8 @@
 #include <QImageReader>
 #include <QTimer>
 
+#define  GLSL_PATT "*.vert *.tesc *.tese *.geom *.frag *.comp *.glsl"
+
 using namespace Demo;
 
 MainWindow::MainWindow(const QString& project)
@@ -232,7 +234,7 @@ void Demo::MainWindow::on_actionOpen_triggered() {
         filter += ")";
     } else if (item.parent() == mProject->itemParent(Project::ShaderItems)) {
         title = "Open a shader source file to create a shader";
-        filter = "GLSL files ( *.glsl *.vert *.frag)";
+        filter = "GLSL files (" GLSL_PATT ")";
     } else if (item.parent() == mProject->itemParent(Project::TextureItems)) {
         title = "Open a KTX file to create a texture";
         filter = "KTX files ( *.ktx)";

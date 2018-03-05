@@ -1,0 +1,33 @@
+Shared Var vao: Natural = genvertexarray()
+bindvertexarray vao
+
+Execute "init shaders"
+
+activetexture texture0
+Shared Var tiles: Natural = ktx("tiles")
+bindtexture texture_2d, tiles
+texparameter texture_2d, texture_min_filter, linear
+texparameter texture_2d, texture_mag_filter, linear
+texparameter texture_2d, texture_wrap_s, repeat
+texparameter texture_2d, texture_wrap_t, repeat
+
+generatemipmap texture_2d
+
+clearcolor vec(.1,.2,.3,1)
+enable cull_face
+enable depth_test
+cullface front
+
+Shared Var b_buffer: Natural = genbuffer()
+bindbuffer array_buffer, b_buffer
+Var data: Array of Vector
+data[6] = pos(0, 0, 0)
+bufferdata array_buffer, data, dynamic_draw
+
+enablevertexattribarray 0
+vertexattribpointer 0, 4, float, false, 0, 0
+
+
+
+
+

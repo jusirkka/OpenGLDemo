@@ -2,14 +2,14 @@ From "get locations" import  u_v_light, u_m_light_colors
 
 From "" import projection, camera
 
-Var pos: Vector
+Var lp: Vector
 Var colors, model: Matrix
 
-pos = vec(25, 25, 25, 0)
+lp = vec(25, 25, 25, 0)
 colors = matcol(vec(.1, .1, .1, 0), vec(1, 1, 1, 0), vec(1, 1, 1, 0), vec(0, 0, 0, 1))
-model = translation(pos)
+model = translation(lp)
 
-uniform4f u_v_light, camera*pos
+uniform4f u_v_light, camera*lp
 uniformmatrix4f u_m_light_colors, colors
 
 From "init models" import model_array, model_elements
@@ -44,5 +44,6 @@ draw modelstore, "dodeca", triangles
 disablevertexattribarray a_vertex
 enablevertexattribarray a_normal
 enablevertexattribarray a_tex
+
 
 

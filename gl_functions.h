@@ -1198,6 +1198,26 @@ public:
 };
 
 
+class PatchParameter: public GLProc {
+
+public:
+
+    PatchParameter(Demo::GLWidget* p): GLProc("patchparameter", new Integer_T, p) {
+        mArgTypes.append(new Integer_T);
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& gl_execute(const QVector<QVariant>& vals, int start) override {
+        GLenum pname = vals[start].value<int>();
+        GLint value = vals[start + 1].value<int>();
+        mParent->glPatchParameteri(pname, value);
+        mValue.setValue(0);
+        return mValue;
+    }
+
+    COPY_AND_CLONE(PatchParameter)
+};
+
 class TexExtImage2D: public GLProc {
 
 public:
@@ -1857,6 +1877,7 @@ public:
         contents.append(new GenTexture(p));
         contents.append(new DeleteTexture(p));
         contents.append(new TexParameter(p));
+        contents.append(new PatchParameter(p));
         contents.append(new TexImage2D(p));
         contents.append(new TexEmptyImage2D(p));
         contents.append(new TexExtImage2D(p));
@@ -1918,6 +1939,8 @@ public:
         CONST(VERTEX_SHADER);
         CONST(FRAGMENT_SHADER);
         CONST(GEOMETRY_SHADER);
+        CONST(TESS_CONTROL_SHADER);
+        CONST(TESS_EVALUATION_SHADER);
         // bindbuffer
         CONST(ARRAY_BUFFER);
         CONST(ELEMENT_ARRAY_BUFFER);
@@ -1934,6 +1957,7 @@ public:
         CONST(LINE_LOOP);
         CONST(TRIANGLE_STRIP);
         CONST(TRIANGLE_FAN);
+        CONST(PATCHES);
         // active texture
         CONST(TEXTURE0);
         // texture targets
@@ -2099,6 +2123,8 @@ public:
         // Get integer parameter names
         CONST(TEXTURE_BINDING_2D);
         // TODO: rest of the pnames
+        // patch parameter
+        CONST(PATCH_VERTICES);
     }
 
 

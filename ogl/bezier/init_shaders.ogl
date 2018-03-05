@@ -1,0 +1,60 @@
+Var s: Array of Record(s, t: Natural, src: Text)
+
+s[0].t = vertex_shader
+
+s[0].src ="#version 450 core
+
+layout (location=0) in vec4 pos;
+
+void main() {
+  gl_Position = pos;
+}"
+
+s[1].t = tess_control_shader
+
+s[1].src = "#version 450 core
+
+layout (vertices = 4) out;
+
+void main() {
+  gl_TessLevelOuter[0] = 1;
+  gl_TessLevelOuter[1] = 32;
+  gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+}"
+
+s[2].t = tess_evaluation_shader
+s[2].src = source("bezier tes")
+s[3].t = geometry_shader
+s[3].src = source("bezier geom")
+s[4].t = fragment_shader
+s[4].src = source("bezier frag")
+
+Shared Var prog: Natural = createprogram()
+
+Var i: Natural = 0
+While i < 5
+  s[i].s = createshader(s[i].t)
+  compileshader s[i].s, s[i].src
+  attachshader prog, s[i].s
+  i = i + 1
+Endwhile
+
+linkprogram prog
+
+i = 0
+While i < 5
+  detachshader prog, s[i].s
+  deleteshader s[i].s
+  i = i + 1
+Endwhile
+
+useprogram prog
+
+Shared Var u: Record(p, v, lp: Natural)
+
+u.p = getuniformlocation(prog, "m_p")
+u.v = getuniformlocation(prog, "m_v")
+u.lp = getuniformlocation(prog, "lp")
+
+
+

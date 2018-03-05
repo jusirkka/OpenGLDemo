@@ -1,0 +1,40 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "" import camera, projection, time
+From "init shaders" import u
+From "init main" import b_buffer
+
+Var cp: Array of Vector
+
+// cp[0] = pos(-4, -3, -1)
+// cp[1] = pos(-2 * sin(.14*time), 3 * cos(.11 * time), 8*sin(.2*time))
+// cp[2] = pos(3, 2, -8)
+// cp[3] = pos(4, -1, 1)
+
+cp[0] = pos(0, 0, 0)
+cp[1] = pos(5, 0, 0)
+cp[2] = pos(5, -3, 2)
+cp[3] = pos(4, -3, 2)
+cp[4] = pos(1, -3, 2)
+cp[5] = pos(1, 3, 2)
+cp[6] = pos(5, 3, 2)
+
+
+bindbuffer array_buffer, b_buffer
+buffersubdata array_buffer, 0, cp
+
+uniform4f u.lp, pos(10, 10, 40)
+uniformmatrix4f u.p, projection
+uniformmatrix4f u.v, camera
+
+// drawarrays points, 0, 4
+
+patchparameter patch_vertices, 4
+
+drawarrays patches, 0, 4
+drawarrays patches, 3, 4
+
+
+
+
+
