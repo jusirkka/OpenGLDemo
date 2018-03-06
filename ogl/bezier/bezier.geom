@@ -17,7 +17,7 @@ out GS_OUT {
 
 
 const int NUM_V = 20;
-const float R = .5;
+const float R = .2;
 
 uniform mat4 m_p;
 uniform mat4 m_v;

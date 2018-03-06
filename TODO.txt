@@ -1,5 +1,4 @@
 - check & implement demos from web
-- knot drawing utility
 - plugin description/config
 - autosave scripts
 - function defs in gl_lang

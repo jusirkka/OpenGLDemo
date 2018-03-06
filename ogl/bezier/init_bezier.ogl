@@ -21,11 +21,14 @@ cullface front
 Shared Var b_buffer: Natural = genbuffer()
 bindbuffer array_buffer, b_buffer
 Var data: Array of Vector
-data[6] = pos(0, 0, 0)
+data[3 * 120] = pos(0, 0, 0)
+
 bufferdata array_buffer, data, dynamic_draw
 
 enablevertexattribarray 0
 vertexattribpointer 0, 4, float, false, 0, 0
+
+
 
 
 
