@@ -6,6 +6,8 @@
 #include "logging.h"
 #include "math3d.h"
 #include "gl_lang_compiler.h"
+#include "datasource.h"
+
 
 class QMouseEvent;
 
@@ -53,6 +55,11 @@ public:
     void deresource(const QString& res, GLuint name);
 
     bool initialized() const {return mInitialized;}
+
+    using DataVector = DataSource::DataVector;
+
+    int registerDataSource(const QString& device);
+    const DataVector& readData(int device);
 
     ~GLWidget() override;
 
@@ -201,6 +208,25 @@ private:
     using ResourceMap = QMap<QString, Resource*>;
 
 
+    class DataCache {
+    public:
+        DataCache(int id, QString device, int mx)
+            : source(new DataSource(id, device, mx))
+            , data()
+            , currFrame(0) {}
+        DataCache()
+            : source(nullptr)
+            , data()
+            , currFrame() {}
+
+        DataSource* source;
+        DataVector data;
+        int currFrame;
+    };
+
+    using CacheMap = QMap<int, DataCache>;
+
+
 signals:
 
     void init();
@@ -224,6 +250,7 @@ private slots:
     void anim();
     void realResize();
     void encodingFinished();
+    void dataSourceClosed();
 
 private:
 
@@ -252,6 +279,9 @@ private:
     VideoEncoder* mEncoder;
     GL::Downloader* mDownloader;
     bool mRecording;
+    CacheMap mDataCache;
+    int mMaxFrames;
+
 
 };
 

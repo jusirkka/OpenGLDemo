@@ -6,7 +6,7 @@
 
 CONFIG += c++14
 
-QT += core gui opengl widgets
+QT += core gui opengl widgets network
 
 TARGET = OpenGLDemo
 TEMPLATE = app
@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     projectfolder.cpp \
     texturestore.cpp \
     downloader.cpp \
-    videoencoder.cpp
+    videoencoder.cpp \
+    datasource.cpp
 
 HEADERS  += mainwindow.h \
     math3d.h \
@@ -77,7 +78,8 @@ HEADERS  += mainwindow.h \
     texturestore.h \
     downloader.h \
     videoencoder.h \
-    logging.h
+    logging.h \
+    datasource.h
 
 FORMS    += mainwindow.ui \
     newdialog.ui \

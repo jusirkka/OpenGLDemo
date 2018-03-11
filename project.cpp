@@ -57,7 +57,9 @@ using Demo::CodeEditor;
 using Demo::TextFileStore;
 using Demo::TextureStore;
 
-Demo::Project::~Project() {}
+Demo::Project::~Project() {
+    disconnect();
+}
 
 
 Demo::Project::Project(const QDir& pdir, GLWidget* target, const Scope* globals, bool autoCompileOn)

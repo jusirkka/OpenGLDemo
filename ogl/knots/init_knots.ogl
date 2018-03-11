@@ -28,6 +28,8 @@ bufferdata array_buffer, data, dynamic_draw
 enablevertexattribarray 0
 vertexattribpointer 0, 4, float, false, 0, 0
 
+Shared Var cps: Natural = registerdatasource("controlpoints")
+
 
 
 

@@ -554,6 +554,25 @@ public:
     COPY_AND_CLONE(Trace)
 };
 
+class Size: public Function {
+
+public:
+
+    Size(): Function("size", new Integer_T) {
+        mArgTypes.append(new NullType);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& vals, int start) override {
+        QVariant v = vals[start];
+        if (v.userType() != QMetaType::QVariantList) {
+            throw RunError("Only Records and Arrays accepted", 0);
+        }
+        mValue.setValue(v.toList().size());
+        return mValue;
+    }
+
+    COPY_AND_CLONE(Size)
+};
 
 class Functions {
 
@@ -583,6 +602,7 @@ public:
         contents.append(new Length());
         contents.append(new LookAt());
         contents.append(new Trace());
+        contents.append(new Size());
         FUN(sin);
         FUN(cos);
         FUN(tan);

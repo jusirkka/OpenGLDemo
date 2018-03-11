@@ -1,0 +1,28 @@
+clear color_buffer_bit | depth_buffer_bit
+
+From "" import camera, projection, time
+From "init shaders" import u
+From "init main" import b_buffer, cps
+
+Var cp: Array of Real = readfromsource(cps)
+
+bindbuffer array_buffer, b_buffer
+buffersubdata array_buffer, 0, cp
+
+uniform4f u.lp, pos(10, 10, 40)
+uniformmatrix4f u.p, projection
+uniformmatrix4f u.v, camera
+
+patchparameter patch_vertices, 4
+
+Var i: Natural = 0
+Var imax: Natural = size(cp) / 4
+While i < imax
+  drawarrays patches, 3 * i, 4
+  i = i + 1
+Endwhile
+
+
+
+
+

@@ -125,19 +125,42 @@ def solve(points):
         points[i].p2 = add(add(mul(points[i].p0, 4), points[i-1].p1), mul(points[i-1].p2, -4))
 
 
-    for k, p in enumerate(points):
-        v = [p.p0, p.p1, p.p2]
-        for i in range(0, 3):
-            s = 'cp[{}] = pos({}, {}, {})'.format(3 * k + i, v[i].x , v[i].y, v[i].z)
-            print(s)
-    v = points[-1].p3
-    s = 'cp[{}] = pos({}, {}, {})'.format(3 * len(points), v.x , v.y, v.z)
-    print(s)
+    return points
 
 
-from sys import stdin
+from sys import stdin, argv
+from struct import pack
+
 if __name__ == '__main__':
     tokens = ''
     for line in stdin:
         tokens += line.strip()
-    solve(parse(tokens))
+    patches = solve(parse(tokens))
+    if argv[1] == '-f':
+        fmt = argv[2]
+        for k, p in enumerate(patches):
+            v = [p.p0, p.p1, p.p2]
+            for i in range(0, 3):
+                s = fmt.format(3 * k + i, v[i].x , v[i].y, v[i].z)
+                print(s)
+        v = patches[-1].p3
+        s = fmt.format(3 * len(patches), v.x , v.y, v.z)
+        print(s)
+    elif argv[1] == '-o':
+        f = open(argv[2], 'wb')
+        f.write(pack('>i', 4 * (3 * len(patches) + 1)))
+        for p in patches:
+            v = [p.p0, p.p1, p.p2]
+            for i in range(0, 3):
+                f.write(pack('>d', v[i].x))
+                f.write(pack('>d', v[i].y))
+                f.write(pack('>d', v[i].z))
+                f.write(pack('>d', 1.0))
+        v = patches[-1].p3
+        f.write(pack('>d', v.x))
+        f.write(pack('>d', v.y))
+        f.write(pack('>d', v.z))
+        f.write(pack('>d', 1.0))
+        f.close()
+
+

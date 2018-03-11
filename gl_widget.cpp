@@ -93,6 +93,53 @@ private:
     GLWidget* mParent;
 };
 
+class RegisterSource: public Function {
+public:
+    RegisterSource(GLWidget* p)
+        : Function("registerdatasource", new Integer_T)
+        , mParent(p) {
+        mArgTypes.append(new Text_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& values, int start) override {
+        QString device = values[start].toString();
+        mValue.setValue(mParent->registerDataSource(device));
+        return mValue;
+    }
+
+    RegisterSource* clone() const override {
+        return new RegisterSource(*this);
+    }
+
+private:
+    GLWidget* mParent;
+};
+
+class ReadFromSource: public Function {
+public:
+    ReadFromSource(GLWidget* p)
+        : Function("readfromsource", new ArrayType(new Real_T))
+        , mParent(p) {
+        mArgTypes.append(new Integer_T);
+    }
+
+    const QVariant& execute(const QVector<QVariant>& values, int start) override {
+        int device = values[start].toInt();
+        auto data = mParent->readData(device);
+        QVariantList list;
+        for (auto v: data) list.append(QVariant::fromValue(v));
+        mValue.setValue(list);
+        return mValue;
+    }
+
+    ReadFromSource* clone() const override {
+        return new ReadFromSource(*this);
+    }
+
+private:
+    GLWidget* mParent;
+};
+
 
 #define ALT(item) case item: return QString(#item);
 
@@ -123,12 +170,13 @@ GLWidget::GLWidget(QWidget *parent)
     , mInitialized(false)
     , mDim(500)
     , mMover(new Mover(this))
-    , mNear(1)
+    , mNear(.1)
     , mFar(500)
     , mLastOp(None)
     , mEncoder(nullptr)
     , mDownloader(nullptr)
     , mRecording(false)
+    , mMaxFrames(25*60)
 {
 
     mTime = 0;
@@ -158,6 +206,10 @@ void GLWidget::addGLSymbols(SymbolMap& globals, VariableMap& exports) {
     func = new DefaultFrameBuffer(this);
     globals[func->name()] = func;
     func = new Paused(this);
+    globals[func->name()] = func;
+    func = new RegisterSource(this);
+    globals[func->name()] = func;
+    func = new ReadFromSource(this);
     globals[func->name()] = func;
 
 
@@ -261,6 +313,11 @@ GL::TexBlob* Demo::GLWidget::texBlob(const SymbolMap& globals, const QString& na
 
 Demo::GLWidget::~GLWidget() {
     delete mCamera;
+    for (DataCache& c: mDataCache.values()) {
+        c.source->stop();
+        c.source->wait(1000);
+        delete c.source;
+    }
 }
 
 
@@ -294,6 +351,50 @@ void Demo::GLWidget::encodingFinished() {
     delete mDownloader;
     delete mEncoder;
 }
+
+
+int Demo::GLWidget::registerDataSource(const QString& device) {
+    int id = 0;
+    while (mDataCache.contains(id)) id++;
+    mDataCache[id] = DataCache(id, device, mMaxFrames);
+    connect(mDataCache[id].source, SIGNAL(finished()), this, SLOT(dataSourceClosed()));
+    mDataCache[id].source->start();
+    return id;
+}
+
+const Demo::GLWidget::DataVector& Demo::GLWidget::readData(int device) {
+    if (!mDataCache.contains(device)) {
+        throw RunError(QString("%1: no such cache id").arg(device), 0);
+    }
+    auto src = mDataCache[device].source;
+
+    if (!src->hasFilledFrames()) {
+        if (mDataCache[device].data.isEmpty()) {
+            throw RunError(QString("%1: no data").arg(device), 0);
+        }
+        return mDataCache[device].data;
+    }
+
+    src->acquireFilledFrame();
+    int slot = mDataCache[device].currFrame;
+    mDataCache[device].currFrame = (slot + 1) % mMaxFrames;
+
+    DataVector& data = src->buffer()[slot];
+    mDataCache[device].data = data;
+    data.clear();
+
+    src->releaseEmptyFrame();
+
+    return mDataCache[device].data;
+}
+
+void Demo::GLWidget::dataSourceClosed() {
+    qCDebug(OGL) << "data source closed";
+    auto src = qobject_cast<DataSource*>(sender());
+    mDataCache.remove(src->id());
+    delete src;
+}
+
 
 void Demo::GLWidget::paintGL()
 {
@@ -607,6 +708,9 @@ void Demo::GLWidget::defaults() {
 
     CHECK_GL;
 
+    for (DataCache& c: mDataCache.values()) {
+        c.source->stop();
+    }
 }
 
 

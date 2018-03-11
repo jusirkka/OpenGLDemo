@@ -858,8 +858,10 @@ void Demo::MainWindow::openProject(const QString &path) {
 
 
 Demo::MainWindow::~MainWindow() {
+    disconnect();
+    mUI->editorsTabs->disconnect();
     delete mUI;
+    delete mGLWidget;
     mProject->deleteLater();
 }
 
-// #include "mainwindow.moc"

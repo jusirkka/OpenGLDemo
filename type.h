@@ -7,6 +7,24 @@
 
 namespace Demo {
 
+class RunError {
+
+public:
+    RunError(QString msg, int pos)
+        : emsg(std::move(msg))
+        , epos(pos)
+    {}
+
+    const QString msg() const {return emsg;}
+    int pos() const {return epos;}
+
+private:
+
+    QString emsg;
+    int epos;
+
+};
+
 class Type {
 public:
 
